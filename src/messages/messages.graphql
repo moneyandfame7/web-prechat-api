@@ -1,0 +1,26 @@
+type Message {
+  # Example field (placeholder)
+  id: String!
+  text: String!
+  User: User
+}
+
+input CreateMessageInput {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input UpdateMessageInput {
+  id: Int!
+}
+
+type Query {
+  messages: [Message]!
+  message(id: Int!): Message
+}
+
+type Mutation {
+  createMessage(createMessageInput: CreateMessageInput!): Message!
+  updateMessage(updateMessageInput: UpdateMessageInput!): Message!
+  removeMessage(id: Int!): Message
+}

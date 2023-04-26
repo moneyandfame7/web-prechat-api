@@ -1,0 +1,37 @@
+scalar DateTime
+
+type User {
+  id: String!
+  email: String!
+  displayName: String!
+  username: String!
+  createdAt: DateTime!
+  """
+  Relation for messages
+  """
+  messages: [Message]
+}
+
+input CreateUserInput {
+  email: String!
+  displayName: String!
+  username: String!
+}
+
+input UpdateUserInput {
+  id: String!
+  email: String
+  displayName: String
+  username: String
+}
+
+type Query {
+  users: [User]!
+  user(id: String!): User
+}
+
+type Mutation {
+  createUser(createUserInput: CreateUserInput!): User!
+  updateUser(updateUserInput: UpdateUserInput!): User!
+  removeUser(id: String!): User
+}
