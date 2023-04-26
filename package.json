@@ -10,7 +10,7 @@
   },
   "scripts": {
     "build": "nest build",
-    "vercel-build": "yarn prisma:generate && yarn build",
+    "vercel-build": "npx prisma generate && yarn build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:debug": "nest start --debug --watch",

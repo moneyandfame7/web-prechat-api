@@ -5,12 +5,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
-generator nestgraphql {
-  provider               = "node node_modules/prisma-nestjs-graphql"
-  output                 = "../src/@generated/prisma-nestjs-graphql"
-  fields_Validator_from  = "class-validator"
-  fields_Validator_input = true
-}
+// generator nestgraphql {
+//   provider               = "node node_modules/prisma-nestjs-graphql"
+//   output                 = "../src/@generated/prisma-nestjs-graphql"
+//   fields_Validator_from  = "class-validator"
+//   fields_Validator_input = true
+// }
 
 datasource db {
   provider = "postgresql"
