@@ -10,6 +10,7 @@
   },
   "scripts": {
     "build": "nest build",
+    "vercel-build": "yarn prisma:generate && yarn build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:debug": "nest start --debug --watch",
@@ -40,7 +41,6 @@
     "graphql": "^16.6.0",
     "graphql-iso-date": "^3.6.1",
     "graphql-tools": "^8.3.20",
-    "prisma": "^4.13.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0"
   },
@@ -60,6 +60,7 @@
     "eslint-plugin-prettier": "^4.0.0",
     "jest": "29.3.1",
     "prettier": "^2.3.2",
+    "prisma": "^4.13.0",
     "prisma-nestjs-graphql": "^18.0.0",
     "source-map-support": "^0.5.20",
     "supertest": "^6.1.3",
