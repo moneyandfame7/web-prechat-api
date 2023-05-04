@@ -1,0 +1,14 @@
+type AuthResponse {
+  user: User!
+  refreshToken: String!
+  accessToken: String!
+}
+
+input AuthInput {
+  token: String!
+}
+
+type Mutation {
+  login(loginInput: AuthInput!): AuthResponse!
+  refresh(refreshInput: AuthInput!): AuthResponse!
+}

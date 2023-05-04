@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CreateMessageInput } from './dto/create-message.input';
-import { UpdateMessageInput } from './dto/update-message.input';
+import { CreateMessageInput, UpdateMessageInput } from 'src/graphql';
 
 @Injectable()
 export class MessagesService {

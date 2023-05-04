@@ -1,7 +1,6 @@
 import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
 import { MessagesService } from './messages.service';
-import { CreateMessageInput } from './dto/create-message.input';
-import { UpdateMessageInput } from './dto/update-message.input';
+import { CreateMessageInput, UpdateMessageInput } from 'src/graphql';
 
 @Resolver('Message')
 export class MessagesResolver {
@@ -24,10 +23,7 @@ export class MessagesResolver {
 
   @Mutation('updateMessage')
   update(@Args('updateMessageInput') updateMessageInput: UpdateMessageInput) {
-    return this.messagesService.update(
-      updateMessageInput.id,
-      updateMessageInput,
-    );
+    return this.messagesService.update(updateMessageInput.id, updateMessageInput);
   }
 
   @Mutation('removeMessage')
