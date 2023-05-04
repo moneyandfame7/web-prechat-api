@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { GraphQLError } from 'graphql';
-import { AuthService } from 'src/auth/auth.service';
-import { JwtPayload } from 'src/auth/auth.type';
+import { AuthService } from 'src/authorization/auth.service';
+import { JwtPayload } from 'src/authorization/auth.type';
 import { GraphqlErrorCode } from 'src/common/constants/auth';
 import { CreateUserInput, CreateUsernameInput, UpdateUserInput } from 'src/graphql';
 
