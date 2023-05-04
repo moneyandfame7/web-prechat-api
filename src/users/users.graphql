@@ -4,8 +4,9 @@ type User {
   id: String!
   email: String!
   displayName: String!
-  username: String!
-  createdAt: DateTime!
+  username: String
+  photo: String!
+  createdAt: DateTime
   """
   Relation for messages
   """
@@ -15,23 +16,29 @@ type User {
 input CreateUserInput {
   email: String!
   displayName: String!
-  username: String!
+  username: String
+  photo: String!
 }
 
 input UpdateUserInput {
-  id: String!
   email: String
   displayName: String
   username: String
 }
 
+input CreateUsernameInput {
+  username: String!
+}
+
 type Query {
   users: [User]!
   user(id: String!): User
+  me: User
 }
 
 type Mutation {
   createUser(createUserInput: CreateUserInput!): User!
   updateUser(updateUserInput: UpdateUserInput!): User!
+  createUsername(createUsernameInput: CreateUsernameInput!): AuthResponse!
   removeUser(id: String!): User
 }

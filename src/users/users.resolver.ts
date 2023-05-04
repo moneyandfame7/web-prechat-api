@@ -1,38 +1,44 @@
+import { UseGuards } from '@nestjs/common';
+
+import { JwtPayload } from './../auth/auth.type';
 import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
 
 import { UsersService } from './users.service';
-import { UpdateUserInput } from './dto/update-user.input';
-import { CreateUserInput } from './dto/create-user.input';
+import { GqlUser } from 'src/common/decorators/gql-user.decorator';
+import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
+import { CreateUserInput, CreateUsernameInput, UpdateUserInput, User } from 'src/graphql';
+import { AuthService } from 'src/auth/auth.service';
 
 @Resolver('User')
 export class UsersResolver {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private usersService: UsersService, private authService: AuthService) {}
 
   @Mutation('createUser')
-  create(@Args('createUserInput') createUserInput: CreateUserInput) {
+  public create(@Args('createUserInput') createUserInput: CreateUserInput) {
     return this.usersService.create(createUserInput);
   }
 
-  @Query('users')
-  findAll() {
-    return this.usersService.findMany();
-  }
-
-  @Query('user')
-  findOne(@Args('id') id: string) {
-    return this.usersService.findOne(id);
+  @Query('me')
+  @UseGuards(JwtAuthGuard)
+  public async me(@GqlUser() user: User): Promise<User> {
+    console.log(user);
+    return user;
   }
 
   @Mutation('updateUser')
-  update(
-    @Args('id') id: string,
-    @Args('updateUserInput') updateUserInput: UpdateUserInput,
-  ) {
-    return this.usersService.update(id, updateUserInput);
+  @UseGuards(JwtAuthGuard)
+  public update(@Args('updateUserInput') updateUserInput: UpdateUserInput, @GqlUser() user: JwtPayload) {
+    return this.usersService.update(user.id, updateUserInput);
   }
 
-  @Mutation('removeUser')
-  remove(@Args('id') id: string) {
-    return this.usersService.delete(id);
+  @Mutation('createUsername')
+  @UseGuards(JwtAuthGuard)
+  public async createUsername(
+    @Args('createUsernameInput') createUsernameInput: CreateUsernameInput,
+    @GqlUser() user: JwtPayload,
+  ) {
+    const created = await this.usersService.verifyAndCreateUsername(user, createUsernameInput);
+
+    return this.authService.buildLoginResponse(created);
   }
 }

@@ -1,8 +1,13 @@
+scalar DateTime
+
 type Message {
   # Example field (placeholder)
   id: String!
   text: String!
-  User: User
+  createdAt: DateTime
+  updatedAt: DateTime
+
+  User: User!
 }
 
 input CreateMessageInput {
