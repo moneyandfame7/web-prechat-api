@@ -1,6 +1,5 @@
 export enum AuthorizationProvider {
   Jwt = 'jwt',
-  Google = 'google',
 }
 
 export enum GraphqlErrorCode {

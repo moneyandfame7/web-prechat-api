@@ -1,14 +1,15 @@
-import { AuthModule } from './auth/auth.module';
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { ConfigModule } from '@nestjs/config';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
+import { DateTimeResolver } from 'graphql-scalars';
+
+import { AuthModule } from './authorization/auth.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { MessagesModule } from './messages/messages.module';
-import { ConfigModule } from '@nestjs/config';
-import { DateTimeResolver } from 'graphql-scalars';
 
 @Module({
   imports: [

@@ -5,7 +5,6 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from 'src/common/strategy/jwt.strategy';
 import { AuthService } from './auth.service';
 import { UsersModule } from 'src/users/users.module';
-import { GoogleStrategy } from 'src/common/strategy/google.strategy';
 
 @Module({
   imports: [
@@ -18,7 +17,7 @@ import { GoogleStrategy } from 'src/common/strategy/google.strategy';
     forwardRef(() => UsersModule),
   ],
 
-  providers: [AuthService, JwtStrategy, GoogleStrategy, AuthResolver],
+  providers: [AuthService, JwtStrategy, AuthResolver],
   exports: [AuthService],
 })
 export class AuthModule {}

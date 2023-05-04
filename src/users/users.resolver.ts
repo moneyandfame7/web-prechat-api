@@ -1,13 +1,13 @@
 import { UseGuards } from '@nestjs/common';
 
-import { JwtPayload } from './../auth/auth.type';
+import { JwtPayload } from '../authorization/auth.type';
 import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
 
 import { UsersService } from './users.service';
-import { GqlUser } from 'src/common/decorators/gql-user.decorator';
+import { CurrentUser } from 'src/common/decorators/gql-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { CreateUserInput, CreateUsernameInput, UpdateUserInput, User } from 'src/graphql';
-import { AuthService } from 'src/auth/auth.service';
+import { AuthService } from 'src/authorization/auth.service';
 
 @Resolver('User')
 export class UsersResolver {
@@ -20,14 +20,14 @@ export class UsersResolver {
 
   @Query('me')
   @UseGuards(JwtAuthGuard)
-  public async me(@GqlUser() user: User): Promise<User> {
+  public async me(@CurrentUser() user: User): Promise<User> {
     console.log(user);
     return user;
   }
 
   @Mutation('updateUser')
   @UseGuards(JwtAuthGuard)
-  public update(@Args('updateUserInput') updateUserInput: UpdateUserInput, @GqlUser() user: JwtPayload) {
+  public update(@Args('updateUserInput') updateUserInput: UpdateUserInput, @CurrentUser() user: JwtPayload) {
     return this.usersService.update(user.id, updateUserInput);
   }
 
@@ -35,7 +35,7 @@ export class UsersResolver {
   @UseGuards(JwtAuthGuard)
   public async createUsername(
     @Args('createUsernameInput') createUsernameInput: CreateUsernameInput,
-    @GqlUser() user: JwtPayload,
+    @CurrentUser() user: JwtPayload,
   ) {
     const created = await this.usersService.verifyAndCreateUsername(user, createUsernameInput);
 
