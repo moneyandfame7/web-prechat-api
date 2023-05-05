@@ -10,6 +10,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { MessagesModule } from './messages/messages.module';
+import { AppResolver } from './app.resolver';
 
 @Module({
   imports: [
@@ -30,6 +31,6 @@ import { MessagesModule } from './messages/messages.module';
     MessagesModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AppResolver],
 })
 export class AppModule {}

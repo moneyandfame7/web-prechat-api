@@ -37,6 +37,20 @@ export class CreateUsernameInput {
     username: string;
 }
 
+export abstract class IQuery {
+    abstract ping(): string | Promise<string>;
+
+    abstract messages(): Nullable<Message>[] | Promise<Nullable<Message>[]>;
+
+    abstract message(id: number): Nullable<Message> | Promise<Nullable<Message>>;
+
+    abstract users(): Nullable<User>[] | Promise<Nullable<User>[]>;
+
+    abstract user(id: string): Nullable<User> | Promise<Nullable<User>>;
+
+    abstract me(): Nullable<User> | Promise<Nullable<User>>;
+}
+
 export class AuthResponse {
     user: User;
     refreshToken: string;
@@ -69,18 +83,6 @@ export class Message {
     createdAt?: Nullable<DateTime>;
     updatedAt?: Nullable<DateTime>;
     User: User;
-}
-
-export abstract class IQuery {
-    abstract messages(): Nullable<Message>[] | Promise<Nullable<Message>[]>;
-
-    abstract message(id: number): Nullable<Message> | Promise<Nullable<Message>>;
-
-    abstract users(): Nullable<User>[] | Promise<Nullable<User>[]>;
-
-    abstract user(id: string): Nullable<User> | Promise<Nullable<User>>;
-
-    abstract me(): Nullable<User> | Promise<Nullable<User>>;
 }
 
 export class User {

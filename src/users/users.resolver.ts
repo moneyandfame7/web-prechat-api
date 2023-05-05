@@ -4,7 +4,7 @@ import { JwtPayload } from '../authorization/auth.type';
 import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
 
 import { UsersService } from './users.service';
-import { CurrentUser } from 'src/common/decorators/gql-user.decorator';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { CreateUserInput, CreateUsernameInput, UpdateUserInput, User } from 'src/graphql';
 import { AuthService } from 'src/authorization/auth.service';
