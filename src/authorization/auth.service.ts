@@ -101,7 +101,6 @@ export class AuthService {
       id: user.id,
       email: user.email,
       username: user.username,
-      displayName: user.displayName,
       createdAt: user.createdAt,
       photo: user.photo,
     };

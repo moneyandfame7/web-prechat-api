@@ -12,6 +12,14 @@ export class AuthInput {
     token: string;
 }
 
+export class CreateConversationInput {
+    exampleField?: Nullable<number>;
+}
+
+export class UpdateConversationInput {
+    id: number;
+}
+
 export class CreateMessageInput {
     exampleField?: Nullable<number>;
 }
@@ -22,14 +30,12 @@ export class UpdateMessageInput {
 
 export class CreateUserInput {
     email: string;
-    displayName: string;
     username?: Nullable<string>;
     photo: string;
 }
 
 export class UpdateUserInput {
     email?: Nullable<string>;
-    displayName?: Nullable<string>;
     username?: Nullable<string>;
 }
 
@@ -40,11 +46,15 @@ export class CreateUsernameInput {
 export abstract class IQuery {
     abstract ping(): string | Promise<string>;
 
+    abstract conversations(): Nullable<Conversation>[] | Promise<Nullable<Conversation>[]>;
+
+    abstract conversation(id: number): Nullable<Conversation> | Promise<Nullable<Conversation>>;
+
     abstract messages(): Nullable<Message>[] | Promise<Nullable<Message>[]>;
 
     abstract message(id: number): Nullable<Message> | Promise<Nullable<Message>>;
 
-    abstract users(): Nullable<User>[] | Promise<Nullable<User>[]>;
+    abstract searchUsers(username: string): Nullable<Nullable<SearchedUser>[]> | Promise<Nullable<Nullable<SearchedUser>[]>>;
 
     abstract user(id: string): Nullable<User> | Promise<Nullable<User>>;
 
@@ -62,6 +72,12 @@ export abstract class IMutation {
 
     abstract refresh(refreshInput: AuthInput): AuthResponse | Promise<AuthResponse>;
 
+    abstract createConversation(createConversationInput: CreateConversationInput): Conversation | Promise<Conversation>;
+
+    abstract updateConversation(updateConversationInput: UpdateConversationInput): Conversation | Promise<Conversation>;
+
+    abstract removeConversation(id: number): Nullable<Conversation> | Promise<Nullable<Conversation>>;
+
     abstract createMessage(createMessageInput: CreateMessageInput): Message | Promise<Message>;
 
     abstract updateMessage(updateMessageInput: UpdateMessageInput): Message | Promise<Message>;
@@ -77,6 +93,14 @@ export abstract class IMutation {
     abstract removeUser(id: string): Nullable<User> | Promise<Nullable<User>>;
 }
 
+export class Conversation {
+    exampleField?: Nullable<number>;
+}
+
+export class CreateConversationResponse {
+    conversationId: string;
+}
+
 export class Message {
     id: string;
     text: string;
@@ -88,11 +112,16 @@ export class Message {
 export class User {
     id: string;
     email: string;
-    displayName: string;
     username?: Nullable<string>;
     photo: string;
     createdAt?: Nullable<DateTime>;
     messages?: Nullable<Nullable<Message>[]>;
+}
+
+export class SearchedUser {
+    id: string;
+    username: string;
+    photo: string;
 }
 
 export type DateTime = any;
