@@ -11,6 +11,8 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { MessagesModule } from './messages/messages.module';
 import { AppResolver } from './app.resolver';
+import { getErrorCode } from './common/errors';
+import { ConversationsModule } from './conversations/conversations.module';
 
 @Module({
   imports: [
@@ -22,6 +24,11 @@ import { AppResolver } from './app.resolver';
       resolvers: {
         DateTime: DateTimeResolver,
       },
+      formatError: (e) => {
+        const formatted = getErrorCode(e.message);
+        console.log(formatted);
+        return formatted;
+      },
     }),
     ConfigModule.forRoot({
       isGlobal: true,
@@ -29,6 +36,7 @@ import { AppResolver } from './app.resolver';
     UsersModule,
     AuthModule,
     MessagesModule,
+    ConversationsModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver],

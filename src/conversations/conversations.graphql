@@ -1,0 +1,28 @@
+type Conversation {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input CreateConversationInput {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+type CreateConversationResponse {
+  conversationId: String!
+}
+
+input UpdateConversationInput {
+  id: Int!
+}
+
+type Query {
+  conversations: [Conversation]!
+  conversation(id: Int!): Conversation
+}
+
+type Mutation {
+  createConversation(createConversationInput: CreateConversationInput!): Conversation!
+  updateConversation(updateConversationInput: UpdateConversationInput!): Conversation!
+  removeConversation(id: Int!): Conversation
+}

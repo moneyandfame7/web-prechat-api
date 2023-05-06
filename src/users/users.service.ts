@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { GraphQLError } from 'graphql';
-import { AuthService } from 'src/authorization/auth.service';
 import { JwtPayload } from 'src/authorization/auth.type';
-import { GraphqlErrorCode } from 'src/common/constants/auth';
+import { ERROR_NAME } from 'src/common/errors';
 import { CreateUserInput, CreateUsernameInput, UpdateUserInput } from 'src/graphql';
 
 import { PrismaService } from 'src/prisma.service';
@@ -18,23 +16,15 @@ export class UsersService {
   }
 
   public async verifyAndCreateUsername(user: JwtPayload, input: CreateUsernameInput) {
-    try {
-      const alreadyExist = await this.prismaService.user.findUnique({
-        where: {
-          ...input,
-        },
-      });
-      if (alreadyExist) {
-        throw new GraphQLError('Username already taken. Try another.', {
-          extensions: {
-            code: GraphqlErrorCode.BadRequest,
-          },
-        });
-      }
-      return this.update(user.id, input);
-    } catch (e) {
-      console.log(e);
+    const alreadyExist = await this.prismaService.user.findUnique({
+      where: {
+        ...input,
+      },
+    });
+    if (alreadyExist) {
+      throw new Error(ERROR_NAME.USERNAME_ALREADY_EXIST);
     }
+    return this.update(user.id, input);
   }
 
   findMany() {
@@ -49,6 +39,18 @@ export class UsersService {
     return this.prismaService.user.findUnique({
       where: {
         id,
+      },
+    });
+  }
+
+  findManyByUsername(myUsername: string, searchedUsername: string) {
+    return this.prismaService.user.findMany({
+      where: {
+        username: {
+          contains: searchedUsername,
+          not: myUsername,
+          mode: 'insensitive',
+        },
       },
     });
   }

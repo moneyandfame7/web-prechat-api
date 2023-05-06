@@ -3,7 +3,6 @@ scalar DateTime
 type User {
   id: String!
   email: String!
-  displayName: String!
   username: String
   photo: String!
   createdAt: DateTime
@@ -13,16 +12,20 @@ type User {
   messages: [Message]
 }
 
+type SearchedUser {
+  id: String!
+  username: String!
+  photo: String!
+}
+
 input CreateUserInput {
   email: String!
-  displayName: String!
   username: String
   photo: String!
 }
 
 input UpdateUserInput {
   email: String
-  displayName: String
   username: String
 }
 
@@ -31,7 +34,7 @@ input CreateUsernameInput {
 }
 
 type Query {
-  users: [User]!
+  searchUsers(username: String!): [SearchedUser]
   user(id: String!): User
   me: User
 }
