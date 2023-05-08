@@ -4,10 +4,12 @@ type Message {
   # Example field (placeholder)
   id: String!
   text: String!
-  createdAt: DateTime
-  updatedAt: DateTime
-
-  User: User!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  conversation: Conversation!
+  isLastIn: Conversation
+  sender: User!
+  isRead: Boolean
 }
 
 input CreateMessageInput {

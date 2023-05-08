@@ -12,10 +12,6 @@ export class AuthInput {
     token: string;
 }
 
-export class CreateConversationInput {
-    exampleField?: Nullable<number>;
-}
-
 export class UpdateConversationInput {
     id: number;
 }
@@ -48,7 +44,7 @@ export abstract class IQuery {
 
     abstract conversations(): Nullable<Conversation>[] | Promise<Nullable<Conversation>[]>;
 
-    abstract conversation(id: number): Nullable<Conversation> | Promise<Nullable<Conversation>>;
+    abstract conversation(id: string): Nullable<Conversation> | Promise<Nullable<Conversation>>;
 
     abstract messages(): Nullable<Message>[] | Promise<Nullable<Message>[]>;
 
@@ -72,11 +68,7 @@ export abstract class IMutation {
 
     abstract refresh(refreshInput: AuthInput): AuthResponse | Promise<AuthResponse>;
 
-    abstract createConversation(createConversationInput: CreateConversationInput): Conversation | Promise<Conversation>;
-
-    abstract updateConversation(updateConversationInput: UpdateConversationInput): Conversation | Promise<Conversation>;
-
-    abstract removeConversation(id: number): Nullable<Conversation> | Promise<Nullable<Conversation>>;
+    abstract createConversation(participantsIds?: Nullable<Nullable<string>[]>): Nullable<CreateConversationResponse> | Promise<Nullable<CreateConversationResponse>>;
 
     abstract createMessage(createMessageInput: CreateMessageInput): Message | Promise<Message>;
 
@@ -94,7 +86,13 @@ export abstract class IMutation {
 }
 
 export class Conversation {
-    exampleField?: Nullable<number>;
+    id: string;
+    name?: Nullable<string>;
+    unreadMessages: number;
+    messages: Nullable<Message>[];
+    participants: User[];
+    lastMessage?: Nullable<Message>;
+    createdAt: DateTime;
 }
 
 export class CreateConversationResponse {
@@ -104,9 +102,12 @@ export class CreateConversationResponse {
 export class Message {
     id: string;
     text: string;
-    createdAt?: Nullable<DateTime>;
-    updatedAt?: Nullable<DateTime>;
-    User: User;
+    createdAt: DateTime;
+    updatedAt: DateTime;
+    conversation: Conversation;
+    isLastIn?: Nullable<Conversation>;
+    sender: User;
+    isRead?: Nullable<boolean>;
 }
 
 export class User {
@@ -115,7 +116,6 @@ export class User {
     username?: Nullable<string>;
     photo: string;
     createdAt?: Nullable<DateTime>;
-    messages?: Nullable<Nullable<Message>[]>;
 }
 
 export class SearchedUser {

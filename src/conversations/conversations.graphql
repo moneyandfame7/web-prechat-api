@@ -1,11 +1,11 @@
 type Conversation {
-  # Example field (placeholder)
-  exampleField: Int
-}
-
-input CreateConversationInput {
-  # Example field (placeholder)
-  exampleField: Int
+  id: String!
+  name: String
+  unreadMessages: Int!
+  messages: [Message]!
+  participants: [User!]!
+  lastMessage: Message
+  createdAt: DateTime!
 }
 
 type CreateConversationResponse {
@@ -16,13 +16,11 @@ input UpdateConversationInput {
   id: Int!
 }
 
-type Query {
-  conversations: [Conversation]!
-  conversation(id: Int!): Conversation
+type Mutation {
+  createConversation(participantsIds: [String]): CreateConversationResponse
 }
 
-type Mutation {
-  createConversation(createConversationInput: CreateConversationInput!): Conversation!
-  updateConversation(updateConversationInput: UpdateConversationInput!): Conversation!
-  removeConversation(id: Int!): Conversation
+type Query {
+  conversations: [Conversation]!
+  conversation(id: String!): Conversation
 }

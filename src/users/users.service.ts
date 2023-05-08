@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { JwtPayload } from 'src/authorization/auth.type';
-import { ERROR_NAME } from 'src/common/errors';
-import { CreateUserInput, CreateUsernameInput, UpdateUserInput } from 'src/graphql';
+import { UpdateUserInput, CreateUserInput, CreateUsernameInput } from 'src/types/graphql'
+import { Injectable } from '@nestjs/common'
+import { JwtPayload } from 'src/authorization/auth.type'
+import { ERROR_NAME } from 'src/common/errors'
 
-import { PrismaService } from 'src/prisma.service';
+import { PrismaService } from 'src/prisma.service'
 
 @Injectable()
 export class UsersService {
@@ -12,7 +12,7 @@ export class UsersService {
   public create(createUserInput: CreateUserInput) {
     return this.prismaService.user.create({
       data: createUserInput,
-    });
+    })
   }
 
   public async verifyAndCreateUsername(user: JwtPayload, input: CreateUsernameInput) {
@@ -20,11 +20,11 @@ export class UsersService {
       where: {
         ...input,
       },
-    });
+    })
     if (alreadyExist) {
-      throw new Error(ERROR_NAME.USERNAME_ALREADY_EXIST);
+      throw new Error(ERROR_NAME.USERNAME_ALREADY_EXIST)
     }
-    return this.update(user.id, input);
+    return this.update(user.id, input)
   }
 
   findMany() {
@@ -32,7 +32,7 @@ export class UsersService {
       include: {
         messages: true,
       },
-    });
+    })
   }
 
   findOne(id: string) {
@@ -40,7 +40,7 @@ export class UsersService {
       where: {
         id,
       },
-    });
+    })
   }
 
   findManyByUsername(myUsername: string, searchedUsername: string) {
@@ -52,7 +52,7 @@ export class UsersService {
           mode: 'insensitive',
         },
       },
-    });
+    })
   }
 
   async findOneByEmail(email: string) {
@@ -60,7 +60,7 @@ export class UsersService {
       where: {
         email,
       },
-    });
+    })
   }
 
   update(id: string, updateUserInput: UpdateUserInput) {
@@ -69,7 +69,7 @@ export class UsersService {
         id,
       },
       data: updateUserInput,
-    });
+    })
   }
 
   delete(id: string) {
@@ -77,6 +77,6 @@ export class UsersService {
       where: {
         id,
       },
-    });
+    })
   }
 }

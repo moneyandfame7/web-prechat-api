@@ -6,10 +6,6 @@ type User {
   username: String
   photo: String!
   createdAt: DateTime
-  """
-  Relation for messages
-  """
-  messages: [Message]
 }
 
 type SearchedUser {
