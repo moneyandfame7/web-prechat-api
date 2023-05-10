@@ -2,7 +2,7 @@ type Conversation {
   id: String!
   name: String
   unreadMessages: Int!
-  messages: [Message]!
+  messages: [Message]
   participants: [User!]!
   lastMessage: Message
   createdAt: DateTime!
@@ -23,4 +23,8 @@ type Mutation {
 type Query {
   conversations: [Conversation]!
   conversation(id: String!): Conversation
+}
+
+type Subscription {
+  conversationCreated: Conversation
 }

@@ -1,5 +1,5 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { NestFactory } from '@nestjs/core'
+import { AppModule } from './app.module'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -7,9 +7,8 @@ async function bootstrap() {
       origin: process.env.CLIENT_URL,
       credentials: true,
     },
-  });
-  const env = process.env.PORT || 8001;
-  await app.listen(env);
-  console.log('uri:', process.env.CLIENT_URL);
+  })
+  const env = process.env.PORT || 8001
+  await app.listen(env)
 }
-bootstrap();
+bootstrap()

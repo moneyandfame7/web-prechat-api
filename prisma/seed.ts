@@ -48,6 +48,8 @@ class Seeder {
 
 const seed = new Seeder()
 async function main() {
+  await prisma.user.deleteMany()
+  await prisma.conversation.deleteMany()
   await seed.createUsers(100)
   console.log(' Created successfully ')
 }

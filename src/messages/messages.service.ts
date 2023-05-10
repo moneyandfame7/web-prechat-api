@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common'
-import { CreateMessageInput, UpdateMessageInput } from 'src/types/graphql'
+import { Prisma } from '@prisma/client'
 
 @Injectable()
 export class MessagesService {
-  create(createMessageInput: CreateMessageInput) {
+  create(createMessageInput: Prisma.MessageCreateInput) {
     return 'This action adds a new message'
   }
 
@@ -15,7 +15,7 @@ export class MessagesService {
     return `This action returns a #${id} message`
   }
 
-  update(id: number, updateMessageInput: UpdateMessageInput) {
+  update(id: string, updateMessageInput: Prisma.MessageUpdateInput) {
     return `This action updates a #${id} message`
   }
 

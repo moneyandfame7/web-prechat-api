@@ -1,18 +1,32 @@
-import { Resolver, Mutation, Args, Query } from '@nestjs/graphql'
+import { Resolver, Mutation, Args, Query, Subscription } from '@nestjs/graphql'
 import { ConversationsService } from './conversations.service'
 import { CurrentUser } from 'src/common/decorators/current-user.decorator'
 import { JwtPayload } from 'src/authorization/auth.type'
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard'
-import { UseGuards } from '@nestjs/common'
+import { Inject, UseGuards } from '@nestjs/common'
 import { CreateConversationResponse } from 'src/types/graphql'
+import { PubSub } from 'graphql-subscriptions'
 
 @Resolver('Conversation')
 export class ConversationsResolver {
-  constructor(private readonly conversationsService: ConversationsService) {}
+  constructor(@Inject('PUB_SUB') private pubSub: PubSub, private readonly conversationsService: ConversationsService) {}
 
   @Mutation('createConversation')
+  @UseGuards(JwtAuthGuard)
   async create(@Args('participantsIds') participantsIds: string[]): Promise<CreateConversationResponse> {
-    return this.conversationsService.create(participantsIds)
+    const conversation = await this.conversationsService.create(participantsIds)
+
+    this.pubSub.publish('CONVERSATION_CREATED', { conversationCreated: conversation })
+
+    return {
+      conversationId: conversation.id,
+    }
+  }
+
+  @Subscription()
+  /* @TODO: зробити валідацію просто в файлі на onConnect? */
+  conversationCreated() {
+    return this.pubSub.asyncIterator('CONVERSATION_CREATED')
   }
 
   @Query('conversations')
