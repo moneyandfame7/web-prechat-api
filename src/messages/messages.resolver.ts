@@ -1,13 +1,13 @@
 import { Resolver, Query, Mutation, Args } from '@nestjs/graphql'
 import { MessagesService } from './messages.service'
-import { CreateMessageInput, UpdateMessageInput } from 'src/types/graphql'
+import { Prisma } from '@prisma/client'
 
 @Resolver('Message')
 export class MessagesResolver {
   constructor(private readonly messagesService: MessagesService) {}
 
   @Mutation('createMessage')
-  create(@Args('createMessageInput') createMessageInput: CreateMessageInput) {
+  create(@Args('createMessageInput') createMessageInput: Prisma.MessageCreateInput) {
     return this.messagesService.create(createMessageInput)
   }
 
@@ -22,8 +22,8 @@ export class MessagesResolver {
   }
 
   @Mutation('updateMessage')
-  update(@Args('updateMessageInput') updateMessageInput: UpdateMessageInput) {
-    return this.messagesService.update(updateMessageInput.id, updateMessageInput)
+  update(@Args('id') id: string, @Args('updateMessageInput') updateMessageInput: Prisma.MessageUpdateInput) {
+    return this.messagesService.update(id, updateMessageInput)
   }
 
   @Mutation('removeMessage')

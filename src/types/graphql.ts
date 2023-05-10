@@ -35,10 +35,6 @@ export class UpdateUserInput {
     username?: Nullable<string>;
 }
 
-export class CreateUsernameInput {
-    username: string;
-}
-
 export abstract class IQuery {
     abstract ping(): string | Promise<string>;
 
@@ -51,10 +47,6 @@ export abstract class IQuery {
     abstract message(id: number): Nullable<Message> | Promise<Nullable<Message>>;
 
     abstract searchUsers(username: string): Nullable<Nullable<SearchedUser>[]> | Promise<Nullable<Nullable<SearchedUser>[]>>;
-
-    abstract user(id: string): Nullable<User> | Promise<Nullable<User>>;
-
-    abstract me(): Nullable<User> | Promise<Nullable<User>>;
 }
 
 export class AuthResponse {
@@ -72,24 +64,20 @@ export abstract class IMutation {
 
     abstract createMessage(createMessageInput: CreateMessageInput): Message | Promise<Message>;
 
-    abstract updateMessage(updateMessageInput: UpdateMessageInput): Message | Promise<Message>;
+    abstract updateMessage(id: string, updateMessageInput: UpdateMessageInput): Message | Promise<Message>;
 
     abstract removeMessage(id: number): Nullable<Message> | Promise<Nullable<Message>>;
 
     abstract createUser(createUserInput: CreateUserInput): User | Promise<User>;
 
-    abstract updateUser(updateUserInput: UpdateUserInput): User | Promise<User>;
-
-    abstract createUsername(createUsernameInput: CreateUsernameInput): AuthResponse | Promise<AuthResponse>;
-
-    abstract removeUser(id: string): Nullable<User> | Promise<Nullable<User>>;
+    abstract createUsername(username: string): AuthResponse | Promise<AuthResponse>;
 }
 
 export class Conversation {
     id: string;
     name?: Nullable<string>;
     unreadMessages: number;
-    messages: Nullable<Message>[];
+    messages?: Nullable<Nullable<Message>[]>;
     participants: User[];
     lastMessage?: Nullable<Message>;
     createdAt: DateTime;
@@ -97,6 +85,10 @@ export class Conversation {
 
 export class CreateConversationResponse {
     conversationId: string;
+}
+
+export abstract class ISubscription {
+    abstract conversationCreated(): Nullable<Conversation> | Promise<Nullable<Conversation>>;
 }
 
 export class Message {

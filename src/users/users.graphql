@@ -25,19 +25,11 @@ input UpdateUserInput {
   username: String
 }
 
-input CreateUsernameInput {
-  username: String!
-}
-
 type Query {
   searchUsers(username: String!): [SearchedUser]
-  user(id: String!): User
-  me: User
 }
 
 type Mutation {
   createUser(createUserInput: CreateUserInput!): User!
-  updateUser(updateUserInput: UpdateUserInput!): User!
-  createUsername(createUsernameInput: CreateUsernameInput!): AuthResponse!
-  removeUser(id: String!): User
+  createUsername(username: String!): AuthResponse!
 }
