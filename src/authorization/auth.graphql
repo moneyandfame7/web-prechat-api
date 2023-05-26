@@ -12,3 +12,7 @@ type Mutation {
   login(loginInput: AuthInput!): AuthResponse!
   refresh(refreshInput: AuthInput!): AuthResponse!
 }
+
+type Query {
+  protected: User!
+}

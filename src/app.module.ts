@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common'
 import { GraphQLModule } from '@nestjs/graphql'
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo'
+import { ApolloDriver, ApolloDriverConfig, AuthenticationError } from '@nestjs/apollo'
 import { ConfigModule } from '@nestjs/config'
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
 import { DateTimeResolver } from 'graphql-scalars'
@@ -14,58 +14,61 @@ import { AppResolver } from './app.resolver'
 // import { getErrorCode } from './common/errors'
 import { ConversationsModule } from './conversations/conversations.module'
 import { PubSubModule } from './pubsub/pubsub.module'
+import { AuthService } from './authorization/auth.service'
+import { JwtPayload } from './authorization/auth.type'
+import { GqlContext } from './types/ctx'
 
 @Module({
   imports: [
+    AuthModule,
     PubSubModule,
-    GraphQLModule.forRoot<ApolloDriverConfig>({
-      driver: ApolloDriver,
-      playground: false,
-      plugins: [ApolloServerPluginLandingPageLocalDefault()],
-      introspection: true,
-      typePaths: ['./**/*.graphql'],
-      resolvers: {
-        DateTime: DateTimeResolver,
-      },
-      context: (context) => {
-        if (context?.extra?.request) {
-          return {
-            req: {
-              ...context?.extra?.request,
-              headers: {
-                ...context?.extra?.request?.headers,
-                ...context?.connectionParams,
-              },
-            },
-          }
-        }
-
-        return { req: context?.req }
-      },
-      /* https://github.com/nestjs/docs.nestjs.com/issues/394#issuecomment-938814115 */
-      subscriptions: {
-        'graphql-ws': {
-          path: '/graphql/subscriptions',
-        },
-        'subscriptions-transport-ws': {
-          path: '/graphql/subscriptions',
-        },
-      },
-      formatError: (e) => {
-        // const formatted = getErrorCode(e.message)
-        // console.log(formatted)
-        // return formatted
-        console.log(e)
-        return e
-      },
-    }),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
     UsersModule,
-    AuthModule,
     MessagesModule,
     ConversationsModule,
+    GraphQLModule.forRootAsync<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      imports: [AuthModule],
+      inject: [AuthService],
+      useFactory: async (authService: AuthService) => ({
+        playground: false,
+        plugins: [ApolloServerPluginLandingPageLocalDefault()],
+        introspection: true,
+        typePaths: ['./**/*.graphql'],
+        resolvers: {
+          DateTime: DateTimeResolver,
+        },
+        subscriptions: {
+          'graphql-ws': {
+            path: '/graphql/subscriptions',
+            onConnect: (ctx) => {
+              const headers: Record<string, unknown> = {
+                ...(ctx.connectionParams.headers as object),
+              }
+              if ('authorization' in headers && typeof headers.authorization === 'string') {
+                const token = headers.authorization.split(' ')[1]
+
+                const user: JwtPayload = authService.getJwtPayload(token, authService.SECRET_ACCESS)
+
+                ;(ctx.extra as any).user = user
+              } else {
+                throw new AuthenticationError('TOKEN NOT PROVIDED')
+              }
+            },
+          },
+          'subscriptions-transport-ws': {
+            path: '/graphql/subscriptions',
+          },
+        },
+        context: ({ req, connection }) => (connection ? { req: connection.context } : { req }),
+        formatError: (e) => {
+          console.log({ e })
+          return e
+        },
+      }),
+    }),
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver],

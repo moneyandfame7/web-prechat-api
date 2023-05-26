@@ -28,6 +28,7 @@ model Conversation {
   id             String    @id @default(uuid())
   unreadMessages Int       @default(0)
   createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
   name           String?
   description    String?
   avatarVariant  String?

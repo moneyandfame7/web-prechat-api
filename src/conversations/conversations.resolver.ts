@@ -4,8 +4,9 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator'
 import { JwtPayload } from 'src/authorization/auth.type'
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard'
 import { Inject, UseGuards } from '@nestjs/common'
-import { Conversation, CreateConversationInput, CreateConversationResponse } from 'src/types/graphql'
+import { CreateConversationInput, CreateConversationResponse } from 'src/types/graphql'
 import { PubSub } from 'graphql-subscriptions'
+import { ConversationCreatedSubscriptionPayload } from './conversations.types'
 
 @Resolver('Conversation')
 export class ConversationsResolver {
@@ -25,17 +26,17 @@ export class ConversationsResolver {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Subscription(() => Conversation, {
-    filter: (payload, variables, context) => {
-      console.log({ payload, variables, context }, ' ALSDLALSDLASLDLASLD LASLDLASLD')
-      console.log('TOKEN:', context.req.headers)
-      return true
+  @Subscription('conversationCreated', {
+    filter(payload: ConversationCreatedSubscriptionPayload, variables, context) {
+      const currentUser = context.req.extra.user
+      const {
+        conversationCreated: { participants },
+      } = payload
+
+      return Boolean(participants.find((u) => u.id === currentUser.id))
     },
   })
-  /* @TODO: зробити валідацію просто в файлі на onConnect? */
   conversationCreated() {
-    console.log('AY SUKA')
     return this.pubSub.asyncIterator('CONVERSATION_CREATED')
   }
 
