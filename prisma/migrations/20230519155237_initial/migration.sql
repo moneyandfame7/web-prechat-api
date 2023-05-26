@@ -15,6 +15,10 @@ CREATE TABLE "User" (
 CREATE TABLE "Conversation" (
     "id" TEXT NOT NULL,
     "unreadMessages" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "name" TEXT,
+    "description" TEXT,
+    "avatarVariant" TEXT,
     "lastMessageId" TEXT,
 
     CONSTRAINT "Conversation_pkey" PRIMARY KEY ("id")

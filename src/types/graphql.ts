@@ -12,6 +12,12 @@ export class AuthInput {
     token: string;
 }
 
+export class CreateConversationInput {
+    name?: Nullable<string>;
+    description?: Nullable<string>;
+    participantsIds: string[];
+}
+
 export class UpdateConversationInput {
     id: number;
 }
@@ -60,7 +66,7 @@ export abstract class IMutation {
 
     abstract refresh(refreshInput: AuthInput): AuthResponse | Promise<AuthResponse>;
 
-    abstract createConversation(participantsIds?: Nullable<Nullable<string>[]>): Nullable<CreateConversationResponse> | Promise<Nullable<CreateConversationResponse>>;
+    abstract createConversation(createConversationInput?: Nullable<CreateConversationInput>): Nullable<CreateConversationResponse> | Promise<Nullable<CreateConversationResponse>>;
 
     abstract createMessage(createMessageInput: CreateMessageInput): Message | Promise<Message>;
 
@@ -76,6 +82,8 @@ export abstract class IMutation {
 export class Conversation {
     id: string;
     name?: Nullable<string>;
+    description?: Nullable<string>;
+    avatarVariant?: Nullable<string>;
     unreadMessages: number;
     messages?: Nullable<Nullable<Message>[]>;
     participants: User[];

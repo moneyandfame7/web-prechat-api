@@ -25,17 +25,19 @@ model User {
 }
 
 model Conversation {
-  id             String   @id @default(uuid())
-  unreadMessages Int      @default(0)
-  createdAt      DateTime @default(now())
-
+  id             String    @id @default(uuid())
+  unreadMessages Int       @default(0)
+  createdAt      DateTime  @default(now())
+  name           String?
+  description    String?
+  avatarVariant  String?
   // Relations  
-  messages      Message[]
+  messages       Message[]
   // @TODO: зробити так, як в тг, можна помічати conservation без повідомлень, і тоді загальна кількість
   // повідомлень буде включати тільки ті, де unreadMessages!==0
-  participants  User[]
-  lastMessage   Message?  @relation(name: "lastConversationMessage", fields: [lastMessageId], references: [id])
-  lastMessageId String?   @unique
+  participants   User[]
+  lastMessage    Message?  @relation(name: "lastConversationMessage", fields: [lastMessageId], references: [id])
+  lastMessageId  String?   @unique
 }
 
 model Message {

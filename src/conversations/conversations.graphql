@@ -1,6 +1,8 @@
 type Conversation {
   id: String!
   name: String
+  description: String
+  avatarVariant: String
   unreadMessages: Int!
   messages: [Message]
   participants: [User!]!
@@ -8,6 +10,11 @@ type Conversation {
   createdAt: DateTime!
 }
 
+input CreateConversationInput {
+  name: String
+  description: String
+  participantsIds: [String!]!
+}
 type CreateConversationResponse {
   conversationId: String!
 }
@@ -17,7 +24,7 @@ input UpdateConversationInput {
 }
 
 type Mutation {
-  createConversation(participantsIds: [String]): CreateConversationResponse
+  createConversation(createConversationInput: CreateConversationInput): CreateConversationResponse
 }
 
 type Query {
