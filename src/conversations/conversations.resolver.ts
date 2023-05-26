@@ -25,15 +25,17 @@ export class ConversationsResolver {
     }
   }
 
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Subscription(() => Conversation, {
     filter: (payload, variables, context) => {
-      console.log({ context }, 'context')
+      console.log({ payload, variables, context }, ' ALSDLALSDLASLDLASLD LASLDLASLD')
+      console.log('TOKEN:', context.req.headers)
       return true
     },
   })
   /* @TODO: зробити валідацію просто в файлі на onConnect? */
   conversationCreated() {
+    console.log('AY SUKA')
     return this.pubSub.asyncIterator('CONVERSATION_CREATED')
   }
 

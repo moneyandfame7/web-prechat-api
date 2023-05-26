@@ -27,6 +27,21 @@ import { PubSubModule } from './pubsub/pubsub.module'
       resolvers: {
         DateTime: DateTimeResolver,
       },
+      context: (context) => {
+        if (context?.extra?.request) {
+          return {
+            req: {
+              ...context?.extra?.request,
+              headers: {
+                ...context?.extra?.request?.headers,
+                ...context?.connectionParams,
+              },
+            },
+          }
+        }
+
+        return { req: context?.req }
+      },
       /* https://github.com/nestjs/docs.nestjs.com/issues/394#issuecomment-938814115 */
       subscriptions: {
         'graphql-ws': {
