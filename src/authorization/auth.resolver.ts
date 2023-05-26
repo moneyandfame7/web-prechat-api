@@ -1,7 +1,11 @@
-import { Args, Mutation, Resolver } from '@nestjs/graphql'
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql'
 import type { AuthResponse, AuthInput } from 'src/types/graphql'
 
 import { AuthService } from './auth.service'
+import { UseGuards } from '@nestjs/common'
+import { JwtAuthGuard } from 'src/common/guards/jwt.guard'
+import { CurrentUser } from 'src/common/decorators/current-user.decorator'
+import { User } from '@prisma/client'
 
 @Resolver()
 export class AuthResolver {
@@ -15,5 +19,11 @@ export class AuthResolver {
   @Mutation('refresh')
   async refresh(@Args('refreshInput') refreshInput: AuthInput): Promise<AuthResponse> {
     return this.authService.refresh(refreshInput.token)
+  }
+
+  @Query('protected')
+  @UseGuards(JwtAuthGuard)
+  async protected(@CurrentUser() user: User) {
+    return user
   }
 }

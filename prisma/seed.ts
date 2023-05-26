@@ -26,6 +26,10 @@ class Seeder {
     await prisma.user.deleteMany()
   }
 
+  public async deleteConversastions() {
+    await prisma.conversation.deleteMany()
+  }
+
   // public async createConversationsWithMessages() {
   //   for (let i = 0; i < 20; i++) {
   //     const conversation = await prisma.conversation.create({
@@ -52,10 +56,11 @@ class Seeder {
 
 const seed = new Seeder()
 async function main() {
-  await seed.deleteUsers()
-  console.log('DELETING SUCCESSFULLY')
-  await seed.createUsers(100)
-  console.log(' Created successfully ')
+  // await seed.deleteUsers()
+  // console.log('DELETING SUCCESSFULLY')
+  // await seed.createUsers(100)
+  await seed.deleteConversastions()
+  // console.log(' Created successfully ')
 }
 
 main()

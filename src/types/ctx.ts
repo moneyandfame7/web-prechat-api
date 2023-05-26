@@ -8,7 +8,7 @@ export interface Ctx {
 export interface GqlContext {
   req: Request
   res: Response
-  payload?: any
+  jwtPayload?: any
   // required for subscription
   connection: any
 }

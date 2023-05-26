@@ -7,6 +7,7 @@ import { AuthorizationProvider } from '../constants/auth'
 export class JwtAuthGuard extends AuthGuard(AuthorizationProvider.Jwt) {
   getRequest(context: GqlExecutionContext) {
     const ctx = GqlExecutionContext.create(context)
+
     return ctx.getContext().req
   }
 }

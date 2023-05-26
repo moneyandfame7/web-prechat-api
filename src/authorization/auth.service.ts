@@ -9,8 +9,8 @@ import type { GooglePayload, JwtPayload } from './auth.type'
 
 @Injectable()
 export class AuthService {
-  private readonly SECRET_ACCESS: string
-  private readonly SECRET_REFRESH: string
+  public readonly SECRET_ACCESS: string
+  public readonly SECRET_REFRESH: string
 
   constructor(
     private readonly jwtService: JwtService,
@@ -64,10 +64,14 @@ export class AuthService {
   }
 
   private validateRefreshToken(token: string) {
+    return this.getJwtPayload(token, this.SECRET_REFRESH)
+  }
+
+  public getJwtPayload(token: string, secret: string) {
     try {
-      return this.jwtService.verify<JwtPayload>(token, { secret: this.SECRET_REFRESH })
+      return this.jwtService.verify<JwtPayload>(token, { secret })
     } catch (e) {
-      console.log(e)
+      console.warn(e)
       return null
     }
   }

@@ -8,6 +8,7 @@ type Conversation {
   participants: [User!]!
   lastMessage: Message
   createdAt: DateTime!
+  updatedAt: DateTime!
 }
 
 input CreateConversationInput {

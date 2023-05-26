@@ -44,6 +44,8 @@ export class UpdateUserInput {
 export abstract class IQuery {
     abstract ping(): string | Promise<string>;
 
+    abstract protected(): User | Promise<User>;
+
     abstract conversations(): Nullable<Conversation>[] | Promise<Nullable<Conversation>[]>;
 
     abstract conversation(id: string): Nullable<Conversation> | Promise<Nullable<Conversation>>;
@@ -89,6 +91,7 @@ export class Conversation {
     participants: User[];
     lastMessage?: Nullable<Message>;
     createdAt: DateTime;
+    updatedAt: DateTime;
 }
 
 export class CreateConversationResponse {
