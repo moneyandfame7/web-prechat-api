@@ -56,11 +56,8 @@ class Seeder {
 
 const seed = new Seeder()
 async function main() {
-  // await seed.deleteUsers()
-  // console.log('DELETING SUCCESSFULLY')
-  // await seed.createUsers(100)
-  await seed.deleteConversastions()
-  // console.log(' Created successfully ')
+  await seed.createUsers(100)
+  console.log('[100 USERS] created successfully 🤝')
 }
 
 main()
