@@ -2,17 +2,19 @@ import { Injectable } from '@nestjs/common'
 import * as firebase from 'firebase-admin'
 import { App } from 'firebase-admin/app'
 import { FileUpload } from './firebase.types'
-import firebaseConfig from 'common/constants/firebase'
+import { getFirebaseConfig } from 'common/constants/firebase'
 import { v4 as uuid } from 'uuid'
 import * as mime from 'mime-types'
 import type { Auth } from 'firebase-admin/auth'
+import { ConfigService } from '@nestjs/config'
 @Injectable()
 export class FirebaseService {
   public readonly app: App
   public readonly auth: Auth
-  constructor() {
+  constructor(private configService: ConfigService) {
+    const config = JSON.parse(this.configService.get('FIREBASE_CREDENTIALS')!)
     this.app = firebase.initializeApp({
-      credential: firebase.credential.cert(firebaseConfig as firebase.ServiceAccount),
+      credential: firebase.credential.cert(config as firebase.ServiceAccount),
       databaseURL: 'https://nestjs-chat-a42f4-default-rtdb.europe-west1.firebasedatabase.app',
       storageBucket: 'gs://nestjs-chat-a42f4.appspot.com/',
     })
