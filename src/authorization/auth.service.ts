@@ -1,110 +1,115 @@
 import { Injectable } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
-import axios from 'axios'
+import { FileUpload } from 'graphql-upload'
 
-import { UsersService } from 'src/users/users.service'
-import { AuthInput, AuthResponse, CreateUserInput, User } from 'src/types/graphql'
-import type { GooglePayload, JwtPayload } from './auth.type'
+import type { Connection, SendPhoneResponse, SignInInput } from 'types/graphql'
 
+import { FirebaseService } from 'firebase/firebase.service'
+import { UserService } from 'users/users.service'
+import { MediaService } from 'media/media.service'
+
+import { SessionService } from 'sessions/sessions.service'
+import type { SessionData } from 'sessions/sessions.type'
+
+import type { SessionJwtPayload, SignUpInput } from './auth.type'
+import { Session } from '@prisma/client'
+import { GraphQLError } from 'graphql'
 @Injectable()
 export class AuthService {
-  public readonly SECRET_ACCESS: string
-  public readonly SECRET_REFRESH: string
-
   constructor(
+    private readonly userService: UserService,
+    private readonly firebaseService: FirebaseService,
+    private readonly mediaService: MediaService,
+    private readonly sessionService: SessionService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
-    private readonly userService: UsersService,
-  ) {
-    this.SECRET_ACCESS = this.configService.get<string>('AT_TOKEN')
-    this.SECRET_REFRESH = this.configService.get<string>('RT_TOKEN')
-  }
+  ) {}
 
-  public async login(loginInput: AuthInput): Promise<AuthResponse> {
-    const payload = await this.googleVerify(loginInput.token)
+  public async sendPhone(phoneNumber: string): Promise<SendPhoneResponse> {
+    const user = await this.userService.getByPhone(phoneNumber)
 
-    const alreadyExistUser = await this.userService.findOneByEmail(payload.email)
-
-    if (alreadyExistUser) {
-      return this.buildLoginResponse(alreadyExistUser)
-    }
-    const profile: CreateUserInput = {
-      email: payload.email,
-
-      /* Set username from client */
-      username: null,
-      photo: payload.picture,
-    }
-    const created = await this.userService.create(profile)
-    return this.buildLoginResponse(created)
-  }
-
-  public refresh(refreshToken: string): AuthResponse {
-    const decoded = this.validateRefreshToken(refreshToken)
-
-    if (!decoded) {
-      throw new Error('Invalid token')
-    }
-
-    const accessToken = this.generateAccess(decoded)
     return {
-      accessToken,
-      refreshToken,
-      user: decoded,
+      userId: user?.id,
     }
   }
 
-  private async googleVerify(token: string) {
-    const { data } = await axios.get<GooglePayload>(
-      `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`,
-    )
-
-    return data
+  public async sendCode(code: string) {
+    return this.firebaseService.auth.verifyIdToken(code)
   }
 
-  private validateRefreshToken(token: string) {
-    return this.getJwtPayload(token, this.SECRET_REFRESH)
+  public async getTwoFa(token: string) {
+    const verified = this.verifyToken(token)
   }
 
-  public getJwtPayload(token: string, secret: string) {
-    try {
-      return this.jwtService.verify<JwtPayload>(token, { secret })
-    } catch (e) {
-      console.warn(e)
-      return null
-    }
-  }
-
-  private generateAccess(user: User): string {
-    const payload = this.getPayloadForJwt(user)
-
-    return this.jwtService.sign(payload, { secret: this.SECRET_ACCESS, expiresIn: '1h' })
-  }
-
-  private generateRefresh(user: User): string {
-    const payload = {
-      ...this.getPayloadForJwt(user),
+  public async signUp(input: SignUpInput, photo?: FileUpload) {
+    const { connection, firstName, lastName, silent, token, phoneNumber } = input
+    /* Validate token, if not valid - throw error */
+    let photoUrl: string | undefined
+    if (photo) {
+      const photoName = (firstName + ' ' + lastName || '').toLowerCase().replace(/\s+/g, '-') + Date.now()
+      photoUrl = await this.mediaService.uploadPhoto(photo, `avatars/${photoName}`)
     }
 
-    return this.jwtService.sign(payload, { secret: this.SECRET_REFRESH, expiresIn: '15d' })
+    const sessionData: SessionData = {
+      ip: connection.ipAddress,
+      country: connection.countryName,
+      region: connection.cityName + ' ' + connection.regionName,
+      platform: connection.platform || 'unknown',
+      browser: connection.browser || 'unknown',
+    }
+
+    const user = await this.userService.create({
+      firstName,
+      lastName,
+      phoneNumber,
+      photoUrl,
+      sessionData,
+    })
+
+    const session = await this.sessionService.create(sessionData, user.id)
+    return { session }
   }
 
-  public buildLoginResponse(user: User): AuthResponse {
+  public async signIn(input: SignInInput) {
+    /* validate token */
+    /* if valid, then return session */
+    const user = await this.userService.getById(input.userId)
+    if (!user) {
+      throw new Error('User not found')
+    }
+    const verified = await this.firebaseService.auth.verifyIdToken(input.token)
+    if (verified.phone_number !== user.phoneNumber) {
+      console.log('Token invalid')
+      throw new Error('Token invalid')
+      return
+    }
+
+    const session = await this.sessionService.create(this.getSessionData(input.connection), input.userId)
+
+    return { session: this.encodeSession(session) }
+  }
+
+  private async verifyToken(token: string) {
+    return token
+  }
+
+  private getSessionData(connection: Connection) {
     return {
-      accessToken: this.generateAccess(user),
-      refreshToken: this.generateRefresh(user),
-      user,
+      ip: connection.ipAddress,
+      country: connection.countryName,
+      region: connection.cityName + ' ' + connection.regionName,
+      platform: connection.platform || 'unknown',
+      browser: connection.browser || 'unknown',
     }
   }
 
-  private getPayloadForJwt(user: User) {
-    return {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      createdAt: user.createdAt,
-      photo: user.photo,
-    }
+  private encodeSession(session: Session) {
+    return this.jwtService.sign({
+      id: session.id,
+      userId: session.userId,
+    })
+  }
+
+  private decodeSession(token: string) {
+    return this.jwtService.decode(token) as SessionJwtPayload
   }
 }

@@ -1,18 +1,58 @@
-type AuthResponse {
-  user: User!
-  refreshToken: String!
-  accessToken: String!
+scalar Any
+
+type TwoFactorAuth {
+  hint: String
+  email: String!
 }
 
-input AuthInput {
+input Connection {
+  ipVersion: Int!
+  ipAddress: String!
+  latitude: Float!
+  longitude: Float!
+  countryName: String!
+  countryCode: String!
+  timeZone: String!
+  zipCode: String!
+  cityName: String!
+  regionName: String!
+  browser: String
+  platform: String
+}
+
+type SendPhoneResponse {
+  userId: String
+}
+
+input SignUpInput {
+  silent: Boolean!
+  connection: Connection!
+  firstName: String!
+  phoneNumber: String!
   token: String!
+  lastName: String
 }
 
-type Mutation {
-  login(loginInput: AuthInput!): AuthResponse!
-  refresh(refreshInput: AuthInput!): AuthResponse!
+type SignUpResponse {
+  session: String!
+}
+
+input SignInInput {
+  token: String!
+  connection: Connection!
+  userId: String!
+}
+type SignInResponse {
+  session: String!
 }
 
 type Query {
-  protected: User!
+  sendCode(phone: String!): Any
+  getTwoFa(token: String!): TwoFactorAuth
+}
+
+type Mutation {
+  sendPhone(phone: String!): SendPhoneResponse!
+  signUp(input: SignUpInput!, photo: Upload): SignUpResponse!
+  signIn(input: SignInInput!): SignInResponse!
 }

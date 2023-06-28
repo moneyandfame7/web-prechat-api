@@ -11,48 +11,257 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id             String         @id @default(uuid())
-  email          String         @unique
-  username       String?        @unique
-  createdAt      DateTime       @default(now())
-  photo          String
-  // Relations
-  conversations  Conversation[]
-  conversationId String?
-  messages       Message[]
-  messageId      String?
+// CHAT MEDIA
+enum AvatarVariants {
+  GREEN
+  PINK
+  BLUE
+  YELLOW
+  PURPLE
+  ORANGE
+
+  @@map("avatar_variants")
 }
 
-model Conversation {
-  id             String    @id @default(uuid())
-  unreadMessages Int       @default(0)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  name           String?
-  description    String?
-  avatarVariant  String?
-  // Relations  
+model ChatAvatar {
+  id            String         @id @default(uuid())
+  avatarVariant AvatarVariants @map("avatar_variant")
+  images        Image[]
+  user          User?
+  chat          Chat?
+
+  @@map("chat_avatars")
+}
+
+model Image {
+  id           String     @id @default(uuid())
+  hash         String
+  url          String
+  createdAt    DateTime   @default(now()) @map("created_at")
+  // relations
+  chatAvatar   ChatAvatar @relation(fields: [chatAvatarId], references: [id])
+  chatAvatarId String     @map("chat_avatar_id")
+
+  messageContent MessageContent? @relation(fields: [messageId], references: [id])
+  messageId      String?         @unique @map("message_id")
+
+  @@map("images")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  ip        String
+  region    String
+  country   String
+  platform  String
+  browser   String
+  createdAt DateTime @default(now())
+  activeAt  DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @map("user_id")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  username    String?  @unique
+  phoneNumber String   @unique
+  firstName   String   @map("first_name")
+  lastName    String?  @map("last_name")
+  bio         String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  avatar         ChatAvatar       @relation(fields: [avatarId], references: [id])
+  avatarId       String           @unique @map("avatar_id")
+  //
+  sessions       Session[]
+  contacts       Contact[]
   messages       Message[]
-  // @TODO: зробити так, як в тг, можна помічати conservation без повідомлень, і тоді загальна кількість
-  // повідомлень буде включати тільки ті, де unreadMessages!==0
-  participants   User[]
-  lastMessage    Message?  @relation(name: "lastConversationMessage", fields: [lastMessageId], references: [id])
-  lastMessageId  String?   @unique
+  viewedMessages ViewedMessages[]
+  chats          ChatToUsers[]
+  // isAdminIn ChatToUsers[] 
+
+  settings           Settings?  @relation(name: "UserSettings")
+  blockedBy          Settings[] @relation(name: "BlockedUsers")
+  //
+  cannotSeeHisPhone  Settings[] @relation(name: "ExcludeForSeePhone")
+  cannotSeeHisPhoto  Settings[] @relation(name: "ExcludeForSeePhoto")
+  cannotSeeHisStatus Settings[] @relation(name: "ExcludeForSeeStatus")
+  cannotAddHim       Settings[] @relation(name: "ExcludeForAdding")
+
+  @@map("users")
+}
+
+enum WhoCan {
+  EVERYBODY
+  CONTACTS
+  NOBODY
+
+  @@map("who_can")
+}
+
+model Settings {
+  id     String @id @default(uuid())
+  user   User   @relation(fields: [userId], references: [id], name: "UserSettings")
+  userId String @unique @map("user_id")
+
+  whoCanSeePhone  WhoCan @default(EVERYBODY) @map("who_can_see_phone")
+  excludeForPhone User[] @relation(name: "ExcludeForSeePhone")
+
+  whoCanSeeStatus  WhoCan @default(EVERYBODY) @map("who_can_see_status")
+  excludeForStatus User[] @relation(name: "ExcludeForSeeStatus")
+
+  whoCanSeePhoto  WhoCan @default(EVERYBODY) @map("who_can_see_photo")
+  excludeForPhoto User[] @relation(name: "ExcludeForSeePhoto")
+
+  whoCanAddToGroups WhoCan @default(EVERYBODY) @map("who_can_add_to_groups")
+  excludeForAdding  User[] @relation(name: "ExcludeForAdding")
+
+  blockedUsers User[] @relation(name: "BlockedUsers")
+
+  @@map("settings")
+}
+
+// чи пропаде контакт у іншого, якщо видалю у себе. - ні, не пропаде.
+// в контакті можна змінити імʼя ( якщо видалити з контакта - буде імʼя юзера, а не контакта)
+// якщо імені немає - буде юзернейм
+model Contact {
+  id        String @id @default(uuid())
+  firstName String @map("first_name")
+  lastName  String @map("last_name")
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @unique @map("user_id")
+
+  @@map("contacts")
+}
+
+// @todo: зробити міграцію + сідер + переписати всі типи на бекенді + всі запити + всі subscriptions
+// @todo: валідація?
+// const selectMembersExcludeSelf=(members)=>{
+//   return members.filter(m=>m.id!==currentUser.id)
+// }
+// const selectChatId=(chat)=>{
+// switch(chat.type){
+//   case ChatType.PrivateChannel:
+//   return selectMembersExcludeSelf(chat.members)[0].id
+//   default:
+//   return chat.id
+// }
+// }
+
+model Chat {
+  id          String        @id @default(uuid())
+  title       String
+  description String?
+  isPrivate   Boolean?      @map("is_private")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  members     ChatToUsers[]
+  // admins ChatToUsers[] @relation(name:"ChatAdmins")
+  type        ChatType
+  avatar      ChatAvatar    @relation(fields: [avatarId], references: [id])
+  avatarId    String        @unique @map("avatar_id")
+
+  messages      Message[]    @relation(name: "ChatMessages")
+  lastMessage   Message?     @relation(name: "LastChatMessage", fields: [lastMessageId], references: [id])
+  lastMessageId String?      @unique @map("last_message_id")
+  permissions   Permissions?
+
+  @@map("chats")
+}
+
+model ChatToUsers {
+  id       String  @id @default(uuid())
+  isMuted  Boolean @default(false) @map("is_muted")
+  isUnread Boolean @default(true) @map("is_unread")
+  isPinned Boolean @default(false) @map("is_pinned")
+
+  isAdmin   Boolean @default(false) @map("is_admin")
+  isCreator Boolean @default(false) @map("is_creator")
+
+  unreadCount Int    @default(0)
+  user        User   @relation(fields: [userId], references: [id])
+  userId      String @unique @map("user_id")
+  chat        Chat   @relation(fields: [chatId], references: [id])
+  chatId      String @unique @map("chat_id")
+
+  @@map("chat_to_users")
+}
+
+model Permissions {
+  id                   String  @id @default(uuid())
+  canAdd               Boolean @default(true) @map("can_add")
+  canChangeInfo        Boolean @default(true) @map("can_change_info")
+  canSend              Boolean @default(true) @map("can_send")
+  canSendMedia         Boolean @default(true) @map("can_send_media")
+  historyForNewMembers Boolean @default(false) @map("history_for_new_members")
+
+  chat   Chat?   @relation(fields: [chatId], references: [id])
+  chatId String? @unique @map("chat_id")
+
+  @@map("permissions")
+}
+
+enum ChatType {
+  Group
+  Channel
+  Private
+
+  @@map("chat_types")
+}
+
+model ViewedMessages {
+  id String @id @default(uuid())
+
+  viewedAt DateTime @default(now())
+
+  viewedBy User   @relation(fields: [viewerId], references: [id])
+  viewerId String @unique
+
+  message   Message @relation(fields: [messageId], references: [id])
+  messageId String  @unique
 }
 
 model Message {
-  id             String        @id @default(uuid())
-  text           String
-  // if message edited, set isEdited:true 
-  // or just check updatedAt date
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  // Relations
-  isLastIn       Conversation? @relation("lastConversationMessage")
-  conversation   Conversation  @relation(fields: [conversationId], references: [id])
-  conversationId String
-  sender         User          @relation(fields: [senderId], references: [id])
-  senderId       String
-  isRead         Boolean       @default(false)
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  isEdited  Boolean  @default(false) @map("is_edited")
+  isSilent  Boolean  @default(false) @map("is_silent")
+
+  content          MessageContent @relation(fields: [messageContentId], references: [id])
+  messageContentId String         @unique @map("message_content_id")
+
+  views    Int?
+  viewedBy ViewedMessages[]
+
+  chat     Chat   @relation(name: "ChatMessages", fields: [chatId], references: [id])
+  chatId   String @unique @map("chat_id")
+  sender   User   @relation(fields: [senderId], references: [id])
+  senderId String @unique @map("sender_id")
+
+  isLastIn    Chat?           @relation(name: "LastChatMessage")
+  forwardInfo ForwardMessage?
+
+  @@map("messages")
+}
+
+model MessageContent {
+  id      String   @id @default(uuid())
+  text    String?
+  image   Image?
+  message Message?
+
+  @@map("message_contents")
+}
+
+model ForwardMessage {
+  id               String  @id @default(uuid())
+  // якщо isChannelMessage - виводити count views
+  isChannelMessage Boolean
+
+  message   Message @relation(fields: [messageId], references: [id])
+  messageId String  @unique @map("message_id")
+
+  @@map("forward_messages")
 }

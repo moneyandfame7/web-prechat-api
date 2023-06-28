@@ -1,35 +1,20 @@
 scalar DateTime
-
+scalar Upload
 type User {
   id: String!
-  email: String!
-  username: String
+  phoneNumber: String!
+  username: String!
+
   photo: String!
   createdAt: DateTime
 }
-
-type SearchedUser {
-  id: String!
-  username: String!
-  photo: String!
-}
-
 input CreateUserInput {
-  email: String!
-  username: String
-  photo: String!
-}
-
-input UpdateUserInput {
-  email: String
-  username: String
-}
-
-type Query {
-  searchUsers(username: String!): [SearchedUser]
+  username: String!
+  firstName: String!
+  lastName: String
+  phoneNumber: String!
 }
 
 type Mutation {
-  createUser(createUserInput: CreateUserInput!): User!
-  createUsername(username: String!): AuthResponse!
+  createUser(createUserInput: CreateUserInput!, avatar: Upload!): String!
 }

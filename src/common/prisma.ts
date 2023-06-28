@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client'
 
-export const participantPopulated = {
-  participants: {
+export const memberPopulated = {
+  members: {
     select: {
       id: true,
       username: true,
@@ -10,8 +10,9 @@ export const participantPopulated = {
   },
 }
 
-export const conversationPopulated = Prisma.validator<Prisma.ConversationInclude>()({
-  ...participantPopulated,
+export const chatPopulated = Prisma.validator<Prisma.ChatInclude>()({
+  ...memberPopulated,
+  members: true,
   lastMessage: {
     include: {
       sender: {

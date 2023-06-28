@@ -1,0 +1,11 @@
+type Session {
+  id: String!
+  ip: String!
+  region: String!
+  country: String!
+  platform: String!
+  browser: String!
+  createdAt: DateTime!
+  activeAt: DateTime!
+  userId: String!
+}

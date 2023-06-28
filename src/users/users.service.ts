@@ -1,78 +1,57 @@
-import { UpdateUserInput, CreateUserInput } from 'src/types/graphql'
 import { Injectable } from '@nestjs/common'
-import { JwtPayload } from 'src/authorization/auth.type'
 
-import { PrismaService } from 'src/prisma.service'
+import { FirebaseService } from 'firebase/firebase.service'
 
+import { PrismaService } from '../prisma.service'
+import { CreateUserInput } from './users.types'
+import { getRandomAvatarVariant } from 'media/media.helpers'
 @Injectable()
-export class UsersService {
-  constructor(private prismaService: PrismaService) {}
+export class UserService {
+  constructor(private prismaService: PrismaService, private firebaseService: FirebaseService) {}
 
-  public create(createUserInput: CreateUserInput) {
+  // public async test(input: CreateUserInput, avatar: FileUpload) {
+  //   const avatarName = input.username.toLowerCase().replace(/\s+/g, '-') + Date.now()
+  //   const initialName = avatar.filename
+  //   return this.firebaseService.uploadFile(avatar, initialName, `avatars/${avatarName}`)
+  //   // return this.firebaseService.uploadFile(input.avat)
+  //   // const user = await this.prismaService.user.create({
+  //   //   data: {
+  //   //     ...input,
+  //   //   },
+  //   // })
+  // }
+
+  public async create({ firstName, lastName, phoneNumber, photoUrl }: CreateUserInput) {
     return this.prismaService.user.create({
-      data: createUserInput,
-    })
-  }
-
-  public async verifyAndCreateUsername(user: JwtPayload, username: string) {
-    const alreadyExist = await this.prismaService.user.findUnique({
-      where: {
-        username,
-      },
-    })
-    if (alreadyExist) {
-      throw new Error('Username already exist.')
-    }
-    return this.update(user.id, { username })
-  }
-
-  findMany() {
-    return this.prismaService.user.findMany({
-      include: {
-        messages: true,
-      },
-    })
-  }
-
-  findOne(id: string) {
-    return this.prismaService.user.findUnique({
-      where: {
-        id,
-      },
-    })
-  }
-
-  findManyByUsername(myUsername: string, searchedUsername: string) {
-    return this.prismaService.user.findMany({
-      where: {
-        username: {
-          contains: searchedUsername,
-          not: myUsername,
-          mode: 'insensitive',
+      data: {
+        firstName,
+        lastName,
+        phoneNumber,
+        avatar: {
+          create: {
+            images: {
+              create: {
+                url: photoUrl || 'WTOOO',
+                hash: 'SOSI HUI ABOBA',
+              },
+            },
+            avatarVariant: getRandomAvatarVariant(),
+          },
         },
       },
     })
   }
 
-  async findOneByEmail(email: string) {
+  public async getByPhone(phoneNumber: string) {
     return this.prismaService.user.findUnique({
       where: {
-        email,
+        phoneNumber,
       },
     })
   }
 
-  update(id: string, updateUserInput: UpdateUserInput) {
-    return this.prismaService.user.update({
-      where: {
-        id,
-      },
-      data: updateUserInput,
-    })
-  }
-
-  delete(id: string) {
-    return this.prismaService.user.delete({
+  public async getById(id: string) {
+    return this.prismaService.user.findUnique({
       where: {
         id,
       },

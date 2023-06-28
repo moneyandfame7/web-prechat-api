@@ -8,124 +8,128 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export class AuthInput {
+export class Connection {
+    ipVersion: number;
+    ipAddress: string;
+    latitude: number;
+    longitude: number;
+    countryName: string;
+    countryCode: string;
+    timeZone: string;
+    zipCode: string;
+    cityName: string;
+    regionName: string;
+    browser?: Nullable<string>;
+    platform?: Nullable<string>;
+}
+
+export class SignUpInput {
+    silent: boolean;
+    connection: Connection;
+    firstName: string;
+    phoneNumber: string;
     token: string;
+    lastName?: Nullable<string>;
 }
 
-export class CreateConversationInput {
-    name?: Nullable<string>;
-    description?: Nullable<string>;
-    participantsIds: string[];
-}
-
-export class UpdateConversationInput {
-    id: number;
-}
-
-export class CreateMessageInput {
-    exampleField?: Nullable<number>;
-}
-
-export class UpdateMessageInput {
-    id: number;
+export class SignInInput {
+    token: string;
+    connection: Connection;
+    userId: string;
 }
 
 export class CreateUserInput {
-    email: string;
-    username?: Nullable<string>;
-    photo: string;
+    username: string;
+    firstName: string;
+    lastName?: Nullable<string>;
+    phoneNumber: string;
 }
 
-export class UpdateUserInput {
-    email?: Nullable<string>;
-    username?: Nullable<string>;
+export class Country {
+    name: string;
+    dial_code: string;
+    emoji: string;
+    code: string;
+}
+
+export class LanguageResponse {
+    countries: Country[];
+    pack?: Nullable<JSON>;
 }
 
 export abstract class IQuery {
     abstract ping(): string | Promise<string>;
 
-    abstract protected(): User | Promise<User>;
+    abstract test(): Nullable<Any> | Promise<Nullable<Any>>;
 
-    abstract conversations(): Nullable<Conversation>[] | Promise<Nullable<Conversation>[]>;
+    abstract generateApiKey(): string | Promise<string>;
 
-    abstract conversation(id: string): Nullable<Conversation> | Promise<Nullable<Conversation>>;
+    abstract language(language: string): LanguageResponse | Promise<LanguageResponse>;
 
-    abstract messages(): Nullable<Message>[] | Promise<Nullable<Message>[]>;
+    abstract languageString(language: string, string: string): string | Promise<string>;
 
-    abstract message(id: number): Nullable<Message> | Promise<Nullable<Message>>;
+    abstract sendCode(phone: string): Nullable<Any> | Promise<Nullable<Any>>;
 
-    abstract searchUsers(username: string): Nullable<Nullable<SearchedUser>[]> | Promise<Nullable<Nullable<SearchedUser>[]>>;
-}
+    abstract getTwoFa(token: string): Nullable<TwoFactorAuth> | Promise<Nullable<TwoFactorAuth>>;
 
-export class AuthResponse {
-    user: User;
-    refreshToken: string;
-    accessToken: string;
-}
+    abstract translateHello(): Nullable<Any> | Promise<Nullable<Any>>;
 
-export abstract class IMutation {
-    abstract login(loginInput: AuthInput): AuthResponse | Promise<AuthResponse>;
-
-    abstract refresh(refreshInput: AuthInput): AuthResponse | Promise<AuthResponse>;
-
-    abstract createConversation(createConversationInput?: Nullable<CreateConversationInput>): Nullable<CreateConversationResponse> | Promise<Nullable<CreateConversationResponse>>;
-
-    abstract createMessage(createMessageInput: CreateMessageInput): Message | Promise<Message>;
-
-    abstract updateMessage(id: string, updateMessageInput: UpdateMessageInput): Message | Promise<Message>;
-
-    abstract removeMessage(id: number): Nullable<Message> | Promise<Nullable<Message>>;
-
-    abstract createUser(createUserInput: CreateUserInput): User | Promise<User>;
-
-    abstract createUsername(username: string): AuthResponse | Promise<AuthResponse>;
-}
-
-export class Conversation {
-    id: string;
-    name?: Nullable<string>;
-    description?: Nullable<string>;
-    avatarVariant?: Nullable<string>;
-    unreadMessages: number;
-    messages?: Nullable<Nullable<Message>[]>;
-    participants: User[];
-    lastMessage?: Nullable<Message>;
-    createdAt: DateTime;
-    updatedAt: DateTime;
-}
-
-export class CreateConversationResponse {
-    conversationId: string;
+    abstract translateCountries(lng: string, outputFile: string): boolean | Promise<boolean>;
 }
 
 export abstract class ISubscription {
-    abstract conversationCreated(): Nullable<Conversation> | Promise<Nullable<Conversation>>;
+    abstract testS(): Nullable<Any> | Promise<Nullable<Any>>;
 }
 
-export class Message {
+export class TwoFactorAuth {
+    hint?: Nullable<string>;
+    email: string;
+}
+
+export class SendPhoneResponse {
+    userId?: Nullable<string>;
+}
+
+export class SignUpResponse {
+    session: string;
+}
+
+export class SignInResponse {
+    session: string;
+}
+
+export abstract class IMutation {
+    abstract sendPhone(phone: string): SendPhoneResponse | Promise<SendPhoneResponse>;
+
+    abstract signUp(input: SignUpInput, photo?: Nullable<Upload>): SignUpResponse | Promise<SignUpResponse>;
+
+    abstract signIn(input: SignInInput): SignInResponse | Promise<SignInResponse>;
+
+    abstract createUser(createUserInput: CreateUserInput, avatar: Upload): string | Promise<string>;
+}
+
+export class Session {
     id: string;
-    text: string;
+    ip: string;
+    region: string;
+    country: string;
+    platform: string;
+    browser: string;
     createdAt: DateTime;
-    updatedAt: DateTime;
-    conversation: Conversation;
-    isLastIn?: Nullable<Conversation>;
-    sender: User;
-    isRead?: Nullable<boolean>;
+    activeAt: DateTime;
+    userId: string;
 }
 
 export class User {
     id: string;
-    email: string;
-    username?: Nullable<string>;
+    phoneNumber: string;
+    username: string;
     photo: string;
     createdAt?: Nullable<DateTime>;
 }
 
-export class SearchedUser {
-    id: string;
-    username: string;
-    photo: string;
-}
-
+export type Any = any;
+export type JSON = any;
 export type DateTime = any;
+export type Upload = any;
 type Nullable<T> = T | null;
