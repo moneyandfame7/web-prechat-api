@@ -1,3 +1,24 @@
+scalar Any
+scalar JSON
+type Country {
+  name: String!
+  dial_code: String!
+  emoji: String!
+  code: String!
+}
+
+type LanguageResponse {
+  countries: [Country!]!
+  pack: JSON
+}
 type Query {
   ping: String!
+  test: Any
+  generateApiKey: String!
+  language(language: String!): LanguageResponse!
+  languageString(language: String!, string: String!): String!
+}
+
+type Subscription {
+  testS: Any
 }

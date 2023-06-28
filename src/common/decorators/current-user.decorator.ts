@@ -1,10 +1,7 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { GqlExecutionContext } from '@nestjs/graphql';
-import { User } from '@prisma/client';
-import { Ctx } from 'src/types/ctx';
+import { createParamDecorator, ExecutionContext } from '@nestjs/common'
+import { GqlExecutionContext } from '@nestjs/graphql'
 
-export const CurrentUser = createParamDecorator((data: keyof User, ctx: ExecutionContext) => {
-  const user = GqlExecutionContext.create(ctx).getContext<Ctx>().req.user;
-
-  return data ? user[data] : user;
-});
+export const GqlContext = createParamDecorator((data, context: ExecutionContext) => {
+  const ctx = GqlExecutionContext.create(context).getContext()
+  return ctx
+})

@@ -1,23 +1,25 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { PassportModule } from '@nestjs/passport';
-import { AuthResolver } from './auth.resolver';
-import { JwtModule } from '@nestjs/jwt';
-import { JwtStrategy } from 'src/common/strategy/jwt.strategy';
-import { AuthService } from './auth.service';
-import { UsersModule } from 'src/users/users.module';
+import { MediaModule } from './../media/media.module'
+import { Module } from '@nestjs/common'
+
+import { UserModule } from 'users/users.module'
+import { FirebaseModule } from 'firebase/firebase.module'
+import { SessionsModule } from 'sessions/sessions.module'
+
+import { AuthService } from './auth.service'
+import { AuthResolver } from './auth.resolver'
+import { JwtModule } from '@nestjs/jwt'
 
 @Module({
   imports: [
-    PassportModule,
+    MediaModule,
+    SessionsModule,
+    UserModule,
+    FirebaseModule,
     JwtModule.register({
-      /* TODO: swtich to Config */
-      /* подивитись, як імпортувати/експортувати модулі/сервіси в nestjs */
-      secret: process.env.AT_SECRET,
+      secret: 'SECRET',
     }),
-    forwardRef(() => UsersModule),
   ],
-
-  providers: [AuthService, JwtStrategy, AuthResolver],
+  providers: [AuthService, AuthResolver],
   exports: [AuthService],
 })
 export class AuthModule {}

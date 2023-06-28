@@ -1,29 +1,38 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql'
-import type { AuthResponse, AuthInput } from 'src/types/graphql'
+import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql'
+import type { Request } from 'express'
+
+import type { SendPhoneResponse, SignInInput } from 'types/graphql'
 
 import { AuthService } from './auth.service'
-import { UseGuards } from '@nestjs/common'
-import { JwtAuthGuard } from 'src/common/guards/jwt.guard'
-import { CurrentUser } from 'src/common/decorators/current-user.decorator'
-import { User } from '@prisma/client'
+import { SignUpInput } from './auth.type'
+import { FileUpload } from 'graphql-upload'
 
 @Resolver()
 export class AuthResolver {
   constructor(private readonly authService: AuthService) {}
-
-  @Mutation('login')
-  async login(@Args('loginInput') loginInput: AuthInput): Promise<AuthResponse> {
-    return this.authService.login(loginInput)
+  @Query('sendCode')
+  async sendCode(@Args('phone') phone: string) {
+    return this.authService.sendCode(phone)
   }
 
-  @Mutation('refresh')
-  async refresh(@Args('refreshInput') refreshInput: AuthInput): Promise<AuthResponse> {
-    return this.authService.refresh(refreshInput.token)
+  @Mutation('sendPhone')
+  async sendPhone(@Args('phone') phone: string): Promise<SendPhoneResponse> {
+    return this.authService.sendPhone(phone)
   }
 
-  @Query('protected')
-  @UseGuards(JwtAuthGuard)
-  async protected(@CurrentUser() user: User) {
-    return user
+  @Mutation('signUp')
+  public async signUp(@Args('input') input: SignUpInput, @Args('photo') photo?: FileUpload) {
+    return this.authService.signUp(input, photo)
+  }
+
+  @Mutation('signIn')
+  public async signIn(@Args('input') input: SignInInput, @Context('req') req: Request) {
+    console.log(req.headers)
+    return this.authService.signIn(input)
+  }
+
+  @Query('getTwoFa')
+  async getTwoFa(@Args('token') token: string) {
+    return this.authService.getTwoFa(token)
   }
 }
