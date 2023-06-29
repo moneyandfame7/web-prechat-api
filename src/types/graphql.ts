@@ -68,8 +68,6 @@ export abstract class IQuery {
 
     abstract languageString(language: string, string: string): string | Promise<string>;
 
-    abstract sendCode(phone: string): Nullable<Any> | Promise<Nullable<Any>>;
-
     abstract getTwoFa(token: string): Nullable<TwoFactorAuth> | Promise<Nullable<TwoFactorAuth>>;
 
     abstract translateHello(): Nullable<Any> | Promise<Nullable<Any>>;

@@ -73,6 +73,7 @@ model User {
 
   avatar         ChatAvatar       @relation(fields: [avatarId], references: [id])
   avatarId       String           @unique @map("avatar_id")
+  twoFaAuth      TwoFaAuth?
   //
   sessions       Session[]
   contacts       Contact[]
@@ -90,6 +91,18 @@ model User {
   cannotAddHim       Settings[] @relation(name: "ExcludeForAdding")
 
   @@map("users")
+}
+
+model TwoFaAuth {
+  id       String  @id @default(uuid())
+  password String
+  email    String  @unique
+  hint     String?
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @unique
+
+  @@map("two_fa_auth")
 }
 
 enum WhoCan {

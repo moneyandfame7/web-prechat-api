@@ -47,7 +47,6 @@ type SignInResponse {
 }
 
 type Query {
-  sendCode(phone: String!): Any
   getTwoFa(token: String!): TwoFactorAuth
 }
 

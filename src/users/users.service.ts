@@ -50,6 +50,22 @@ export class UserService {
     })
   }
 
+  public async getTwoFaByPhone(phoneNumber: string) {
+    return this.prismaService.user.findUnique({
+      where: {
+        phoneNumber,
+      },
+      select: {
+        twoFaAuth: {
+          select: {
+            email: true,
+            hint: true,
+          },
+        },
+      },
+    })
+  }
+
   public async getById(id: string) {
     return this.prismaService.user.findUnique({
       where: {

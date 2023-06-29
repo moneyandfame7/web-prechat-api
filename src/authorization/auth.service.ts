@@ -11,8 +11,8 @@ import { MediaService } from 'media/media.service'
 import { SessionService } from 'sessions/sessions.service'
 import type { SessionData } from 'sessions/sessions.type'
 
-import type { SessionJwtPayload, SignUpInput } from './auth.type'
-import { Session } from '@prisma/client'
+import type { AuthCheckTwoFa, SessionJwtPayload, SignUpInput } from './auth.type'
+import { Session, TwoFaAuth } from '@prisma/client'
 import { GraphQLError } from 'graphql'
 @Injectable()
 export class AuthService {
@@ -32,12 +32,17 @@ export class AuthService {
     }
   }
 
-  public async sendCode(code: string) {
-    return this.firebaseService.auth.verifyIdToken(code)
-  }
+  public async getTwoFa(token: string): Promise<AuthCheckTwoFa | null> {
+    const verified = await this.firebaseService.auth.verifyIdToken(token)
+    if (!verified.phone_number) {
+      throw new Error('Verify firebase token error')
+    }
+    const user = await this.userService.getTwoFaByPhone(verified.phone_number)
+    if (!user) {
+      return null
+    }
 
-  public async getTwoFa(token: string) {
-    const verified = this.verifyToken(token)
+    return user.twoFaAuth
   }
 
   public async signUp(input: SignUpInput, photo?: FileUpload) {

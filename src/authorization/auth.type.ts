@@ -13,3 +13,8 @@ export interface SessionJwtPayload {
   id: string
   userId: string
 }
+
+export interface AuthCheckTwoFa {
+  email: string
+  hint: string | null
+}

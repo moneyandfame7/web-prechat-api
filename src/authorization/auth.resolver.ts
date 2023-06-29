@@ -10,11 +10,9 @@ import { FileUpload } from 'graphql-upload'
 @Resolver()
 export class AuthResolver {
   constructor(private readonly authService: AuthService) {}
-  @Query('sendCode')
-  async sendCode(@Args('phone') phone: string) {
-    return this.authService.sendCode(phone)
-  }
-
+  /* Validate phone number, and return user id if exist
+   *
+   */
   @Mutation('sendPhone')
   async sendPhone(@Args('phone') phone: string): Promise<SendPhoneResponse> {
     return this.authService.sendPhone(phone)
