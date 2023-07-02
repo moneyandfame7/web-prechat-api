@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { FileUpload } from 'graphql-upload'
+import { Session } from '@prisma/client'
 
 import type { Connection, SendPhoneResponse, SignInInput } from 'types/graphql'
 
@@ -12,8 +13,8 @@ import { SessionService } from 'sessions/sessions.service'
 import type { SessionData } from 'sessions/sessions.type'
 
 import type { AuthCheckTwoFa, SessionJwtPayload, SignUpInput } from './auth.type'
-import { Session, TwoFaAuth } from '@prisma/client'
-import { GraphQLError } from 'graphql'
+import { ApiError, ApiErrorFormatted } from 'common/errors'
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -75,19 +76,14 @@ export class AuthService {
   }
 
   public async signIn(input: SignInInput) {
-    /* validate token */
-    /* if valid, then return session */
     const user = await this.userService.getById(input.userId)
     if (!user) {
       throw new Error('User not found')
     }
-    const verified = await this.firebaseService.auth.verifyIdToken(input.token)
+    const verified = await this.validateToken(input.token)
     if (verified.phone_number !== user.phoneNumber) {
-      console.log('Token invalid')
       throw new Error('Token invalid')
-      return
     }
-
     const session = await this.sessionService.create(this.getSessionData(input.connection), input.userId)
 
     return { session: this.encodeSession(session) }
@@ -112,6 +108,14 @@ export class AuthService {
       id: session.id,
       userId: session.userId,
     })
+  }
+
+  private async validateToken(token: string) {
+    try {
+      return await this.firebaseService.auth.verifyIdToken(token)
+    } catch (e) {
+      throw new ApiError('AUTH_VERIFY_CODE')
+    }
   }
 
   private decodeSession(token: string) {

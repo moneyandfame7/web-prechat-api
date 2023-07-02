@@ -1,0 +1,3 @@
+type Mutation {
+  generateApiToken(phoneNumber: String!): String!
+}

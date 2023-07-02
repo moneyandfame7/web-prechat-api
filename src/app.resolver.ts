@@ -1,15 +1,16 @@
-import { Args, Context, GqlExecutionContext, GraphQLExecutionContext, Query, Resolver } from '@nestjs/graphql'
-
-import type { LanguageStringInput, SupportedLanguage } from 'types/other'
-import { i18n } from 'common/i18n'
-import { GqlContext } from 'common/decorators/current-user.decorator'
-import { ExecutionContext } from '@nestjs/common'
+import { Args, Context, Query, Resolver } from '@nestjs/graphql'
 import { Request } from 'express'
+import type { LanguageStringInput, SupportedLanguage } from 'types/other'
+
+import { i18n } from 'common/i18n'
+import { AppService } from 'app.service'
+import { ConfigService } from '@nestjs/config'
 /**
  * @todo винести i18n в translation service
  */
 @Resolver()
 export class AppResolver {
+  public constructor(private readonly appService: AppService, private readonly configService: ConfigService) {}
   @Query('ping')
   public pingPong() {
     return 'pong'

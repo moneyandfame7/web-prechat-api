@@ -21,9 +21,15 @@ import { FirebaseModule } from './firebase/firebase.module'
 
 import { TranslationModule } from './translation/translation.module'
 import { MediaModule } from './media/media.module'
+import { ApiErrorFormatted, ErrorCode } from 'common/errors'
+import { PrismaService } from 'prisma.service'
+import { ApiModule } from './api/api.module'
+import { APP_GUARD } from '@nestjs/core'
+import { ApiGuard } from 'common/api.guard'
 
 @Module({
   imports: [
+    ApiModule,
     AuthModule,
     PubSubModule,
     ConfigModule.forRoot({
@@ -77,7 +83,10 @@ import { MediaModule } from './media/media.module'
         },
         // context: ({ req, connection }) => (connection ? { req: connection.context } : { req }),
         formatError: (e) => {
-          console.log({ e })
+          const formatted = new ApiErrorFormatted(e.message as ErrorCode)
+          if (formatted.message) {
+            return { code: formatted.code, message: formatted.message }
+          }
           return e
         },
       }),
@@ -88,6 +97,14 @@ import { MediaModule } from './media/media.module'
     MediaModule,
   ],
   controllers: [AppController],
-  providers: [AppService, AppResolver],
+  providers: [
+    AppService,
+    AppResolver,
+    PrismaService,
+    {
+      provide: APP_GUARD,
+      useClass: ApiGuard,
+    },
+  ],
 })
 export class AppModule {}

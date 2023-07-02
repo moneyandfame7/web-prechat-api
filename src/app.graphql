@@ -10,11 +10,12 @@ type Country {
 type LanguageResponse {
   countries: [Country!]!
   pack: JSON
+  errors: JSON
 }
+
 type Query {
   ping: String!
   test: Any
-  generateApiKey: String!
   language(language: String!): LanguageResponse!
   languageString(language: String!, string: String!): String!
 }

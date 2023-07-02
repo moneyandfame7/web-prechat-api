@@ -63,14 +63,14 @@ model Session {
 }
 
 model User {
-  id          String   @id @default(uuid())
-  username    String?  @unique
-  phoneNumber String   @unique
-  firstName   String   @map("first_name")
-  lastName    String?  @map("last_name")
-  bio         String?
-  createdAt   DateTime @default(now()) @map("created_at")
-
+  id             String           @id @default(uuid())
+  username       String?          @unique
+  phoneNumber    String           @unique
+  firstName      String           @map("first_name")
+  lastName       String?          @map("last_name")
+  bio            String?
+  createdAt      DateTime         @default(now()) @map("created_at")
+  apiToken       ApiToken?
   avatar         ChatAvatar       @relation(fields: [avatarId], references: [id])
   avatarId       String           @unique @map("avatar_id")
   twoFaAuth      TwoFaAuth?
@@ -103,6 +103,13 @@ model TwoFaAuth {
   userId String @unique
 
   @@map("two_fa_auth")
+}
+
+model ApiToken {
+  id     String @id @default(uuid())
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @unique
+  hash   String
 }
 
 enum WhoCan {

@@ -17,6 +17,7 @@ import { JwtModule } from '@nestjs/jwt'
     FirebaseModule,
     JwtModule.register({
       secret: 'SECRET',
+      global: true,
     }),
   ],
   providers: [AuthService, AuthResolver],

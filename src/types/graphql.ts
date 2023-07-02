@@ -45,6 +45,18 @@ export class CreateUserInput {
     phoneNumber: string;
 }
 
+export abstract class IMutation {
+    abstract generateApiToken(phoneNumber: string): string | Promise<string>;
+
+    abstract sendPhone(phone: string): SendPhoneResponse | Promise<SendPhoneResponse>;
+
+    abstract signUp(input: SignUpInput, photo?: Nullable<Upload>): SignUpResponse | Promise<SignUpResponse>;
+
+    abstract signIn(input: SignInInput): SignInResponse | Promise<SignInResponse>;
+
+    abstract createUser(createUserInput: CreateUserInput, avatar: Upload): string | Promise<string>;
+}
+
 export class Country {
     name: string;
     dial_code: string;
@@ -55,14 +67,13 @@ export class Country {
 export class LanguageResponse {
     countries: Country[];
     pack?: Nullable<JSON>;
+    errors?: Nullable<JSON>;
 }
 
 export abstract class IQuery {
     abstract ping(): string | Promise<string>;
 
     abstract test(): Nullable<Any> | Promise<Nullable<Any>>;
-
-    abstract generateApiKey(): string | Promise<string>;
 
     abstract language(language: string): LanguageResponse | Promise<LanguageResponse>;
 
@@ -94,16 +105,6 @@ export class SignUpResponse {
 
 export class SignInResponse {
     session: string;
-}
-
-export abstract class IMutation {
-    abstract sendPhone(phone: string): SendPhoneResponse | Promise<SendPhoneResponse>;
-
-    abstract signUp(input: SignUpInput, photo?: Nullable<Upload>): SignUpResponse | Promise<SignUpResponse>;
-
-    abstract signIn(input: SignInInput): SignInResponse | Promise<SignInResponse>;
-
-    abstract createUser(createUserInput: CreateUserInput, avatar: Upload): string | Promise<string>;
 }
 
 export class Session {

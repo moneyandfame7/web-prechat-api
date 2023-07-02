@@ -66,6 +66,18 @@ export class UserService {
     })
   }
 
+  public async getApiTokenByPhone(phoneNumber: string) {
+    return this.prismaService.user.findUnique({
+      where: {
+        phoneNumber,
+      },
+      select: {
+        apiToken: true,
+        id: true,
+      },
+    })
+  }
+
   public async getById(id: string) {
     return this.prismaService.user.findUnique({
       where: {

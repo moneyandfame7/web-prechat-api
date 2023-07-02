@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common'
 import * as firebase from 'firebase-admin'
 import { App } from 'firebase-admin/app'
 import { FileUpload } from './firebase.types'
-import { getFirebaseConfig } from 'common/constants/firebase'
 import { v4 as uuid } from 'uuid'
 import * as mime from 'mime-types'
 import type { Auth } from 'firebase-admin/auth'
@@ -12,6 +11,7 @@ export class FirebaseService {
   public readonly app: App
   public readonly auth: Auth
   constructor(private configService: ConfigService) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const config = JSON.parse(this.configService.get('FIREBASE_CREDENTIALS')!)
     this.app = firebase.initializeApp({
       credential: firebase.credential.cert(config as firebase.ServiceAccount),
