@@ -19,7 +19,9 @@ type Query {
   language(language: String!): LanguageResponse!
   languageString(language: String!, string: String!): String!
 }
-
+type Mutation {
+  testSubscription(name: String!): String!
+}
 type Subscription {
-  testS: Any
+  testSubscribed: Any
 }

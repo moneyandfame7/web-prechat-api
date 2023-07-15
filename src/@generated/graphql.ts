@@ -50,6 +50,8 @@ export class CreateUserInput {
 export abstract class IMutation {
     abstract generateApiToken(phoneNumber: string): string | Promise<string>;
 
+    abstract testSubscription(name: string): string | Promise<string>;
+
     abstract sendPhone(phone: string): SendPhoneResponse | Promise<SendPhoneResponse>;
 
     abstract signUp(input: SignUpInput, photo?: Nullable<Upload>): SignUpResponse | Promise<SignUpResponse>;
@@ -57,6 +59,39 @@ export abstract class IMutation {
     abstract signIn(input: SignInInput): SignInResponse | Promise<SignInResponse>;
 
     abstract createUser(createUserInput: CreateUserInput, avatar: Upload): string | Promise<string>;
+}
+
+export class Country {
+    name: string;
+    dial_code: string;
+    emoji: string;
+    code: string;
+}
+
+export class LanguageResponse {
+    countries: Country[];
+    pack?: Nullable<JSON>;
+    errors?: Nullable<JSON>;
+}
+
+export abstract class IQuery {
+    abstract ping(): string | Promise<string>;
+
+    abstract test(): Nullable<Any> | Promise<Nullable<Any>>;
+
+    abstract language(language: string): LanguageResponse | Promise<LanguageResponse>;
+
+    abstract languageString(language: string, string: string): string | Promise<string>;
+
+    abstract getTwoFa(token: string): Nullable<TwoFactorAuth> | Promise<Nullable<TwoFactorAuth>>;
+
+    abstract translateHello(): Nullable<Any> | Promise<Nullable<Any>>;
+
+    abstract translateCountries(lng: string, outputFile: string): boolean | Promise<boolean>;
+}
+
+export abstract class ISubscription {
+    abstract testSubscribed(): Nullable<Any> | Promise<Nullable<Any>>;
 }
 
 export class TwoFactorAuth {
@@ -74,22 +109,6 @@ export class SignUpResponse {
 
 export class SignInResponse {
     session: string;
-}
-
-export abstract class IQuery {
-    abstract getTwoFa(token: string): Nullable<TwoFactorAuth> | Promise<Nullable<TwoFactorAuth>>;
-
-    abstract translateHello(): Nullable<Any> | Promise<Nullable<Any>>;
-
-    abstract translateCountries(lng: string, outputFile: string): boolean | Promise<boolean>;
-
-    abstract ping(): string | Promise<string>;
-
-    abstract test(): Nullable<Any> | Promise<Nullable<Any>>;
-
-    abstract language(language: string): LanguageResponse | Promise<LanguageResponse>;
-
-    abstract languageString(language: string, string: string): string | Promise<string>;
 }
 
 export class Session {
@@ -112,25 +131,8 @@ export class User {
     createdAt?: Nullable<DateTime>;
 }
 
-export class Country {
-    name: string;
-    dial_code: string;
-    emoji: string;
-    code: string;
-}
-
-export class LanguageResponse {
-    countries: Country[];
-    pack?: Nullable<JSON>;
-    errors?: Nullable<JSON>;
-}
-
-export abstract class ISubscription {
-    abstract testS(): Nullable<Any> | Promise<Nullable<Any>>;
-}
-
 export type Any = any;
+export type JSON = any;
 export type DateTime = any;
 export type Upload = any;
-export type JSON = any;
 type Nullable<T> = T | null;

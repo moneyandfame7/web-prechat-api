@@ -1,0 +1,1 @@
+export { PubSubModule } from './Module'
