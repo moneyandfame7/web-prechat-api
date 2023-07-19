@@ -72,7 +72,7 @@ export class AuthService {
     })
 
     const session = await this.sessionService.create(sessionData, user.id)
-    return { session }
+    return { session: this.encodeSession(session) }
   }
 
   public async signIn(input: SignInInput) {

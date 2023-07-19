@@ -19,7 +19,6 @@ export class ApiGuard implements CanActivate {
   private validateApiToken(req: Request) {
     const token = req.headers['prechat-api-token'] as string | undefined
 
-    console.log(req.socket.remoteAddress)
     if (!token) {
       throw new ApiError('API_TOKEN_NOT_PROVIDED')
     }

@@ -1,11 +1,14 @@
 import { Injectable } from '@nestjs/common'
-import * as firebase from 'firebase-admin'
-import type { App } from 'firebase-admin/app'
-import type { FileUpload } from './Types'
+import { initializeApp, cert, type App, type ServiceAccount } from 'firebase-admin/app'
+import { getStorage } from 'firebase-admin/storage'
+import { type Auth, getAuth } from 'firebase-admin/auth'
+
 import { v4 as uuid } from 'uuid'
 import * as mime from 'mime-types'
-import type { Auth } from 'firebase-admin/auth'
 import { ConfigService } from '@nestjs/config'
+
+import type { FileUpload } from './Types'
+
 @Injectable()
 export class FirebaseService {
   public readonly app: App
@@ -13,18 +16,18 @@ export class FirebaseService {
   constructor(private configService: ConfigService) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const config = JSON.parse(this.configService.get('FIREBASE_CREDENTIALS')!)
-    this.app = firebase.initializeApp({
-      credential: firebase.credential.cert(config as firebase.ServiceAccount),
+    this.app = initializeApp({
+      credential: cert(config as ServiceAccount),
       databaseURL: 'https://nestjs-chat-a42f4-default-rtdb.europe-west1.firebasedatabase.app',
       storageBucket: 'gs://nestjs-chat-a42f4.appspot.com/',
     })
-    this.auth = firebase.auth(this.app)
+    this.auth = getAuth(this.app)
   }
 
   public async uploadFile(file: FileUpload, initialName: string, fileName: string) {
     console.log({ file })
     const stream = file.createReadStream()
-    const storageRef = firebase.storage().bucket().file(fileName)
+    const storageRef = getStorage(this.app).bucket().file(fileName)
     console.log({ storageRef })
     const firebaseStorageUrl = `https://firebasestorage.googleapis.com/v0/b/nestjs-chat-a42f4.appspot.com/o/${encodeURIComponent(
       fileName,
