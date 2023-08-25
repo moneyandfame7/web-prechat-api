@@ -1,0 +1,21 @@
+input SearchGlobalInput {
+  query: String!
+  limit: Int
+}
+
+type SearchGlobalResponse {
+  knownChats: Any
+  knownUsers: [User!]
+  globalChats: Any
+  globalUsers: [User!]
+}
+
+type SearchUsersResponse {
+  globalUsers: [User!]
+  knownUsers: [User!]
+}
+
+type Query {
+  searchGlobal(input: SearchGlobalInput!): SearchGlobalResponse!
+  searchUsers(input: SearchGlobalInput!): SearchUsersResponse!
+}

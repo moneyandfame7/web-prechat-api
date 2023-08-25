@@ -1,0 +1,22 @@
+input AddContactInput {
+  firstName: String!
+  lastName: String
+  userId: String
+  phoneNumber: String
+  addPrivacyPhoneException: Boolean
+}
+
+input UpdateContactInput {
+  firstName: String!
+  lastName: String
+  userId: String!
+}
+
+type Query {
+  getContacts: [User!]
+}
+type Mutation {
+  addContact(input: AddContactInput): User!
+  updateContact(input: UpdateContactInput!): Any
+  deleteContact(userId: String!): Any
+}

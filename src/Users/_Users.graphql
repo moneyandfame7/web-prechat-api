@@ -2,19 +2,49 @@ scalar DateTime
 scalar Upload
 type User {
   id: String!
+  firstName: String!
   phoneNumber: String!
-  username: String!
-
-  photo: String!
-  createdAt: DateTime
+  lastName: String
+  username: String
+  isContact: Boolean!
+  isSelf: Boolean!
+  isMutualContact: Boolean!
+  fullInfo: UserFull!
+}
+enum UserAvatarVariants {
+  GREEN
+  PINK
+  BLUE
+  YELLOW
+  PURPLE
+  ORANGE
+}
+type UserAvatar {
+  avatarVariant: UserAvatarVariants!
+  hash: String
+  url: String
+}
+type UserFull {
+  avatar: UserAvatar!
+  bio: String
 }
 input CreateUserInput {
-  username: String!
   firstName: String!
   lastName: String
   phoneNumber: String!
+  photoUrl: String
+  sessionData: SessionData
 }
 
-type Mutation {
-  createUser(createUserInput: CreateUserInput!, avatar: Upload!): String!
+input GetUsersInput {
+  ids: [String!]!
+}
+
+input UserInput {
+  userId: String!
+}
+
+type Query {
+  getUsers(input: GetUsersInput!): [User!]!
+  getUserFull(input: UserInput!): UserFull!
 }

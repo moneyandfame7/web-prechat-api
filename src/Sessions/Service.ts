@@ -1,15 +1,14 @@
 import { Injectable } from '@nestjs/common'
-import { PrismaService } from 'prisma.service'
+import type { SessionData } from '@generated/graphql'
 
-import { SessionData } from './Types'
+import { PrismaService } from 'common/prisma.service'
 
 @Injectable()
 export class SessionService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public create(input: SessionData, userId: string) {
-    console.log(userId)
-    return this.prismaService.session.create({
+    return this.prisma.session.create({
       data: {
         ...input,
         userId,
@@ -17,9 +16,32 @@ export class SessionService {
     })
   }
 
-  public findByUser() {}
+  public findByUser(requesterId: string) {
+    return this.prisma.session.findMany({
+      where: {
+        userId: requesterId,
+      },
+    })
+  }
 
-  public deleteById() {}
+  public getById(id: string) {
+    return this.prisma.session.findUnique({
+      where: {
+        id,
+      },
+    })
+  }
 
-  public deleteAllByUser() {}
+  public async deleteById(id: string) {
+    try {
+      await this.prisma.session.delete({
+        where: {
+          id,
+        },
+      })
+      return true
+    } catch (e) {
+      return false
+    }
+  }
 }

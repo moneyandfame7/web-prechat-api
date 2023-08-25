@@ -9,3 +9,11 @@ type Session {
   activeAt: DateTime!
   userId: String!
 }
+
+input SessionData {
+  ip: String!
+  region: String!
+  country: String!
+  platform: String!
+  browser: String!
+}

@@ -8,17 +8,17 @@ class Seeder {
     await prisma.user.deleteMany()
   }
 
-  public async deleteChats() {
-    await prisma.chat.deleteMany()
-  }
+  // public async deleteChats() {
+  //   await prisma.chat.deleteMany()
+  // }
 }
 
 const seed = new Seeder()
 async function main() {
   await seed.deleteUsers()
   console.log('Users deleted successfully ✅')
-  await seed.deleteChats()
-  console.log('Conversations deleted successfully ✅')
+  // await seed.deleteChats()
+  // console.log('Conversations deleted successfully ✅')
 }
 
 main()

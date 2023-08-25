@@ -1,27 +1,7 @@
 scalar Any
 scalar JSON
-type Country {
-  name: String!
-  dial_code: String!
-  emoji: String!
-  code: String!
-}
-
-type LanguageResponse {
-  countries: [Country!]!
-  pack: JSON
-  errors: JSON
-}
-
+scalar UUID
+scalar DateTime
 type Query {
-  ping: String!
-  test: Any
-  language(language: String!): LanguageResponse!
-  languageString(language: String!, string: String!): String!
-}
-type Mutation {
-  testSubscription(name: String!): String!
-}
-type Subscription {
-  testSubscribed: Any
+  ping: Any
 }

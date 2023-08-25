@@ -1,0 +1,13 @@
+type AuthTwoFa {
+  hint: String
+  email: String
+}
+
+type Query {
+  # 2FA Login.
+  getPassword: AuthTwoFa
+}
+
+type Mutation {
+  checkPassword(password: String!): Any
+}

@@ -1,9 +1,9 @@
-import { Module } from '@nestjs/common'
+import { Module } from '@nestjs/common/decorators/modules/module.decorator'
 import { GraphQLModule } from '@nestjs/graphql'
-import { APP_GUARD } from '@nestjs/core'
+import type { Provider } from '@nestjs/common'
 import { ApolloDriver, type ApolloDriverConfig } from '@nestjs/apollo'
 import { ConfigModule } from '@nestjs/config'
-import { DateTimeResolver, GraphQLJSON } from 'graphql-scalars'
+import { DateTimeResolver, GraphQLJSON, UUIDResolver } from 'graphql-scalars'
 import { GraphQLUpload } from 'graphql-upload'
 
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
@@ -11,32 +11,40 @@ import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin
 import { AuthModule, AuthService } from './Auth'
 import { UserModule } from './Users'
 import { ChatsModule } from './Chats'
-import { PubSubModule } from './PubSub'
 import { SessionsModule } from './Sessions'
 import { TranslationModule } from './Translation'
 import { MediaModule } from './Media'
 import { MessagesModule } from './Messages'
-import { FirebaseModule } from './Firebase'
-import { ApiModule, ApiGuard } from './Api'
+import { ContactsModule } from './Contacts'
 
-import { ApiErrorFormatted, type ErrorCode } from 'common/errors'
-import { PrismaService } from 'prisma.service'
+import { FirebaseModule } from 'common/Firebase'
+import { PubSubModule } from 'common/pubSub/Module'
+import { PrismaService } from 'common/prisma.service'
+
+import { ApiErrorFormatted } from 'common/errors'
 
 /** App  */
+import { SearchModule } from 'Search/Module'
+import { AccountModule } from 'Account/Module'
+import { LangPackModule } from 'LangPack/Module'
+
 import { AppResolver } from './Resolver'
-import { AppService } from './Service'
 
 const MAIN_MODULES = [
-  ApiModule,
+  // ApiModule,
   AuthModule,
   PubSubModule,
   UserModule,
+  SearchModule,
   MessagesModule,
   ChatsModule,
+  ContactsModule,
   SessionsModule,
   FirebaseModule,
   TranslationModule,
   MediaModule,
+  AccountModule,
+  LangPackModule,
 ]
 const CONFIG_MODULES = [
   ConfigModule.forRoot({
@@ -47,7 +55,7 @@ const CONFIG_MODULES = [
     imports: [AuthModule],
     inject: [AuthService],
 
-    useFactory: async (authService: AuthService) => ({
+    useFactory: async (/* authService: AuthService */) => ({
       playground: false,
       plugins: [ApolloServerPluginLandingPageLocalDefault()],
       introspection: true,
@@ -60,77 +68,87 @@ const CONFIG_MODULES = [
         DateTime: DateTimeResolver,
         Upload: GraphQLUpload,
         JSON: GraphQLJSON,
+        UUID: UUIDResolver,
       },
-      // context: ({ req, connection }: any) => (connection ? { req: connection.context } : { req }),
-      context: (context: any) => {
-        if (context?.extra?.request) {
-          return {
-            req: {
-              ...context?.extra?.request,
-              headers: {
-                ...context?.extra?.request?.headers,
-                ...context?.connectionParams,
-              },
-            },
-          }
-        }
+      // context: (context: any) => {
+      //   if (context?.extra?.request) {
+      //     return {
+      //       req: {
+      //         ...context?.extra?.request,
+      //         headers: {
+      //           ...context?.extra?.request?.headers,
+      //           ...context?.connectionParams,
+      //         },
+      //       },
+      //     }
+      //   }
 
-        return { req: context?.req }
-      },
+      //   return { req: context?.req }
+      // },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      context: ({ req, connection }: any) => (connection ? { req: connection.context } : { req }),
+
       subscriptions: {
         'graphql-ws': {
           path: '/graphql/subscriptions',
-          onConnect: (ctx) => {
+          onConnect: async (ctx) => {
             const headers: Record<string, unknown> = {
               ...(ctx.connectionParams?.headers as object),
             }
             console.log('graphql-ws-CONNECT')
-            if ('sessionId' in headers && typeof headers.sessionId === 'string') {
-              /* do smth */
-            }
+            // const session = headers['prechat-session']
+            // if (!session) {
+            //   throw new UnauthorizedError('graphql.subscribe')
+            // }
+            // const decoded = await authService.decodeSession(session as string)
+            // if (!decoded) {
+            //   throw new SessionInvalidError('authGuard')
+            // }
 
+            // ;(ctx.extra as any).prechatSession = decoded
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ;(ctx.extra as any).headers = headers
+            // /* якщо потрібно, можна і юзера знайти по айдішніку і поставити тут */
             return {
               req: {
                 headers,
+                // prechatSession: decoded,
               },
             }
           },
         },
-        // 'subscriptions-transport-ws': {
-        //   path: '/graphql/subscriptions',
-        //   onConnect: (connection: Record<string, any>) => {
-        //     console.log('graphql-transport-ws-CONNECT')
+        'subscriptions-transport-ws': {
+          path: '/graphql/subscriptions',
 
-        //     console.log({ connection })
-        //     return {
-        //       req: {
-        //         headers: {
-        //           ...connection,
-        //         },
-        //       },
-        //     }
-        //   },
-        // },
+          onConnect: () => {
+            // eslint-disable-next-line no-console
+            console.log('CONNECT')
+          },
+        },
       },
-      // context: ({ req, connection }) => (connection ? { req: connection.context } : { req }),
       formatError: (e) => {
-        const formatted = new ApiErrorFormatted(e.message as ErrorCode)
-        if (formatted.message) {
-          return { code: formatted.code, message: formatted.message }
+        if (e.extensions?.code === 'BAD_USER_INPUT') {
+          return e
         }
-        return e
+        const formatted = new ApiErrorFormatted(e)
+
+        return {
+          code: formatted.error.code,
+          message: formatted.error.message,
+          method: formatted.error.method,
+          path: formatted.error.path,
+        }
       },
     }),
   }),
 ]
-const PROVIDERS = [
-  AppService,
+const PROVIDERS: Provider[] = [
   AppResolver,
   PrismaService,
-  {
-    provide: APP_GUARD,
-    useClass: ApiGuard,
-  },
+  // {
+  //   provide: APP_GUARD,
+  //   useClass: ApiGuard,
+  // },
 ]
 
 @Module({

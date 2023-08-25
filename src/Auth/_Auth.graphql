@@ -1,10 +1,7 @@
-scalar Any
-
 type TwoFactorAuth {
   hint: String
-  email: String!
+  email: String
 }
-
 input Connection {
   ipVersion: Int!
   ipAddress: String!
@@ -24,6 +21,7 @@ input Connection {
 
 type SendPhoneResponse {
   userId: String
+  hasActiveSession: Boolean!
 }
 
 input SignUpInput {
@@ -31,29 +29,41 @@ input SignUpInput {
   connection: Connection!
   firstName: String!
   phoneNumber: String!
-  token: String!
+  firebase_token: String!
   lastName: String
 }
 
 type SignUpResponse {
-  session: String!
+  sessionHash: String!
 }
 
 input SignInInput {
-  token: String!
+  firebase_token: String!
   connection: Connection!
-  userId: String!
+  phoneNumber: String!
 }
 type SignInResponse {
-  session: String!
+  sessionHash: String!
 }
 
+# enum AuthState {
+#   signUpRequired
+#   passwordRequired
+#   authDone
+# }
+# type AuthResponse {
+#   _: AuthState!
+#   session: String
+#   twoFa: TwoFactorAuth
+# }
 type Query {
   getTwoFa(token: String!): TwoFactorAuth
+  sendPhone(phone: String!): SendPhoneResponse!
 }
 
 type Mutation {
-  sendPhone(phone: String!): SendPhoneResponse!
   signUp(input: SignUpInput!, photo: Upload): SignUpResponse!
   signIn(input: SignInInput!): SignInResponse!
+  terminateAuthorization(id: String!): Boolean!
+  terminateAllAuthorizations: Boolean!
 }

@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common'
 
+import { PrismaService } from 'common/prisma.service'
+
 import { SessionService } from './Service'
-import { SessionsResolver } from './Resolver'
-import { PrismaService } from '../prisma.service'
 
 @Module({
-  providers: [SessionsResolver, SessionService, PrismaService],
+  providers: [SessionService, PrismaService],
   exports: [SessionService],
 })
 export class SessionsModule {}

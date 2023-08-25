@@ -1,18 +1,34 @@
-import { Resolver } from '@nestjs/graphql'
+import { Args, Query, Resolver } from '@nestjs/graphql'
+import { UseGuards } from '@nestjs/common'
+import { GetUsersInput, UserInput } from '@generated/graphql'
 
-import { AuthService } from 'Auth/Service'
+import { AuthGuard } from 'Auth/Guard'
+import { CurrentSession } from 'common/decorators/Session'
+
 import { UserService } from './Service'
-// import { Prisma } from '@prisma/client'
-// import { CreateUserInput } from './users.types'
 
 @Resolver()
 export class UserResolver {
-  constructor(private usersService: UserService, private authService: AuthService) {}
+  constructor(private users: UserService) {}
 
-  // @Mutation('createUser')
-  // public async create(@Args('createUserInput') createUserInput: CreateUserInput, @Args('avatar') avatar: FileUpload) {
-  //   // const user = await this.usersService.create(createUserInput, avatar)
+  /**
+   *
+   * @returns
+   */
+  @Query('getUsers')
+  @UseGuards(AuthGuard)
+  public async getUsers(@CurrentSession('userId') currentUserId: string, @Args('input') input: GetUsersInput) {
+    return this.users.getUsers(currentUserId, input)
+  }
 
-  //   return user
-  // }
+  /**
+   *
+   * @param input User ID.
+   * @returns User full info by id.
+   */
+  @Query('getUserFull')
+  @UseGuards(AuthGuard)
+  public async getUserFull(/* @CurrentSession('userId') currentUserId: string, */ @Args('input') input: UserInput) {
+    return this.users.getUserFull(input)
+  }
 }

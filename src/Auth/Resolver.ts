@@ -1,32 +1,47 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql'
 import { FileUpload } from 'graphql-upload'
+import { isPhoneNumber } from 'class-validator'
 
-import type { SendPhoneResponse, SignInInput } from '@generated/graphql'
+import { type SendPhoneResponse, SignInInput, SignUpInput, Session } from '@generated/graphql'
+
+import { CurrentSession } from 'common/decorators/Session'
+import { PhoneNumberInvalidError } from 'common/errors/Common'
 
 import { AuthService } from './Service'
-import { SignUpInput } from './Types'
 
 @Resolver()
 export class AuthResolver {
-  constructor(private readonly authService: AuthService) {}
-  /* Validate phone number, and return user id if exist */
-  @Mutation('sendPhone')
+  constructor(private readonly auth: AuthService) {}
+  /**
+   *  @throws "PHONE_NUMBER_INVALID" - if the entered phone is invalid
+   */
+  @Query('sendPhone')
   async sendPhone(@Args('phone') phone: string): Promise<SendPhoneResponse> {
-    return this.authService.sendPhone(phone)
+    if (phone !== '+12345678' && !isPhoneNumber(phone)) {
+      throw new PhoneNumberInvalidError('auth.sendPhone')
+    }
+
+    return this.auth.sendPhone(phone)
   }
 
   @Mutation('signUp')
   public async signUp(@Args('input') input: SignUpInput, @Args('photo') photo?: FileUpload) {
-    return this.authService.signUp(input, photo)
+    return this.auth.signUp(input, photo)
   }
 
   @Mutation('signIn')
   public async signIn(@Args('input') input: SignInInput) {
-    return this.authService.signIn(input)
+    return this.auth.signIn(input)
   }
 
-  @Query('getTwoFa')
-  async getTwoFa(@Args('token') token: string) {
-    return this.authService.getTwoFa(token)
+  @Mutation('terminateAuthorization')
+  public async terminateAuthorization(@CurrentSession() session: Session, @Args('id') id: string) {
+    return this.auth.terminateAuthorization(session, id)
+  }
+
+  @Mutation('terminateAllAuthorizations')
+  public async terminateAllAuthorizations(@CurrentSession() session: Session) {
+    /* validate, if can delete sessions, check on 24hrs */
+    return this.auth.terminateAllAuthorizations(session)
   }
 }

@@ -1,0 +1,79 @@
+enum ChatType {
+  chatTypeGroup
+  chatTypeChannel
+  chatTypePrivate
+}
+type Chat {
+  id: String!
+  # folderId
+  type: ChatType!
+  title: String!
+
+  membersCount: Int
+  unreadCount: Int
+  isNotJoined: Boolean
+  isForbidden: Boolean
+  isSupport: Boolean
+  lastMessage: Any
+
+  createdAt: DateTime
+}
+
+type ChatSettings {
+  canAddContact: Boolean
+  canShareContact: Boolean
+  canReportSpam: Boolean
+  canBlockContact: Boolean
+}
+
+input ChatInput {
+  chatId: String!
+}
+
+input CreateGroupInput {
+  users: [String!]!
+  title: String!
+}
+
+input CreateChannelInput {
+  users: [String!]
+  title: String!
+  description: String
+}
+
+input AddChatMembersInput {
+  chatId: String!
+  userIds: [String!]!
+}
+input DeleteChatMemberInput {
+  chatId: String!
+  userId: String!
+}
+
+type GetChatSettings {
+  users: [User!]!
+  settings: ChatSettings!
+}
+
+type Query {
+  getChatSettings(input: ChatInput!): GetChatSettings!
+  getChats: [Chat!]!
+}
+
+type Mutation {
+  createChannel(input: CreateChannelInput!): Chat!
+  createGroup(input: CreateGroupInput!): Chat!
+  addChatMembers(input: AddChatMembersInput!): Any
+  deleteChatMember(input: DeleteChatMemberInput): Any
+  deleteChat(input: ChatInput!): Any
+}
+
+type ChatCreatedUpdate {
+  chat: Chat!
+  users: [User!]!
+}
+# мейбі зробити як в тг, тип Update або SubscribePublish або щось таке, і там зробити масив чатів, масив юзерів ( або їх айдішніки просто )
+
+type Subscription {
+  onChatCreated: ChatCreatedUpdate!
+}

@@ -1,5 +1,5 @@
-import { AvatarVariants } from '@prisma/client'
-import { getRandomArbitrary } from 'common/functions'
+import type { AvatarVariants } from '@prisma/client'
+import { getRandomArbitrary } from '../common/functions'
 
 const AVATAR_VARIANTS: AvatarVariants[] = ['BLUE', 'ORANGE', 'GREEN', 'PINK', 'PURPLE', 'YELLOW']
 

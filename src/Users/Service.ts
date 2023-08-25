@@ -1,57 +1,62 @@
 import { Injectable } from '@nestjs/common'
 
-import { FirebaseService } from 'Firebase/Service'
+import type * as Api from '@generated/graphql'
 
-import { PrismaService } from '../prisma.service'
-import { CreateUserInput } from './Types'
-import { getRandomAvatarVariant } from 'Media/Helpers'
+import { FirebaseService } from 'common/Firebase/Service'
+import { PrismaService } from '../common/prisma.service'
+
+import { buildApiUser, buildPrivacySettings, buildUserFullInfo, selectUserFieldsToBuild } from 'common/builder/users'
+
 @Injectable()
 export class UserService {
-  constructor(private prismaService: PrismaService, private firebaseService: FirebaseService) {}
+  constructor(private prisma: PrismaService, private firebaseService: FirebaseService) {}
 
-  // public async test(input: CreateUserInput, avatar: FileUpload) {
-  //   const avatarName = input.username.toLowerCase().replace(/\s+/g, '-') + Date.now()
-  //   const initialName = avatar.filename
-  //   return this.firebaseService.uploadFile(avatar, initialName, `avatars/${avatarName}`)
-  //   // return this.firebaseService.uploadFile(input.avat)
-  //   // const user = await this.prismaService.user.create({
-  //   //   data: {
-  //   //     ...input,
-  //   //   },
-  //   // })
-  // }
-
-  public async create({ firstName, lastName, phoneNumber, photoUrl }: CreateUserInput) {
-    return this.prismaService.user.create({
+  public async create({ firstName, lastName, phoneNumber }: Api.CreateUserInput) {
+    return this.prisma.user.create({
       data: {
         firstName,
         lastName,
         phoneNumber,
-        avatar: {
-          create: {
-            images: {
-              create: {
-                url: photoUrl || 'WTOOO',
-                hash: 'SOSI HUI ABOBA',
-              },
-            },
-            avatarVariant: getRandomAvatarVariant(),
+        fullInfo: buildUserFullInfo(),
+        privacySettings: buildPrivacySettings(),
+      },
+    })
+  }
+
+  public async getUsers(requesterId: string, input: Api.GetUsersInput): Promise<Api.User[]> {
+    const users = await this.prisma.user.findMany({
+      where: {
+        id: {
+          in: input.ids,
+        },
+      },
+      select: {
+        ...selectUserFieldsToBuild(),
+      },
+    })
+
+    return users.map((user) => buildApiUser(requesterId, user))
+  }
+
+  public async getUserFull(input: Api.UserInput): Promise<Api.UserFull> {
+    const result = await this.prisma.user.findFirstOrThrow({
+      where: {
+        id: input.userId,
+      },
+      select: {
+        fullInfo: {
+          select: {
+            avatar: true,
+            bio: true,
           },
         },
       },
     })
-  }
-
-  public async getByPhone(phoneNumber: string) {
-    return this.prismaService.user.findUnique({
-      where: {
-        phoneNumber,
-      },
-    })
+    return result?.fullInfo as Api.UserFull
   }
 
   public async getTwoFaByPhone(phoneNumber: string) {
-    return this.prismaService.user.findUnique({
+    return this.prisma.user.findUnique({
       where: {
         phoneNumber,
       },
@@ -60,28 +65,57 @@ export class UserService {
           select: {
             email: true,
             hint: true,
+            // password:true
           },
         },
       },
     })
   }
 
-  public async getApiTokenByPhone(phoneNumber: string) {
-    return this.prismaService.user.findUnique({
+  public async getApiById(requesterId: string, id: string) {
+    const result = await this.prisma.user.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        ...selectUserFieldsToBuild(),
+      },
+    })
+    if (!result) {
+      return undefined
+    }
+
+    return buildApiUser(requesterId, result) as Api.User
+  }
+
+  public async getApiByPhone(requesterId: string, phoneNumber: string) {
+    const result = await this.prisma.user.findUnique({
       where: {
         phoneNumber,
       },
       select: {
-        apiToken: true,
-        id: true,
+        ...selectUserFieldsToBuild(),
+      },
+    })
+    if (!result) {
+      return undefined
+    }
+
+    return buildApiUser(requesterId, result) as Api.User
+  }
+
+  public async getById(userId: string) {
+    return this.prisma.user.findUnique({
+      where: {
+        id: userId,
       },
     })
   }
 
-  public async getById(id: string) {
-    return this.prismaService.user.findUnique({
+  public async getByPhone(phoneNumber: string) {
+    return this.prisma.user.findUnique({
       where: {
-        id,
+        phoneNumber,
       },
     })
   }

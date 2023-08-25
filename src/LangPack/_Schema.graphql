@@ -1,0 +1,33 @@
+type LangPack {
+  strings: JSON!
+  langCode: String!
+}
+
+type Language {
+  name: String!
+  nativeName: String!
+  langCode: String!
+  stringsCount: Int!
+}
+
+type Country {
+  name: String!
+  dial_code: String!
+  emoji: String!
+  code: String!
+}
+
+input GetLangStringInput {
+  code: String!
+  key: String!
+}
+
+type Query {
+  getLangPack(code: String!): LangPack!
+  getLangString(input: GetLangStringInput!): String!
+
+  getLanguages: [Language!]!
+  getLanguage(code: String!): Language!
+
+  getCountriesList(code: String!): [Country!]!
+}

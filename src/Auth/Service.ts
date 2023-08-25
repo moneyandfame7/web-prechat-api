@@ -1,58 +1,57 @@
 import { Injectable } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
-import { FileUpload } from 'graphql-upload'
-import { Session } from '@prisma/client'
+import type { Session } from '@prisma/client'
 
-import type { Connection, SendPhoneResponse, SignInInput } from '@generated/graphql'
+import type { FileUpload } from 'graphql-upload'
 
-import { FirebaseService } from 'Firebase'
+import type { SessionData, Connection, SendPhoneResponse, SignInInput, SignUpInput } from '@generated/graphql'
+
 import { UserService } from 'Users'
 import { MediaService } from 'Media'
+import { SessionService } from 'Sessions'
 
-import { SessionService, type SessionData } from 'Sessions'
+import { unformatString } from 'common/utils/unformatString'
+import { FirebaseService } from 'common/Firebase'
+import {
+  AuthVerifyCodeError,
+  SessionInvalidError,
+  SessionPasswordNeeded,
+  SessionTooFreshError,
+} from 'common/errors/Authorization'
+import { PhoneNumberNotFoundError } from 'common/errors/Common'
 
-import { ApiError } from 'common/errors'
-
-import type { AuthCheckTwoFa, SessionJwtPayload, SignUpInput } from './Types'
+import type { AuthSessionDecoded } from './Types'
+import { AccountService } from 'Account/Service'
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly userService: UserService,
-    private readonly firebaseService: FirebaseService,
-    private readonly mediaService: MediaService,
-    private readonly sessionService: SessionService,
-    private readonly jwtService: JwtService,
+    private readonly users: UserService,
+    private readonly firebase: FirebaseService,
+    private readonly media: MediaService,
+    private readonly sessions: SessionService,
+    private readonly jwt: JwtService,
+    private readonly account: AccountService,
   ) {}
 
   public async sendPhone(phoneNumber: string): Promise<SendPhoneResponse> {
-    const user = await this.userService.getByPhone(phoneNumber)
+    const user = await this.users.getByPhone(phoneNumber)
+
+    const hasActiveSession = user ? !!(await this.sessions.findByUser(user.id)).length : false
 
     return {
       userId: user?.id,
+      hasActiveSession,
     }
-  }
-
-  public async getTwoFa(token: string): Promise<AuthCheckTwoFa | null> {
-    const verified = await this.firebaseService.auth.verifyIdToken(token)
-    if (!verified.phone_number) {
-      throw new Error('Verify firebase token error')
-    }
-    const user = await this.userService.getTwoFaByPhone(verified.phone_number)
-    if (!user) {
-      return null
-    }
-
-    return user.twoFaAuth
   }
 
   public async signUp(input: SignUpInput, photo?: FileUpload) {
-    const { connection, firstName, lastName, silent, token, phoneNumber } = input
+    const { connection, firstName, lastName, /* silent, firebase_token, */ phoneNumber } = input
     /* Validate token, if not valid - throw error */
     let photoUrl: string | undefined
     if (photo) {
       const photoName = (firstName + ' ' + lastName || '').toLowerCase().replace(/\s+/g, '-') + Date.now()
-      photoUrl = await this.mediaService.uploadPhoto(photo, `avatars/${photoName}`)
+      photoUrl = await this.media.uploadPhoto(photo, `avatars/${photoName}`)
     }
 
     const sessionData: SessionData = {
@@ -63,34 +62,69 @@ export class AuthService {
       browser: connection.browser || 'unknown',
     }
 
-    const user = await this.userService.create({
+    const user = await this.users.create({
       firstName,
       lastName,
-      phoneNumber,
+      phoneNumber: unformatString(phoneNumber),
       photoUrl,
       sessionData,
     })
 
-    const session = await this.sessionService.create(sessionData, user.id)
-    return { session: this.encodeSession(session) }
+    const session = await this.sessions.create(sessionData, user.id)
+    return { sessionHash: this.encodeSession(session) }
   }
 
   public async signIn(input: SignInInput) {
-    const user = await this.userService.getById(input.userId)
+    const user = await this.users.getByPhone(input.phoneNumber)
+
     if (!user) {
-      throw new Error('User not found')
+      throw new PhoneNumberNotFoundError('auth.signIn')
     }
-    const verified = await this.validateToken(input.token)
-    if (verified.phone_number !== user.phoneNumber) {
+    const verified = await this.validateToken(input.firebase_token)
+    const unformatted = unformatString(user.phoneNumber)
+    if (verified.phone_number !== unformatted) {
       throw new Error('Token invalid')
     }
-    const session = await this.sessionService.create(this.getSessionData(input.connection), input.userId)
+    const password = await this.account.getPassword(user.id)
+    if (password) {
+      throw new SessionPasswordNeeded('auth.signIn')
+    }
 
-    return { session: this.encodeSession(session) }
+    const session = await this.sessions.create(this.getSessionData(input.connection), user.id)
+
+    return { sessionHash: this.encodeSession(session) }
   }
 
-  private async verifyToken(token: string) {
-    return token
+  public async terminateAuthorization(currentSession: Session, id: string) {
+    if (this.isFreshSession(currentSession)) {
+      throw new SessionTooFreshError('auth.terminateAllAuthorizations')
+    }
+
+    const willBeTerminated = await this.sessions.getById(id)
+    /* перевірка на freshSession */
+
+    if (willBeTerminated?.userId === currentSession.userId) {
+      return this.sessions.deleteById(id)
+    }
+
+    return false
+  }
+
+  public async terminateAllAuthorizations(currentSession: Session) {
+    if (this.isFreshSession(currentSession)) {
+      throw new SessionTooFreshError('auth.terminateAllAuthorizations')
+    }
+  }
+
+  private isFreshSession(session: Session) {
+    const sessionCreatedAt = session.createdAt.getTime()
+    const now = new Date().getTime()
+
+    const timeDifferenceMs = now - sessionCreatedAt
+
+    const twentyFourHoursInMs: number = 24 * 60 * 60 * 1000
+
+    return timeDifferenceMs <= twentyFourHoursInMs
   }
 
   private getSessionData(connection: Connection) {
@@ -104,7 +138,7 @@ export class AuthService {
   }
 
   private encodeSession(session: Session) {
-    return this.jwtService.sign({
+    return this.jwt.sign({
       id: session.id,
       userId: session.userId,
     })
@@ -112,13 +146,18 @@ export class AuthService {
 
   private async validateToken(token: string) {
     try {
-      return await this.firebaseService.auth.verifyIdToken(token)
+      return await this.firebase.auth.verifyIdToken(token)
     } catch (e) {
-      throw new ApiError('AUTH_VERIFY_CODE')
+      throw new AuthVerifyCodeError('auth.validateToken')
     }
   }
 
-  private decodeSession(token: string) {
-    return this.jwtService.decode(token) as SessionJwtPayload
+  public async decodeSession(token: string) {
+    try {
+      const decoded = this.jwt.verify(token) as AuthSessionDecoded
+      return this.sessions.getById(decoded.id)
+    } catch (e) {
+      throw new SessionInvalidError('auth.decodeSession')
+    }
   }
 }
