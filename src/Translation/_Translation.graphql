@@ -1,5 +1,0 @@
-scalar Any
-type Query {
-  translateHello: Any
-  translateCountries(lng: String!, outputFile: String!): Boolean!
-}

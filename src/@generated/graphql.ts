@@ -162,10 +162,6 @@ export abstract class IQuery {
 
     abstract searchUsers(input: SearchGlobalInput): SearchUsersResponse | Promise<SearchUsersResponse>;
 
-    abstract translateHello(): Nullable<Any> | Promise<Nullable<Any>>;
-
-    abstract translateCountries(lng: string, outputFile: string): boolean | Promise<boolean>;
-
     abstract getUsers(input: GetUsersInput): User[] | Promise<User[]>;
 
     abstract getUserFull(input: UserInput): UserFull | Promise<UserFull>;

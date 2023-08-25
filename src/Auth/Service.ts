@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common'
-import { JwtService } from '@nestjs/jwt'
 import type { Session } from '@prisma/client'
 
 import type { FileUpload } from 'graphql-upload'
@@ -12,15 +11,9 @@ import { SessionService } from 'Sessions'
 
 import { unformatString } from 'common/utils/unformatString'
 import { FirebaseService } from 'common/Firebase'
-import {
-  AuthVerifyCodeError,
-  SessionInvalidError,
-  SessionPasswordNeeded,
-  SessionTooFreshError,
-} from 'common/errors/Authorization'
+import { AuthVerifyCodeError, SessionPasswordNeeded, SessionTooFreshError } from 'common/errors/Authorization'
 import { PhoneNumberNotFoundError } from 'common/errors/Common'
 
-import type { AuthSessionDecoded } from './Types'
 import { AccountService } from 'Account/Service'
 
 @Injectable()
@@ -30,7 +23,6 @@ export class AuthService {
     private readonly firebase: FirebaseService,
     private readonly media: MediaService,
     private readonly sessions: SessionService,
-    private readonly jwt: JwtService,
     private readonly account: AccountService,
   ) {}
 
@@ -71,7 +63,7 @@ export class AuthService {
     })
 
     const session = await this.sessions.create(sessionData, user.id)
-    return { sessionHash: this.encodeSession(session) }
+    return { sessionHash: session.id }
   }
 
   public async signIn(input: SignInInput) {
@@ -92,7 +84,7 @@ export class AuthService {
 
     const session = await this.sessions.create(this.getSessionData(input.connection), user.id)
 
-    return { sessionHash: this.encodeSession(session) }
+    return { sessionHash: session.id }
   }
 
   public async terminateAuthorization(currentSession: Session, id: string) {
@@ -116,6 +108,10 @@ export class AuthService {
     }
   }
 
+  public async getSession(id: string) {
+    return this.sessions.getById(id)
+  }
+
   private isFreshSession(session: Session) {
     const sessionCreatedAt = session.createdAt.getTime()
     const now = new Date().getTime()
@@ -137,27 +133,11 @@ export class AuthService {
     }
   }
 
-  private encodeSession(session: Session) {
-    return this.jwt.sign({
-      id: session.id,
-      userId: session.userId,
-    })
-  }
-
   private async validateToken(token: string) {
     try {
       return await this.firebase.auth.verifyIdToken(token)
     } catch (e) {
       throw new AuthVerifyCodeError('auth.validateToken')
-    }
-  }
-
-  public async decodeSession(token: string) {
-    try {
-      const decoded = this.jwt.verify(token) as AuthSessionDecoded
-      return this.sessions.getById(decoded.id)
-    } catch (e) {
-      throw new SessionInvalidError('auth.decodeSession')
     }
   }
 }

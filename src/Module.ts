@@ -12,7 +12,6 @@ import { AuthModule, AuthService } from './Auth'
 import { UserModule } from './Users'
 import { ChatsModule } from './Chats'
 import { SessionsModule } from './Sessions'
-import { TranslationModule } from './Translation'
 import { MediaModule } from './Media'
 import { MessagesModule } from './Messages'
 import { ContactsModule } from './Contacts'
@@ -41,7 +40,6 @@ const MAIN_MODULES = [
   ContactsModule,
   SessionsModule,
   FirebaseModule,
-  TranslationModule,
   MediaModule,
   AccountModule,
   LangPackModule,
@@ -70,21 +68,7 @@ const CONFIG_MODULES = [
         JSON: GraphQLJSON,
         UUID: UUIDResolver,
       },
-      // context: (context: any) => {
-      //   if (context?.extra?.request) {
-      //     return {
-      //       req: {
-      //         ...context?.extra?.request,
-      //         headers: {
-      //           ...context?.extra?.request?.headers,
-      //           ...context?.connectionParams,
-      //         },
-      //       },
-      //     }
-      //   }
 
-      //   return { req: context?.req }
-      // },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       context: ({ req, connection }: any) => (connection ? { req: connection.context } : { req }),
 
@@ -142,14 +126,7 @@ const CONFIG_MODULES = [
     }),
   }),
 ]
-const PROVIDERS: Provider[] = [
-  AppResolver,
-  PrismaService,
-  // {
-  //   provide: APP_GUARD,
-  //   useClass: ApiGuard,
-  // },
-]
+const PROVIDERS: Provider[] = [AppResolver, PrismaService]
 
 @Module({
   imports: [...MAIN_MODULES, ...CONFIG_MODULES],

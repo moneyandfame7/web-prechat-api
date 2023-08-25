@@ -1,6 +1,5 @@
 import { Injectable, type CanActivate, type ExecutionContext } from '@nestjs/common'
 import { GqlExecutionContext } from '@nestjs/graphql'
-import type { Request } from 'express'
 
 import { SessionInvalidError, UnauthorizedError } from 'common/errors/Authorization'
 
@@ -27,7 +26,7 @@ export class AuthGuard implements CanActivate {
     if (!session) {
       throw new UnauthorizedError('authGuard')
     }
-    const decoded = await this.authService.decodeSession(session as string)
+    const decoded = await this.authService.getSession(session as string)
     if (!decoded) {
       throw new SessionInvalidError('authGuard')
     }
