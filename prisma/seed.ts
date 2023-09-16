@@ -1,27 +1,34 @@
 import { PrismaClient } from '@prisma/client'
 import { faker } from '@faker-js/faker'
-import { getRandomAvatarVariant } from './../src/Media/Helpers'
+import { getRandomColor } from './../src/Media/Helpers'
 const prisma = new PrismaClient()
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 class Seeder {
   public async createUsers(count = 100) {
+    const poll = await prisma.poll.findFirst({
+      include: {
+        answers: {
+          include: {
+            voters: {
+              include: {
+                user: true,
+              },
+            },
+          },
+        },
+      },
+    })
+    // poll?.answers[0].voters[0].
+    // poll.
     for (let k = 0; k < count; k++) {
       const user = await prisma.user.create({
         data: {
           firstName: faker.name.firstName(),
           lastName: faker.name.lastName(),
           phoneNumber: faker.phone.number('+380#########'),
-          fullInfo: {
-            create: {
-              avatar: {
-                create: {
-                  avatarVariant: getRandomAvatarVariant(),
-                },
-              },
-              bio: faker.lorem.sentence(),
-            },
-          },
+
+          color: getRandomColor(),
           privacySettings: {
             create: {
               addByPhone: {
@@ -179,7 +186,7 @@ class Seeder {
 
 const seed = new Seeder()
 async function main() {
-  await seed.createUsers(100)
+  // await seed.createUsers(100)
   // await seed.deleteUsers()
   // await seed.addContacts(100)
   // await seed.removeContacts()

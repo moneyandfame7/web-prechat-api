@@ -2,25 +2,20 @@ import { Injectable } from '@nestjs/common'
 
 import type * as Api from '@generated/graphql'
 
-import { FirebaseService } from 'common/Firebase/Service'
 import { PrismaService } from '../common/prisma.service'
 
-import { buildApiUser, buildPrivacySettings, buildUserFullInfo, selectUserFieldsToBuild } from 'common/builder/users'
+import { buildApiUser, selectUserFieldsToBuild } from 'common/builder/users'
+import { UserRepository } from './Repository'
+import { BuilderService } from 'common/builder/Service'
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService, private firebaseService: FirebaseService) {}
+  constructor(private prisma: PrismaService, private repository: UserRepository, private builder: BuilderService) {}
 
-  public async create({ firstName, lastName, phoneNumber }: Api.CreateUserInput) {
-    return this.prisma.user.create({
-      data: {
-        firstName,
-        lastName,
-        phoneNumber,
-        fullInfo: buildUserFullInfo(),
-        privacySettings: buildPrivacySettings(),
-      },
-    })
+  public async create(input: Api.CreateUserInput): Promise<Api.InputUser> {
+    const id = await this.repository.create(input)
+
+    return { userId: id }
   }
 
   public async getUsers(requesterId: string, input: Api.GetUsersInput): Promise<Api.User[]> {
@@ -35,24 +30,7 @@ export class UserService {
       },
     })
 
-    return users.map((user) => buildApiUser(requesterId, user))
-  }
-
-  public async getUserFull(input: Api.UserInput): Promise<Api.UserFull> {
-    const result = await this.prisma.user.findFirstOrThrow({
-      where: {
-        id: input.userId,
-      },
-      select: {
-        fullInfo: {
-          select: {
-            avatar: true,
-            bio: true,
-          },
-        },
-      },
-    })
-    return result?.fullInfo as Api.UserFull
+    return this.builder.buildApiUsersAndStatuses(users, requesterId)
   }
 
   public async getTwoFaByPhone(phoneNumber: string) {
@@ -79,6 +57,14 @@ export class UserService {
       },
       select: {
         ...selectUserFieldsToBuild(),
+        photo: {
+          select: {
+            blurHash: true,
+            date: true,
+            id: true,
+            url: true,
+          },
+        },
       },
     })
     if (!result) {

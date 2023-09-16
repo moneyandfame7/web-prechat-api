@@ -1,194 +1,254 @@
 import { Injectable } from '@nestjs/common'
 
-import type {
-  AddChatMembersInput,
-  ChatInput,
-  ChatSettings,
-  CreateChannelInput,
-  CreateGroupInput,
-  DeleteChatMemberInput,
-  User,
-  ChatCreatedUpdate,
-} from '@generated/graphql'
+import type * as Api from '@generated/graphql'
 
-import { buildApiUser, isSelf, selectUserFieldsToBuild } from 'common/builder/users'
-import { buildApiChat, buildApiChatSettings } from 'common/builder/chats'
+import { selectChatFields, createChatMembers } from 'common/builder/chats'
 
 import { PrismaService } from '../common/prisma.service'
 import { ChatRepository } from './Repository'
+import { getRandomColor } from 'Media'
+import { BuilderService } from 'common/builder/Service'
+import { selectUserFieldsToBuild } from 'common/builder/users'
+import { NotFoundEntityError, UsernameNotOccupiedError } from 'common/errors'
+import type { WithTypename } from 'types/other'
+import { createMessageAction } from 'common/builder/messages'
+import { generateId } from 'common/helpers/generateId'
 
 @Injectable()
 export class ChatService {
-  constructor(private readonly prisma: PrismaService, private readonly repo: ChatRepository) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly repo: ChatRepository,
+    private builder: BuilderService,
+  ) {}
 
-  public async createGroup(requesterId: string, input: CreateGroupInput) {
-    const result = await this.prisma.chat.create({
+  public async createGroup(requesterId: string, input: Api.CreateGroupInput) {
+    const memberIds = [...(input.users ? new Set([...input.users, requesterId]) : requesterId)]
+    const chatId = generateId('chat')
+    await this.prisma.chat.create({
       data: {
+        id: chatId,
         type: 'chatTypeGroup',
         title: input.title,
         fullInfo: {
           create: {
-            members: {
-              createMany: {
-                data: input.users.map((u) => ({
-                  inviterId: requesterId,
-                  userId: u,
-                  isAdmin: isSelf(requesterId, u),
-                  isOwner: isSelf(requesterId, u),
-                  unreadCount: isSelf(requesterId, u) ? 0 : 1,
-                })),
-              },
-            },
+            ...createChatMembers(requesterId, memberIds),
           },
         },
-        isPrivate: false,
+        isPrivate: true,
+        color: getRandomColor(),
       },
       include: {
-        fullInfo: {
-          include: {
-            members: true,
-          },
-        },
+        ...selectChatFields(),
       },
     })
 
-    return buildApiChat(requesterId, result)
+    const updated = await this.prisma.chat.update({
+      where: {
+        id: chatId,
+      },
+      data: {
+        lastMessage: {
+          create: {
+            action: {
+              create: createMessageAction(
+                {
+                  '@type': 'chatCreate',
+                  payload: {
+                    title: input.title,
+                  },
+                },
+                requesterId,
+              ),
+            },
+            chatId,
+            senderId: requesterId,
+          },
+        },
+      },
+      include: {
+        ...selectChatFields(),
+      },
+    })
+    // result.lastMessage?.action.
+    // const members = result.fullInfo?.members.map((m) => m.user)
+    // const users = members ? await this.users.buildApiUserAndStatuses(members, requesterId) : []
+    // const chat = buildApiChat(requesterId, result)
+
+    return updated
   }
 
-  public async createChannel(requesterId: string, input: CreateChannelInput): Promise<ChatCreatedUpdate> {
+  public async createChannel(requesterId: string, input: Api.CreateChannelInput) /* : Promise<ChatCreatedUpdate> */ {
     const memberIds = [...(input.users ? new Set([...input.users, requesterId]) : requesterId)]
-
+    const chatId = generateId('chat')
     const result = await this.prisma.chat.create({
       data: {
+        id: chatId,
+        type: 'chatTypeChannel',
         title: input.title,
 
-        type: 'chatTypeChannel',
         fullInfo: {
           create: {
-            members: input.users
-              ? {
-                  createMany: {
-                    data: memberIds.map((u) => ({
-                      unreadCount: isSelf(requesterId, u) ? 0 : 1,
-                      isOwner: isSelf(requesterId, u),
-                      isAdmin: isSelf(requesterId, u),
-                      inviterId: requesterId,
-                      userId: u,
-                    })),
-                  },
-                }
-              : undefined,
+            ...createChatMembers(requesterId, memberIds),
             description: input.description,
           },
         },
-
+        lastMessage: {
+          create: {
+            action: {
+              create: createMessageAction(
+                {
+                  '@type': 'channelCreate',
+                },
+                requesterId,
+              ),
+            },
+            chatId,
+            senderId: requesterId,
+          },
+        },
+        color: getRandomColor(),
         isPrivate: false,
       },
       include: {
-        fullInfo: {
-          include: {
-            members: {
-              include: {
-                member: {
-                  select: {
-                    ...selectUserFieldsToBuild(),
-                  },
-                },
-              },
-            },
-          },
-        },
+        ...selectChatFields(),
       },
     })
-
-    const forBuildUsers = result.fullInfo!.members.map((u) => u.member)
-    const chat = buildApiChat(requesterId, result)
-    const users = forBuildUsers?.map((u) => buildApiUser(requesterId, u))
-    return {
-      chat,
-      users,
-    }
+    return result
+    // const members = result.fullInfo?.members.map((m) => m.user)
+    // const users = members ? await this.users.buildApiUserAndStatuses(members, requesterId) : []
+    // const chat = buildApiChat(requesterId, result)
+    // return { users, chat }
   }
 
+  /* Returns exist or created chat. */
+  public async createPrivate(requesterId: string, input: { userId: string }) {
+    const exist = await this.repo.getPrivateChat(requesterId, input.userId)
+    if (exist) {
+      return this.builder.buildApiChat(exist, requesterId)
+    }
+
+    const result = await this.repo.createPrivate(requesterId, input.userId)
+
+    return this.builder.buildApiChat(result, requesterId)
+  }
+
+  /**
+   * 1. Можливо не створювати чат, при створюванні контакту. Створювати чат, якщо
+   * немає чату з таким айді як в юзера ( якось в тайтл зберігати назву чата??? а мб)
+   * айдішнік по іншому якось генерувати?
+   * колор чату - це колор юзера в приватному чаті треба робити...
+   *
+   * Sessions ID.
+   * Google -  e7fb5128-7c5d-411b-9587-c4accf0152a9
+   * Safari - 651fe60e-ae2f-4b9b-8aa7-dd5f7357cca4
+   */
   public async getChats(requesterId: string) {
-    const result = await this.prisma.chat.findMany({
+    console.log({ requesterId })
+    return this.prisma.chat.findMany({
       where: {
         fullInfo: {
           members: {
             some: {
+              // userId: requesterId,
               userId: requesterId,
             },
           },
         },
       },
       include: {
-        fullInfo: {
-          include: {
-            members: true,
-          },
+        ...selectChatFields(),
+      },
+    })
+  }
+
+  public async getChat(chatId: string, requesterId: string): Promise<Api.Chat> {
+    const chat = await this.repo.findById(chatId)
+    if (!chat) {
+      throw new NotFoundEntityError('chats.getChatFull')
+    }
+
+    return this.builder.buildApiChat(chat, requesterId)
+  }
+
+  public async getChatFull(chatId: string, requesterId: string): Promise<Api.ChatFull> {
+    const chat = await this.repo.findById(chatId)
+    if (!chat) {
+      throw new NotFoundEntityError('chats.getChatFull')
+    }
+
+    return this.builder.buildApiChatFull(chat, requesterId)
+  }
+
+  public async resolveUsername(username: string, requesterId: string): Promise<WithTypename<Api.Peer> | undefined> {
+    if (username[0] === '@') {
+      username.slice(1)
+    }
+    const user = await this.prisma.user.findFirst({
+      where: {
+        username: {
+          equals: username,
+          mode: 'insensitive',
         },
+        // id: requesterId,
+      },
+      select: {
+        ...selectUserFieldsToBuild(),
+      },
+    })
+    if (user) {
+      const builded = await this.builder.buildApiUserAndStatus(user, requesterId)
+      return {
+        ...builded,
+        __typename: 'User',
+      }
+    }
+
+    const chat = await this.prisma.chat.findMany({
+      where: {
+        inviteLink: {
+          equals: `p.me/${username}`,
+          mode: 'insensitive',
+        },
+      },
+      include: {
+        ...selectChatFields(),
       },
     })
 
-    if (!result || result.length === 0) {
-      return []
+    if (chat[0]) {
+      const builded = this.builder.buildApiChat(chat[0], requesterId)
+      return {
+        ...builded,
+        __typename: 'Chat',
+      }
     }
 
-    return result.map((c) => buildApiChat(requesterId, c))
+    throw new UsernameNotOccupiedError('chats.resolveUsername')
   }
 
-  public async addChatMembers(input: AddChatMembersInput) {
-    return true
-  }
-
-  public async deleteChatMember(input: DeleteChatMemberInput) {
-    return true
-  }
-
-  public async deleteChat(input: ChatInput) {
-    return true
-  }
-
-  public async getChatSettings(
-    requesterId: string,
-    input: ChatInput,
-  ): Promise<
-    | {
-        users: User[]
-        settings: ChatSettings
-      }
-    | undefined
-  > {
-    const result = await this.prisma.chat.findUnique({
+  public async getPrivateChatNotBuilded(requesterId: string, partnerId: string) {
+    return this.prisma.chat.findFirst({
       where: {
-        id: input.chatId,
-      },
-      select: {
         fullInfo: {
-          select: {
-            members: {
-              include: {
-                member: {
-                  select: {
-                    ...selectUserFieldsToBuild(),
-                  },
+          members: {
+            some: {
+              AND: [
+                {
+                  userId: requesterId,
                 },
-              },
+                {
+                  userId: partnerId,
+                },
+              ],
             },
           },
         },
       },
     })
-    if (!result || !result.fullInfo) {
-      return undefined
-    }
+  }
 
-    const users = result.fullInfo.members?.map((m) => buildApiUser(requesterId, m.member))
-    const settings = buildApiChatSettings(users)
-
-    return {
-      users,
-      settings,
-    }
+  public async getChatNotBuilded(chatId: string) {
+    return this.repo.findById(chatId)
   }
 }

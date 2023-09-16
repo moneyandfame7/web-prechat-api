@@ -6,12 +6,20 @@ type User {
   phoneNumber: String!
   lastName: String
   username: String
+  bio: String
   isContact: Boolean!
   isSelf: Boolean!
   isMutualContact: Boolean!
-  fullInfo: UserFull!
+  color: ColorVariants!
+  status: UserStatus!
+  photo: Photo
 }
-enum UserAvatarVariants {
+# type UserStatus ...
+type UserStatus {
+  wasOnline: Float
+  type: String!
+}
+enum ColorVariants {
   GREEN
   PINK
   BLUE
@@ -19,32 +27,26 @@ enum UserAvatarVariants {
   PURPLE
   ORANGE
 }
-type UserAvatar {
-  avatarVariant: UserAvatarVariants!
-  hash: String
-  url: String
-}
+
 type UserFull {
-  avatar: UserAvatar!
+  photos: [Photo]
   bio: String
 }
 input CreateUserInput {
   firstName: String!
   lastName: String
   phoneNumber: String!
-  photoUrl: String
-  sessionData: SessionData
 }
 
 input GetUsersInput {
   ids: [String!]!
 }
 
-input UserInput {
+input InputUser {
   userId: String!
 }
 
 type Query {
   getUsers(input: GetUsersInput!): [User!]!
-  getUserFull(input: UserInput!): UserFull!
+  getUserFull(input: InputUser!): UserFull!
 }

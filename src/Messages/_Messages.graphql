@@ -1,1 +1,118 @@
-scalar DateTime
+# scalar DateTime
+input SendMessageInput {
+  peer: InputPeer!
+  silent: Boolean
+  text: String
+  sendAs: InputPeer
+  # media later...
+}
+
+type Mutation {
+  sendMessage: Message!
+}
+type NewMessagePayload {
+  chat: Chat!
+  message: Message!
+}
+type Subscription {
+  onNewMessage: NewMessagePayload!
+}
+type Message {
+  text: String
+  id: String!
+  senderId: String
+  chatId: String!
+  _chatId: String
+  createdAt: DateTime!
+  updatedAt: DateTime
+
+  # noForwards - check privacy in builder?
+  isPost: Boolean
+  isOutgoing: Boolean!
+
+  postAuthor: String
+  views: Int
+
+  media: MessageMedia
+  action: MessageAction
+}
+enum MessageActionType {
+  chatCreate
+}
+type MessageAction {
+  text: String!
+  type: MessageActionType!
+  users: [String!]!
+  photo: Photo
+  values: [String!]
+}
+union MessageMedia = MessageMediaPhoto | MessageMediaDocument | MessageMediaContact | MessageMediaPoll
+
+type MessagePhoto {
+  photo: Photo!
+  ttlSeconds: Int
+  spoiler: Boolean
+}
+type MessageMediaPhoto {
+  photo: MessagePhoto!
+}
+type MessageDocument {
+  document: Document!
+  ttlSeconds: Int
+  spoiler: Boolean
+}
+type MessageMediaDocument {
+  document: MessageDocument!
+}
+
+type MessageContact {
+  phoneNumber: String!
+  firstName: String!
+  lastName: String
+  userId: String
+}
+type MessageMediaContact {
+  contact: MessageContact!
+}
+
+type MessagePoll {
+  poll: Poll!
+  results: PollResults
+}
+type MessageMediaPoll {
+  poll: MessagePoll!
+}
+
+# розібратись з poll!
+type Poll {
+  isClosed: Boolean
+  isAnonymous: Boolean
+  isQuiz: Boolean
+  withMultiplieChoise: Boolean
+  closeDate: DateTime
+  answers: [PollAnswer!]!
+  question: String
+}
+type PollAnswer {
+  id: Int! ## is equal to id in PollAnswerVoter
+  text: String!
+}
+type PollAnswerVoter {
+  id: Int! ## is equal to id in PollAnswer
+  isChosen: Boolean
+  isCorrect: Boolean
+  votersCount: Int!
+}
+type PollResults {
+  results: [PollAnswerVoter!]!
+  solution: String
+}
+
+type Document {
+  id: String!
+
+  blurHash: String
+  size: Int
+  mimeType: String
+  createdAt: DateTime!
+}

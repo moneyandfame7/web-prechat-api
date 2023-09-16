@@ -8,6 +8,7 @@ type Session {
   createdAt: DateTime!
   activeAt: DateTime!
   userId: String!
+  isCurrent: Boolean
 }
 
 input SessionData {

@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common'
 
-import { PrismaService } from 'common/prisma.service'
+import { SessionsModule } from 'Sessions'
 
 import { AccountService } from './Service'
 import { AccountRepository } from './Repository'
 import { AccountResolver } from './Resolver'
 
 @Module({
-  imports: [],
-  providers: [PrismaService, AccountResolver, AccountService, AccountRepository],
+  imports: [SessionsModule],
+  providers: [AccountResolver, AccountService, AccountRepository],
   exports: [AccountService],
 })
 export class AccountModule {}

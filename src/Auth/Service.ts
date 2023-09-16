@@ -1,17 +1,13 @@
 import { Injectable } from '@nestjs/common'
-import type { Session } from '@prisma/client'
-
-import type { FileUpload } from 'graphql-upload'
 
 import type { SessionData, Connection, SendPhoneResponse, SignInInput, SignUpInput } from '@generated/graphql'
 
 import { UserService } from 'Users'
-import { MediaService } from 'Media'
 import { SessionService } from 'Sessions'
 
 import { unformatString } from 'common/utils/unformatString'
 import { FirebaseService } from 'common/Firebase'
-import { AuthVerifyCodeError, SessionPasswordNeeded, SessionTooFreshError } from 'common/errors/Authorization'
+import { AuthVerifyCodeError, SessionPasswordNeeded } from 'common/errors/Authorization'
 import { PhoneNumberNotFoundError } from 'common/errors/Common'
 
 import { AccountService } from 'Account/Service'
@@ -19,11 +15,10 @@ import { AccountService } from 'Account/Service'
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly users: UserService,
-    private readonly firebase: FirebaseService,
-    private readonly media: MediaService,
-    private readonly sessions: SessionService,
-    private readonly account: AccountService,
+    private users: UserService,
+    private firebase: FirebaseService,
+    private sessions: SessionService,
+    private account: AccountService,
   ) {}
 
   public async sendPhone(phoneNumber: string): Promise<SendPhoneResponse> {
@@ -37,13 +32,13 @@ export class AuthService {
     }
   }
 
-  public async signUp(input: SignUpInput, photo?: FileUpload) {
+  public async signUp(input: SignUpInput) {
     const { connection, firstName, lastName, /* silent, firebase_token, */ phoneNumber } = input
-    /* Validate token, if not valid - throw error */
-    let photoUrl: string | undefined
-    if (photo) {
-      const photoName = (firstName + ' ' + lastName || '').toLowerCase().replace(/\s+/g, '-') + Date.now()
-      photoUrl = await this.media.uploadPhoto(photo, `avatars/${photoName}`)
+
+    const verified = await this.validateToken(input.firebase_token)
+    const unformatted = unformatString(phoneNumber)
+    if (verified.phone_number !== unformatted) {
+      throw new Error('Token invalid')
     }
 
     const sessionData: SessionData = {
@@ -54,16 +49,12 @@ export class AuthService {
       browser: connection.browser || 'unknown',
     }
 
-    const user = await this.users.create({
+    const { userId } = await this.users.create({
       firstName,
       lastName,
-      phoneNumber: unformatString(phoneNumber),
-      photoUrl,
-      sessionData,
+      phoneNumber,
     })
-
-    const session = await this.sessions.create(sessionData, user.id)
-    return { sessionHash: session.id }
+    return this.account.createAuthorization(sessionData, userId)
   }
 
   public async signIn(input: SignInInput) {
@@ -81,46 +72,11 @@ export class AuthService {
     if (password) {
       throw new SessionPasswordNeeded('auth.signIn')
     }
-
-    const session = await this.sessions.create(this.getSessionData(input.connection), user.id)
-
-    return { sessionHash: session.id }
-  }
-
-  public async terminateAuthorization(currentSession: Session, id: string) {
-    if (this.isFreshSession(currentSession)) {
-      throw new SessionTooFreshError('auth.terminateAllAuthorizations')
-    }
-
-    const willBeTerminated = await this.sessions.getById(id)
-    /* перевірка на freshSession */
-
-    if (willBeTerminated?.userId === currentSession.userId) {
-      return this.sessions.deleteById(id)
-    }
-
-    return false
-  }
-
-  public async terminateAllAuthorizations(currentSession: Session) {
-    if (this.isFreshSession(currentSession)) {
-      throw new SessionTooFreshError('auth.terminateAllAuthorizations')
-    }
+    return this.account.createAuthorization(this.getSessionData(input.connection), user.id)
   }
 
   public async getSession(id: string) {
     return this.sessions.getById(id)
-  }
-
-  private isFreshSession(session: Session) {
-    const sessionCreatedAt = session.createdAt.getTime()
-    const now = new Date().getTime()
-
-    const timeDifferenceMs = now - sessionCreatedAt
-
-    const twentyFourHoursInMs: number = 24 * 60 * 60 * 1000
-
-    return timeDifferenceMs <= twentyFourHoursInMs
   }
 
   private getSessionData(connection: Connection) {

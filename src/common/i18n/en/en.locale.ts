@@ -1,13 +1,14 @@
+import type { Keyset } from '../types'
+
 export default {
   LANG_NATIVE_NAME: 'English',
-  AUTH_VERIFY_CODE: 'Code verification error',
   Next: 'Next',
   Country: 'Country',
   Code: 'Code',
   PhoneNumber: 'Phone number',
   RememberMe: 'Remember me',
   Password: 'Password',
-  // 'WrongNumber?': 'Wrong number?',
+  'WrongNumber?': 'Wrong number?',
   YourName: 'Your Name',
   Name: 'Name',
   NewChannel: 'New Channel',
@@ -32,8 +33,34 @@ export default {
   'Auth.SignUp': 'Enter your name and add a profile picture',
   'Auth.SilentAuth': 'Silent (without contacts notification)',
   'Auth.StartMessaging': 'Start Messaging',
-  'Translate.Ukrainian': 'Ukrainian',
-  'Translate.English': 'English',
-  'Translate.German': 'German',
-  'Translate.Polish': 'Polish',
-}
+  'Error.UNAUTHORIZED': 'Your request cannot be processed due to lack of authorization. Please log in to gain access.',
+  'Error.AUTH_SESSION_TOO_FRESH':
+    'The operation could not be performed because the session is less than a day old. Sessions must be at least 24 hours old to be safe.',
+  'Error.AUTH_SESSION_EXPIRED':
+    'Your session is no longer valid because it has expired. Please sign in to resume your session.',
+  'Error.AUTH_SESSION_INVALID':
+    'The system could not authorize you with the session provided. It may be damaged or outdated.',
+  'Error.AUTH_VERIFY_CODE': 'Firebase code validation error.',
+  'Error.AUTH_SESSION_PASSWORD_NEEDED': 'The password needed.',
+  'Error.PHONE_NUMBER_NOT_FOUND': 'Phone number not registered.',
+  'Error.PHONE_NUMBER_INVALID': 'The phone number provided is not valid. Please verify the number and try again.',
+  'Error.PHONE_NUMBER_REGISTERED': 'The phone number is already registered. Please try another number.',
+  'Error.QUERY_IS_EMPTY': 'The search query is empty.',
+  'Error.INVALID_ID': 'The provided entity ID is invalid.',
+  'Error.FORBIDDEN': "You don't have permission to access.",
+  'Error.NOT_FOUND_ENTITY': 'The entity not found with provided data.',
+  'Error.BAD_REQUEST': 'Bad Request Exception',
+  'Error.CONTACT_EXIST': 'The contact already created.',
+  'Error.CONTACT_NAME_EMPTY': 'Contact name empty',
+  HelloInterpolate: 'Hi, {{name}}',
+  HelloPluralize: {
+    one: 'Hi, 1 item',
+    other: 'Hi, {{count}} items',
+  },
+  CombinedPlurAndInter: {
+    one: 'Hello, {{name}}, you have 1 item',
+    other: 'Hello, {{name}}, you have {{count}} items',
+  },
+  'Notification.CreatedChatWithTitle': '{{name}} created the group "{{title}}"',
+  'Notification.CreatedChannel': 'Channel created',
+} satisfies Keyset

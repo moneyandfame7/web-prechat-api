@@ -1,0 +1,6 @@
+type Photo {
+  id: String!
+  date: DateTime!
+  blurHash: String!
+  url: String!
+}

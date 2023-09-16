@@ -60,6 +60,12 @@ export class InvalidEntityIdError extends BaseApiError {
   }
 }
 
+export class ForbiddenError extends BaseApiError {
+  public constructor(method?: string) {
+    super(ErrorCode.FORBIDDEN, "you don't have permission to access", method)
+  }
+}
+
 export class NotFoundEntityError extends BaseApiError {
   public constructor(method: string) {
     super(ErrorCode.NOT_FOUND_ENTITY, 'The entity not found with provided data.', method)
@@ -81,5 +87,17 @@ export class ContactAlreadyExistError extends BaseApiError {
 export class ContactNameEmpty extends BaseApiError {
   public constructor(method: string) {
     super(ErrorCode.CONTACT_NAME_EMPTY, 'Contact name empty.', method)
+  }
+}
+
+export class UsernameInvalidError extends BaseApiError {
+  public constructor(method: string) {
+    super(ErrorCode.USERNAME_INVALID, 'The provided usernams is invalid.', method)
+  }
+}
+
+export class UsernameNotOccupiedError extends BaseApiError {
+  public constructor(method: string) {
+    super(ErrorCode.USERNAME_NOT_OCCUPIED, "The provided usernams doesn't exist.", method)
   }
 }

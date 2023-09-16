@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common/decorators/modules/module.decorator'
 import { GraphQLModule } from '@nestjs/graphql'
-import type { Provider } from '@nestjs/common'
+import { OnModuleInit, type Provider } from '@nestjs/common'
 import { ApolloDriver, type ApolloDriverConfig } from '@nestjs/apollo'
-import { ConfigModule } from '@nestjs/config'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 import { DateTimeResolver, GraphQLJSON, UUIDResolver } from 'graphql-scalars'
 import { GraphQLUpload } from 'graphql-upload'
-
+import * as redisStore from 'cache-manager-redis-store'
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
 
 import { AuthModule, AuthService } from './Auth'
@@ -28,6 +28,10 @@ import { AccountModule } from 'Account/Module'
 import { LangPackModule } from 'LangPack/Module'
 
 import { AppResolver } from './Resolver'
+import { PubSub2Module } from 'common/pubsub2/Module'
+import { PrismaModule } from 'common/prisma/Module'
+import { CacheModule } from '@nestjs/cache-manager'
+import { InputPeerTest } from 'common/scalars/InputPeer'
 
 const MAIN_MODULES = [
   // ApiModule,
@@ -43,6 +47,9 @@ const MAIN_MODULES = [
   MediaModule,
   AccountModule,
   LangPackModule,
+  // Wrappers for libs
+  PubSub2Module,
+  PrismaModule,
 ]
 const CONFIG_MODULES = [
   ConfigModule.forRoot({
@@ -67,6 +74,7 @@ const CONFIG_MODULES = [
         Upload: GraphQLUpload,
         JSON: GraphQLJSON,
         UUID: UUIDResolver,
+        InputPeer: InputPeerTest,
       },
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -125,6 +133,20 @@ const CONFIG_MODULES = [
       },
     }),
   }),
+
+  CacheModule.registerAsync({
+    isGlobal: true,
+    imports: [ConfigModule],
+    inject: [ConfigService],
+    useFactory: async (config: ConfigService) => ({
+      store: redisStore,
+      url: config.get('REDIS_URL'),
+      no_ready_check: true, // new property
+
+      ttl: 60,
+      tls: true,
+    }),
+  }),
 ]
 const PROVIDERS: Provider[] = [AppResolver, PrismaService]
 
@@ -132,4 +154,10 @@ const PROVIDERS: Provider[] = [AppResolver, PrismaService]
   imports: [...MAIN_MODULES, ...CONFIG_MODULES],
   providers: [...PROVIDERS],
 })
-export class AppModule {}
+export class AppModule implements OnModuleInit {
+  /* DATABASE FOR SCHEDULE MESSAGES, DATE ON IT SENDING!!! INIT HERE. */
+  /** get cron jobs, check names etc.. */
+  public onModuleInit() {
+    console.log('APP MODULE INITIALIZE')
+  }
+}

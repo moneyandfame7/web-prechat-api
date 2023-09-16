@@ -14,7 +14,11 @@ export enum ChatType {
     chatTypePrivate = "chatTypePrivate"
 }
 
-export enum UserAvatarVariants {
+export enum MessageActionType {
+    chatCreate = "chatCreate"
+}
+
+export enum ColorVariants {
     GREEN = "GREEN",
     PINK = "PINK",
     BLUE = "BLUE",
@@ -55,7 +59,7 @@ export class SignInInput {
     phoneNumber: string;
 }
 
-export class ChatInput {
+export class InputChat {
     chatId: string;
 }
 
@@ -99,6 +103,13 @@ export class GetLangStringInput {
     key: string;
 }
 
+export class SendMessageInput {
+    peer: InputPeer;
+    silent?: Nullable<boolean>;
+    text?: Nullable<string>;
+    sendAs?: Nullable<InputPeer>;
+}
+
 export class SearchGlobalInput {
     query: string;
     limit?: Nullable<number>;
@@ -116,15 +127,13 @@ export class CreateUserInput {
     firstName: string;
     lastName?: Nullable<string>;
     phoneNumber: string;
-    photoUrl?: Nullable<string>;
-    sessionData?: Nullable<SessionData>;
 }
 
 export class GetUsersInput {
     ids: string[];
 }
 
-export class UserInput {
+export class InputUser {
     userId: string;
 }
 
@@ -136,15 +145,21 @@ export class AuthTwoFa {
 export abstract class IQuery {
     abstract getPassword(): Nullable<AuthTwoFa> | Promise<Nullable<AuthTwoFa>>;
 
+    abstract getAuthorizations(): Session[] | Promise<Session[]>;
+
     abstract ping(): Nullable<Any> | Promise<Nullable<Any>>;
 
     abstract getTwoFa(token: string): Nullable<TwoFactorAuth> | Promise<Nullable<TwoFactorAuth>>;
 
     abstract sendPhone(phone: string): SendPhoneResponse | Promise<SendPhoneResponse>;
 
-    abstract getChatSettings(input: ChatInput): GetChatSettings | Promise<GetChatSettings>;
-
     abstract getChats(): Chat[] | Promise<Chat[]>;
+
+    abstract getChat(chatId: string): Chat | Promise<Chat>;
+
+    abstract getChatFull(chatId: string): ChatFull | Promise<ChatFull>;
+
+    abstract resolveUsername(username: string): Nullable<Peer> | Promise<Nullable<Peer>>;
 
     abstract getContacts(): Nullable<User[]> | Promise<Nullable<User[]>>;
 
@@ -164,19 +179,25 @@ export abstract class IQuery {
 
     abstract getUsers(input: GetUsersInput): User[] | Promise<User[]>;
 
-    abstract getUserFull(input: UserInput): UserFull | Promise<UserFull>;
+    abstract getUserFull(input: InputUser): UserFull | Promise<UserFull>;
 }
 
 export abstract class IMutation {
     abstract checkPassword(password: string): Nullable<Any> | Promise<Nullable<Any>>;
 
-    abstract signUp(input: SignUpInput, photo?: Nullable<Upload>): SignUpResponse | Promise<SignUpResponse>;
-
-    abstract signIn(input: SignInInput): SignInResponse | Promise<SignInResponse>;
-
     abstract terminateAuthorization(id: string): boolean | Promise<boolean>;
 
     abstract terminateAllAuthorizations(): boolean | Promise<boolean>;
+
+    abstract updateAuthorizationActivity(): Session | Promise<Session>;
+
+    abstract updateUserStatus(online: boolean): Any | Promise<Any>;
+
+    abstract testSub(number: number): Nullable<Any> | Promise<Nullable<Any>>;
+
+    abstract signUp(input: SignUpInput): Session | Promise<Session>;
+
+    abstract signIn(input: SignInInput): Session | Promise<Session>;
 
     abstract createChannel(input: CreateChannelInput): Chat | Promise<Chat>;
 
@@ -186,13 +207,36 @@ export abstract class IMutation {
 
     abstract deleteChatMember(input?: Nullable<DeleteChatMemberInput>): Nullable<Any> | Promise<Nullable<Any>>;
 
-    abstract deleteChat(input: ChatInput): Nullable<Any> | Promise<Nullable<Any>>;
+    abstract deleteChat(input: InputChat): Nullable<Any> | Promise<Nullable<Any>>;
 
     abstract addContact(input?: Nullable<AddContactInput>): User | Promise<User>;
 
     abstract updateContact(input: UpdateContactInput): Nullable<Any> | Promise<Nullable<Any>>;
 
     abstract deleteContact(userId: string): Nullable<Any> | Promise<Nullable<Any>>;
+
+    abstract sendMessage(): Message | Promise<Message>;
+}
+
+export class UpdateUserStatus {
+    userId: string;
+    status: Any;
+}
+
+export abstract class ISubscription {
+    abstract onAuthorizationTerminated(): Session[] | Promise<Session[]>;
+
+    abstract onAuthorizationUpdated(): Session | Promise<Session>;
+
+    abstract onAuthorizationCreated(): Session | Promise<Session>;
+
+    abstract onUserStatusUpdated(): UpdateUserStatus | Promise<UpdateUserStatus>;
+
+    abstract onTest(): number | Promise<number>;
+
+    abstract onChatCreated(): ChatCreatedUpdate | Promise<ChatCreatedUpdate>;
+
+    abstract onNewMessage(): NewMessagePayload | Promise<NewMessagePayload>;
 }
 
 export class TwoFactorAuth {
@@ -205,46 +249,72 @@ export class SendPhoneResponse {
     hasActiveSession: boolean;
 }
 
-export class SignUpResponse {
-    sessionHash: string;
-}
-
-export class SignInResponse {
-    sessionHash: string;
-}
-
 export class Chat {
     id: string;
+    userId?: Nullable<string>;
+    color: ColorVariants;
     type: ChatType;
     title: string;
+    photo?: Nullable<Photo>;
     membersCount?: Nullable<number>;
     unreadCount?: Nullable<number>;
     isNotJoined?: Nullable<boolean>;
     isForbidden?: Nullable<boolean>;
     isSupport?: Nullable<boolean>;
-    lastMessage?: Nullable<Any>;
+    lastMessage?: Nullable<Message>;
+    isOwner?: Nullable<boolean>;
     createdAt?: Nullable<DateTime>;
+    updatedAt?: Nullable<DateTime>;
+    isSavedMessages?: Nullable<boolean>;
+    isPinned?: Nullable<boolean>;
+    inviteLink?: Nullable<string>;
+    _id: string;
 }
 
-export class ChatSettings {
-    canAddContact?: Nullable<boolean>;
-    canShareContact?: Nullable<boolean>;
-    canReportSpam?: Nullable<boolean>;
-    canBlockContact?: Nullable<boolean>;
+export class ChatMember {
+    userId: string;
+    inviterId?: Nullable<string>;
+    promotedByUserId?: Nullable<string>;
+    kickedByUserId?: Nullable<string>;
+    joinedDate?: Nullable<DateTime>;
+    customTitle?: Nullable<string>;
+    userPermissions?: Nullable<ChatPermissions>;
+    adminPermissions?: Nullable<AdminPermissions>;
+    isAdmin?: Nullable<boolean>;
+    isOwner?: Nullable<boolean>;
 }
 
-export class GetChatSettings {
-    users: User[];
-    settings: ChatSettings;
+export class ChatFull {
+    members: ChatMember[];
+    onlineCount?: Nullable<number>;
+    description?: Nullable<string>;
+    areMembersHidden?: Nullable<boolean>;
+    historyForNewMembers?: Nullable<boolean>;
+    permissions?: Nullable<ChatPermissions>;
+    currentUserPermissions?: Nullable<ChatPermissions>;
+    currentAdminPermissions?: Nullable<AdminPermissions>;
+}
+
+export class ChatPermissions {
+    canSendMessages?: Nullable<boolean>;
+    canSendMedia?: Nullable<boolean>;
+    canInviteUsers?: Nullable<boolean>;
+    canPinMessages?: Nullable<boolean>;
+    canChangeInfo?: Nullable<boolean>;
+}
+
+export class AdminPermissions {
+    canChangeInfo?: Nullable<boolean>;
+    canDeleteMessages?: Nullable<boolean>;
+    canBanUsers?: Nullable<boolean>;
+    canInviteUsers?: Nullable<boolean>;
+    canPinMessages?: Nullable<boolean>;
+    canAddNewAdmins?: Nullable<boolean>;
 }
 
 export class ChatCreatedUpdate {
     chat: Chat;
     users: User[];
-}
-
-export abstract class ISubscription {
-    abstract onChatCreated(): ChatCreatedUpdate | Promise<ChatCreatedUpdate>;
 }
 
 export class LangPack {
@@ -264,6 +334,117 @@ export class Country {
     dial_code: string;
     emoji: string;
     code: string;
+}
+
+export class Photo {
+    id: string;
+    date: DateTime;
+    blurHash: string;
+    url: string;
+}
+
+export class NewMessagePayload {
+    chat: Chat;
+    message: Message;
+}
+
+export class Message {
+    text?: Nullable<string>;
+    id: string;
+    senderId?: Nullable<string>;
+    chatId: string;
+    _chatId?: Nullable<string>;
+    createdAt: DateTime;
+    updatedAt?: Nullable<DateTime>;
+    isPost?: Nullable<boolean>;
+    isOutgoing: boolean;
+    postAuthor?: Nullable<string>;
+    views?: Nullable<number>;
+    media?: Nullable<MessageMedia>;
+    action?: Nullable<MessageAction>;
+}
+
+export class MessageAction {
+    text: string;
+    type: MessageActionType;
+    users: string[];
+    photo?: Nullable<Photo>;
+    values?: Nullable<string[]>;
+}
+
+export class MessagePhoto {
+    photo: Photo;
+    ttlSeconds?: Nullable<number>;
+    spoiler?: Nullable<boolean>;
+}
+
+export class MessageMediaPhoto {
+    photo: MessagePhoto;
+}
+
+export class MessageDocument {
+    document: Document;
+    ttlSeconds?: Nullable<number>;
+    spoiler?: Nullable<boolean>;
+}
+
+export class MessageMediaDocument {
+    document: MessageDocument;
+}
+
+export class MessageContact {
+    phoneNumber: string;
+    firstName: string;
+    lastName?: Nullable<string>;
+    userId?: Nullable<string>;
+}
+
+export class MessageMediaContact {
+    contact: MessageContact;
+}
+
+export class MessagePoll {
+    poll: Poll;
+    results?: Nullable<PollResults>;
+}
+
+export class MessageMediaPoll {
+    poll: MessagePoll;
+}
+
+export class Poll {
+    isClosed?: Nullable<boolean>;
+    isAnonymous?: Nullable<boolean>;
+    isQuiz?: Nullable<boolean>;
+    withMultiplieChoise?: Nullable<boolean>;
+    closeDate?: Nullable<DateTime>;
+    answers: PollAnswer[];
+    question?: Nullable<string>;
+}
+
+export class PollAnswer {
+    id: number;
+    text: string;
+}
+
+export class PollAnswerVoter {
+    id: number;
+    isChosen?: Nullable<boolean>;
+    isCorrect?: Nullable<boolean>;
+    votersCount: number;
+}
+
+export class PollResults {
+    results: PollAnswerVoter[];
+    solution?: Nullable<string>;
+}
+
+export class Document {
+    id: string;
+    blurHash?: Nullable<string>;
+    size?: Nullable<number>;
+    mimeType?: Nullable<string>;
+    createdAt: DateTime;
 }
 
 export class SearchGlobalResponse {
@@ -288,6 +469,7 @@ export class Session {
     createdAt: DateTime;
     activeAt: DateTime;
     userId: string;
+    isCurrent?: Nullable<boolean>;
 }
 
 export class User {
@@ -296,20 +478,22 @@ export class User {
     phoneNumber: string;
     lastName?: Nullable<string>;
     username?: Nullable<string>;
+    bio?: Nullable<string>;
     isContact: boolean;
     isSelf: boolean;
     isMutualContact: boolean;
-    fullInfo: UserFull;
+    color: ColorVariants;
+    status: UserStatus;
+    photo?: Nullable<Photo>;
 }
 
-export class UserAvatar {
-    avatarVariant: UserAvatarVariants;
-    hash?: Nullable<string>;
-    url?: Nullable<string>;
+export class UserStatus {
+    wasOnline?: Nullable<number>;
+    type: string;
 }
 
 export class UserFull {
-    avatar: UserAvatar;
+    photos?: Nullable<Nullable<Photo>[]>;
     bio?: Nullable<string>;
 }
 
@@ -317,5 +501,8 @@ export type Any = any;
 export type JSON = any;
 export type UUID = any;
 export type DateTime = any;
+export type InputPeer = any;
 export type Upload = any;
+export type Peer = Chat | User;
+export type MessageMedia = MessageMediaPhoto | MessageMediaDocument | MessageMediaContact | MessageMediaPoll;
 type Nullable<T> = T | null;

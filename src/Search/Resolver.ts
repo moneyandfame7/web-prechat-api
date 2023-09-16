@@ -13,15 +13,15 @@ import { SearchService } from './Service'
 export class SearchResolver {
   constructor(private search: SearchService) {}
 
-  @Query('searchGlobal')
-  @UseGuards(AuthGuard)
-  async searchGlobal(@CurrentSession() session: Session, @Args('input') input: SearchGlobalInput) {
-    return this.search.searchGlobal(session.userId, input)
-  }
+  // @Query('searchGlobal')
+  // @UseGuards(AuthGuard)
+  // async searchGlobal(@CurrentSession() session: Session, @Args('input') input: SearchGlobalInput) {
+  //   return this.search.searchGlobal(session.userId, input)
+  // }
 
-  @Query('searchUsers')
-  @UseGuards(AuthGuard)
-  async searchUsers(@CurrentSession() session: Session, @Args('input') input: SearchGlobalInput) {
-    return this.search.searchUsers(session.userId, input)
-  }
+  // @Query('searchUsers')
+  // @UseGuards(AuthGuard)
+  // async searchUsers(@CurrentSession() session: Session, @Args('input') input: SearchGlobalInput) {
+  //   return this.search.searchUsers(session.userId, input)
+  // }
 }

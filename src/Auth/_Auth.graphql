@@ -33,37 +33,20 @@ input SignUpInput {
   lastName: String
 }
 
-type SignUpResponse {
-  sessionHash: String!
-}
-
 input SignInInput {
   firebase_token: String!
   connection: Connection!
   phoneNumber: String!
 }
-type SignInResponse {
-  sessionHash: String!
-}
 
-# enum AuthState {
-#   signUpRequired
-#   passwordRequired
-#   authDone
-# }
-# type AuthResponse {
-#   _: AuthState!
-#   session: String
-#   twoFa: TwoFactorAuth
-# }
 type Query {
   getTwoFa(token: String!): TwoFactorAuth
   sendPhone(phone: String!): SendPhoneResponse!
 }
 
 type Mutation {
-  signUp(input: SignUpInput!, photo: Upload): SignUpResponse!
-  signIn(input: SignInInput!): SignInResponse!
+  signUp(input: SignUpInput!): Session!
+  signIn(input: SignInInput!): Session!
   terminateAuthorization(id: String!): Boolean!
   terminateAllAuthorizations: Boolean!
 }

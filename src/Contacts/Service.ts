@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { /*  isPhoneNumber, */ isUUID } from 'class-validator'
 
-import type { AddContactInput, UpdateContactInput, User } from '@generated/graphql'
+import type { AddContactInput, UpdateContactInput, User, Chat } from '@generated/graphql'
 
 import { UserService } from 'Users'
 
@@ -15,17 +15,24 @@ import {
 } from 'common/errors/Common'
 
 import { ContactsRepository } from './Repository'
+import { BuilderService } from 'common/builder/Service'
+import { ChatService } from 'Chats'
 
 @Injectable()
 export class ContactsService {
-  public constructor(private repository: ContactsRepository, private users: UserService) {}
+  public constructor(
+    private repository: ContactsRepository,
+    private users: UserService,
+    private builder: BuilderService,
+    private chats: ChatService,
+  ) {}
 
   /* Adding  */
   public async add(requesterId: string, input: AddContactInput): Promise<User> {
     if (input.userId) {
-      if (!isUUID(input.userId)) {
-        throw new InvalidEntityIdError('contacts.addContact')
-      }
+      // if (!isUUID(input.userId)) {
+      //   throw new InvalidEntityIdError('contacts.addContact')
+      // }
 
       return this.addById(requesterId, {
         firstName: input.firstName,
@@ -57,11 +64,15 @@ export class ContactsService {
     }
     this.validateContact(user)
 
-    return this.repository.add(requesterId, {
+    const added = await this.repository.add(requesterId, {
       userId: user.id,
       firstName: input.firstName,
       lastName: input.lastName,
     })
+    // const chat = await this.chats.createPrivate(requesterId, { userId: user.id })
+    /* const contact = await */ return this.builder.buildApiUserAndStatus(added.contact, requesterId)
+
+    // return { chat, user: contact }
   }
 
   private async addById(requesterId: string, input: AddContactInput & { userId: string }): Promise<User> {
@@ -73,11 +84,15 @@ export class ContactsService {
 
     this.validateContact(user)
 
-    return this.repository.add(requesterId, {
+    const added = await this.repository.add(requesterId, {
       userId: user.id,
       firstName: input.firstName,
       lastName: input.lastName,
     })
+    // const chat = await this.chats.createPrivate(requesterId, { userId: user.id })
+    return this.builder.buildApiUserAndStatus(added.contact, requesterId)
+
+    // return user
   }
 
   private validateContact(user: User) {
@@ -111,6 +126,7 @@ export class ContactsService {
   }
 
   public async get(requesterId: string): Promise<User[]> {
-    return this.repository.get(requesterId)
+    const contacts = await this.repository.get(requesterId)
+    return this.builder.buildApiUsersAndStatuses(contacts, requesterId)
   }
 }

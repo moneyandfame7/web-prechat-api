@@ -1,6 +1,7 @@
+import type { Keyset } from '../types'
+
 export default {
   LANG_NATIVE_NAME: 'Українська',
-  AUTH_VERIFY_CODE: 'Помилка верифікації коду',
   Next: 'Далі',
   Country: 'Країна',
   Code: 'Код',
@@ -32,8 +33,39 @@ export default {
   'Auth.SignUp': "Введіть своє ім'я та додайте фотографію профілю",
   'Auth.SilentAuth': 'Безшумно (ваші контакти не отримають повідомлення )',
   'Auth.StartMessaging': 'Розпочніть Листування',
-  'Translate.Ukrainian': 'Українська',
-  'Translate.English': 'Англійська',
-  'Translate.German': 'Німецька',
-  'Translate.Polish': 'Польска',
-}
+  'Error.UNAUTHORIZED':
+    'Ваш запит не може бути оброблений через відсутність авторизації. Будь ласка, увійдіть, щоб отримати доступ.',
+  'Error.AUTH_SESSION_TOO_FRESH':
+    'Операція не може бути виконана, оскільки сеансу менше доби. Для безпеки сеанси повинні бути щонайменше 24 години.',
+  'Error.AUTH_SESSION_EXPIRED':
+    'Ваш сеанс більше не дійсний, оскільки його термін закінчився. Будь ласка, увійдіть, щоб відновити сесію.',
+  'Error.AUTH_SESSION_INVALID':
+    'Система не змогла авторизувати вас за допомогою наданого сеансу. Можливо, він пошкоджений або застарілий.',
+  'Error.AUTH_VERIFY_CODE': 'Помилка валідації коду Firebase.',
+  'Error.AUTH_SESSION_PASSWORD_NEEDED': 'Потрібен пароль.',
+  'Error.PHONE_NUMBER_NOT_FOUND': 'Номер телефону не зареєстрований.',
+  'Error.PHONE_NUMBER_INVALID': 'Наданий номер телефону є недійсним. Будь ласка, перевірте номер і спробуйте ще раз.',
+  'Error.PHONE_NUMBER_REGISTERED': 'Номер телефону вже зареєстровано. Будь ласка, спробуйте інший номер.',
+  'Error.QUERY_IS_EMPTY': 'Пошуковий запит порожній.',
+  'Error.INVALID_ID': 'Наданий ідентифікатор сутності є недійсним.',
+  'Error.FORBIDDEN': 'У вас немає дозволу на доступ.',
+  'Error.NOT_FOUND_ENTITY': 'Сутність не знайдено за наданими даними.',
+  'Error.BAD_REQUEST': 'Поганий запит.',
+  'Error.CONTACT_EXIST': 'Контакт вже створено.',
+  'Error.CONTACT_NAME_EMPTY': "Ім'я контакту порожнє.",
+  HelloInterpolate: 'Привіт, {{name}}',
+  HelloPluralize: {
+    one: 'Привіт, 1 штука',
+    few: 'Привіт, 2 штуки',
+    many: 'Привіт, **{{count}}** __штук__',
+    other: 'Привіт, **{{count}}** штук',
+  },
+  CombinedPlurAndInter: {
+    one: 'Привіт, {{name}}, ти маєш 1 штуку',
+    few: 'Привіт,{{name}}, ти маєш {{count}} штуки',
+    many: 'Привіт, **{{name}}**, ти маєш {{count}} штук',
+    other: 'Привіт, **{{name}}**, ти маєш {{count}} штук',
+  },
+  'Notification.CreatedChatWithTitle': '{{name}} створив групу "{{title}}"',
+  'Notification.CreatedChannel': 'Канал створено',
+} satisfies Keyset

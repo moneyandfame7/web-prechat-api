@@ -1,8 +1,9 @@
-import type { AvatarVariants, Contact, Prisma } from '@prisma/client'
+import type { Contact, Prisma } from '@prisma/client'
 
-import type { User, UserInput } from '@generated/graphql'
-
-import { getRandomAvatarVariant } from 'Media/Helpers'
+import type { User, InputUser } from '@generated/graphql'
+import type { UserFieldsForBuild } from 'types/users'
+import { selectPhotoFields } from './photos'
+import { pick } from 'common/utils/pick'
 
 /**
  * Just create relation for User and PrivacySettings.
@@ -45,21 +46,6 @@ export function buildPrivacySettings(): Prisma.UserCreateInput['privacySettings'
 }
 
 /**
- * Just create relation for User and UserFullInfo.
- */
-export function buildUserFullInfo(): Prisma.UserCreateInput['fullInfo'] {
-  return {
-    create: {
-      avatar: {
-        create: {
-          avatarVariant: getRandomAvatarVariant(),
-        },
-      },
-    },
-  }
-}
-
-/**
  * Select default user fields.
  */
 
@@ -70,62 +56,48 @@ export function selectUserFieldsToBuild() /* : Required<UserFieldsToBuild> */ {
     lastName: true,
     username: true,
     phoneNumber: true,
-    fullInfo: {
-      select: {
-        avatar: {
-          select: {
-            avatarVariant: true,
-            // url: true,
-            // hash:true
-          },
-        },
-        bio: true,
-      },
-    },
     contacts: true,
     addedByContacts: true,
+    color: true,
+    lastActivity: true,
+    isDeleted: true,
+    createdAt: true,
+    // fullInfoId: true,
+    privacySettingsId: true,
+    bio: true,
+    photo: {
+      ...selectPhotoFields(),
+    },
   }
 }
 export function getContact(contacts: Contact[], currentUserId: string) {
   return contacts.find((c) => c.ownerId === currentUserId)
 }
 
-export function isSelf(requiesterId: string, user: UserInput | string) {
+export function isSelf(requiesterId: string, user: InputUser | string) {
   const id = typeof user === 'string' ? user : user.userId
 
   return requiesterId === id
 }
 
-export function buildApiUser(
-  currentUserId: string,
-
-  u: {
-    id: string
-    firstName: string
-    lastName: string | null
-    username: string | null
-    phoneNumber: string
-    fullInfo: {
-      bio: string | null
-      avatar: {
-        avatarVariant: AvatarVariants
-      }
-    }
-    contacts: Contact[]
-    addedByContacts: Contact[]
-  },
-) {
+export function buildApiUser(currentUserId: string, u: UserFieldsForBuild) {
   const contactAddedByCurrent = getContact(u.addedByContacts, currentUserId)
 
   const isCurrentUserInContact = u.addedByContacts.some((c) => c.ownerId === currentUserId)
 
   const isCurrentUserAddedToContact = u.contacts.some((c) => c.contactId === currentUserId)
+
+  // const status=buildUserStatus(u)
+  const baseFields = pick(u, ['id', 'color', 'photo', 'username', 'phoneNumber'])
   return {
-    ...u,
+    ...baseFields,
+
     firstName: contactAddedByCurrent?.firstName || u.firstName,
     lastName: contactAddedByCurrent?.lastName || u.lastName,
     isSelf: u.id === currentUserId,
     isContact: isCurrentUserInContact,
     isMutualContact: isCurrentUserInContact && isCurrentUserAddedToContact,
-  } as User
+  } as Omit<User, 'status'>
+
+  /* status here -  */
 }

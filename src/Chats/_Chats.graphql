@@ -1,3 +1,5 @@
+scalar InputPeer
+
 enum ChatType {
   chatTypeGroup
   chatTypeChannel
@@ -5,30 +7,71 @@ enum ChatType {
 }
 type Chat {
   id: String!
+  userId: String
   # folderId
+  color: ColorVariants!
   type: ChatType!
   title: String!
-
+  photo: Photo
   membersCount: Int
   unreadCount: Int
   isNotJoined: Boolean
   isForbidden: Boolean
   isSupport: Boolean
-  lastMessage: Any
-
+  lastMessage: Message
+  isOwner: Boolean
   createdAt: DateTime
+  updatedAt: DateTime
+  isSavedMessages: Boolean
+  isPinned: Boolean
+  inviteLink: String
+  _id: String!
 }
 
-type ChatSettings {
-  canAddContact: Boolean
-  canShareContact: Boolean
-  canReportSpam: Boolean
-  canBlockContact: Boolean
+type ChatMember {
+  userId: String!
+  inviterId: String
+  promotedByUserId: String
+  kickedByUserId: String
+  joinedDate: DateTime
+  customTitle: String
+  userPermissions: ChatPermissions
+  adminPermissions: AdminPermissions
+  isAdmin: Boolean
+  isOwner: Boolean
 }
 
-input ChatInput {
+type ChatFull {
+  members: [ChatMember!]!
+  onlineCount: Int
+  description: String
+  areMembersHidden: Boolean
+  historyForNewMembers: Boolean
+  permissions: ChatPermissions
+  currentUserPermissions: ChatPermissions
+  currentAdminPermissions: AdminPermissions
+}
+
+type ChatPermissions {
+  canSendMessages: Boolean
+  canSendMedia: Boolean
+  canInviteUsers: Boolean
+  canPinMessages: Boolean
+  canChangeInfo: Boolean
+}
+type AdminPermissions {
+  canChangeInfo: Boolean
+  canDeleteMessages: Boolean
+  canBanUsers: Boolean
+  canInviteUsers: Boolean
+  canPinMessages: Boolean
+  canAddNewAdmins: Boolean
+}
+input InputChat {
   chatId: String!
 }
+
+union Peer = Chat | User
 
 input CreateGroupInput {
   users: [String!]!
@@ -50,14 +93,17 @@ input DeleteChatMemberInput {
   userId: String!
 }
 
-type GetChatSettings {
-  users: [User!]!
-  settings: ChatSettings!
-}
+# type GetChatSettings {
+#   users: [User!]!
+#   settings: ChatSettings!
+# }
 
 type Query {
-  getChatSettings(input: ChatInput!): GetChatSettings!
+  # getChatSettings(input: ChatInput!): GetChatSettings!
   getChats: [Chat!]!
+  getChat(chatId: String!): Chat!
+  getChatFull(chatId: String!): ChatFull!
+  resolveUsername(username: String!): Peer
 }
 
 type Mutation {
@@ -65,7 +111,7 @@ type Mutation {
   createGroup(input: CreateGroupInput!): Chat!
   addChatMembers(input: AddChatMembersInput!): Any
   deleteChatMember(input: DeleteChatMemberInput): Any
-  deleteChat(input: ChatInput!): Any
+  deleteChat(input: InputChat!): Any
 }
 
 type ChatCreatedUpdate {

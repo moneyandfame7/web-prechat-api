@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common'
 
-import { AuthModule } from 'Auth/Module'
 import { UserModule } from 'Users/Module'
 import { ChatsModule } from 'Chats/Module'
 
@@ -10,9 +9,10 @@ import { PrismaService } from 'common/prisma.service'
 import { ContactsService } from './Service'
 import { ContactsResolver } from './Resolver'
 import { ContactsRepository } from './Repository'
+import { BuilderModule } from 'common/builder/Module'
 
 @Module({
-  imports: [PubSubModule, AuthModule, UserModule, ChatsModule],
+  imports: [PubSubModule, UserModule, ChatsModule, BuilderModule],
   providers: [ContactsResolver, ContactsService, ContactsRepository, PrismaService],
   exports: [ContactsService],
 })

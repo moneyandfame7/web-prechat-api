@@ -15,6 +15,7 @@ input UpdateContactInput {
 type Query {
   getContacts: [User!]
 }
+
 type Mutation {
   addContact(input: AddContactInput): User!
   updateContact(input: UpdateContactInput!): Any

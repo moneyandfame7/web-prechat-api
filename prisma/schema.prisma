@@ -12,7 +12,7 @@ datasource db {
 }
 
 // CHAT MEDIA
-enum AvatarVariants {
+enum ColorVariants {
   GREEN
   PINK
   BLUE
@@ -20,15 +20,23 @@ enum AvatarVariants {
   PURPLE
   ORANGE
 
-  @@map("avatar_variants")
+  @@map("color_variants")
 }
 
-model ChatAvatar {
-  id            String         @id @default(uuid())
-  avatarVariant AvatarVariants @map("avatar_variant")
-  fullUserInfo  UserFullInfo?
+model Photo {
+  id       String   @id @unique @default(uuid())
+  date     DateTime @default(now())
+  blurHash String
+  url      String
+  chat     Chat     @relation(fields: [chatId], references: [id])
+  chatId   String   @unique
+  user     User     @relation(fields: [userId], references: [id])
+  userId   String   @unique
 
-  @@map("chat_avatars")
+  chatFull          ChatFullInfo?      @relation(fields: [chatFullId], references: [id])
+  chatFullId        String?
+  messageMediaPhoto MessageMediaPhoto?
+  messageAction     MessageAction?
 }
 
 model Session {
@@ -43,30 +51,31 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String   @map("user_id")
 
+  @@index([userId])
   @@map("sessions")
 }
 
 model User {
-  id          String  @id @default(uuid())
-  username    String? @unique
-  phoneNumber String  @unique @map("phone_number")
-  firstName   String  @map("first_name")
-  lastName    String? @map("last_name")
+  id           String        @id @default(uuid())
+  username     String?       @unique
+  phoneNumber  String        @unique @map("phone_number")
+  firstName    String        @map("first_name")
+  lastName     String?       @map("last_name")
+  bio          String?
+  isDeleted    Boolean       @default(false)
+  lastActivity DateTime?
+  photo        Photo?
+  createdAt    DateTime      @default(now()) @map("created_at")
+  apiToken     ApiToken?
+  color        ColorVariants
+  twoFaAuth    TwoFaAuth?
+  chats        ChatMember[]
 
-  createdAt DateTime  @default(now()) @map("created_at")
-  apiToken  ApiToken?
-
-  twoFaAuth       TwoFaAuth?
-  chats           ChatMember[]
   sessions        Session[]
-  contacts        Contact[]    @relation(name: "ContactToOwner")
-  addedByContacts Contact[]    @relation(name: "ContactToUser")
-
-  blockedUsers   UserBlock[] @relation(name: "BlockedUsers")
-  blockedByUsers UserBlock[] @relation(name: "BlockedByUsers")
-
-  fullInfo   UserFullInfo @relation(fields: [fullInfoId], references: [id], onDelete: Cascade)
-  fullInfoId String       @unique @map("full_info_id")
+  contacts        Contact[]   @relation(name: "ContactToOwner")
+  addedByContacts Contact[]   @relation(name: "ContactToUser")
+  blockedUsers    UserBlock[] @relation(name: "BlockedUsers")
+  blockedByUsers  UserBlock[] @relation(name: "BlockedByUsers")
 
   privacySettings   PrivacySettings @relation(fields: [privacySettingsId], references: [id])
   privacySettingsId String          @unique
@@ -77,6 +86,152 @@ model User {
   // adminIn
   @@index(fields: [username, phoneNumber, id])
   @@map("users")
+}
+
+enum MessageActionType {
+  chatCreate
+  channelCreate
+  deletePhoto
+  editTitle
+  joinedByLink
+  messagePinned
+  deleteUser
+  addUser
+  other
+}
+
+// ACTIONS
+model MessageAction {
+  id        String            @id @unique @default(uuid())
+  text      String
+  photo     Photo?            @relation(fields: [photoId], references: [id])
+  photoId   String?           @unique
+  type      MessageActionType @default(other)
+  message   Message           @relation(fields: [messageId], references: [id])
+  messageId String            @unique
+  users     String[] // JUST STORE ARRAY????
+  values    String[]
+}
+
+// MEDIA ( rewrite to "content" )
+model MessageMedia {
+  id                   String                @id @unique @default(uuid())
+  messageMediaPhoto    MessageMediaPhoto?
+  messageMediaContact  MessageMediaContact?
+  messageMediaDocument MessageMediaDocument?
+  messageMediaPoll     MessageMediaPoll?
+  message              Message               @relation(fields: [messageId], references: [id])
+  messageId            String                @unique
+}
+
+model MessageMediaPhoto {
+  id         String       @id @default(uuid())
+  spoiler    Boolean?
+  photo      Photo        @relation(fields: [photoId], references: [id])
+  photoId    String       @unique
+  ttlSeconds Int?
+  inMessage  MessageMedia @relation(fields: [messageId], references: [messageId])
+  messageId  String       @unique
+}
+
+model MessageMediaContact {
+  id          String       @id @unique @default(uuid())
+  phoneNumber String
+  firstName   String
+  lastName    String?
+  userId      String?
+  inMessage   MessageMedia @relation(fields: [messageId], references: [messageId])
+  messageId   String       @unique
+}
+
+model MessageMediaDocument {
+  id         String       @id @unique @default(uuid())
+  spoiler    Boolean?
+  ttlSeconds Int?
+  document   Document     @relation(fields: [documentId], references: [id])
+  documentId String       @unique
+  inMessage  MessageMedia @relation(fields: [messageId], references: [messageId])
+  messageId  String       @unique
+}
+
+model MessageMediaPoll {
+  id     String @id @unique @default(uuid())
+  poll   Poll   @relation(fields: [pollId], references: [id])
+  pollId String @unique
+
+  inMessage MessageMedia @relation(fields: [messageId], references: [messageId])
+  messageId String       @unique
+}
+
+// POLLS
+
+model Poll {
+  id              String            @id @unique @default(uuid())
+  inMessageMedia  MessageMediaPoll?
+  isClosed        Boolean           @default(false)
+  isAnonymous     Boolean           @default(false)
+  isQuiz          Boolean           @default(false)
+  multiplieChoise Boolean           @default(false)
+  closeDate       DateTime? // int?
+  answers         PollAnswer[]
+  question        String
+  solution        String?
+}
+
+model PollAnswer {
+  id        Int          @id @default(autoincrement())
+  text      String
+  voters    ChatMember[]
+  poll      Poll         @relation(fields: [pollId], references: [id])
+  pollId    String
+  isCorrect Boolean?
+}
+
+// @todo мейбі зробити окрему таблицю для blurhash
+model Document {
+  id String @id @unique @default(uuid())
+
+  inMessageMedia MessageMediaDocument?
+  blurHash       String?
+  size           Int
+  mimeType       String
+  createdAt      DateTime              @default(now())
+}
+
+enum DeletedFor {
+  deleteForAll
+  deleteForMe
+}
+
+model Message {
+  id     String @id @unique @default(uuid())
+  chat   Chat   @relation(fields: [chatId], references: [id])
+  chatId String // ??
+
+  media          MessageMedia?
+  action         MessageAction?
+  sender         ChatMember     @relation(fields: [senderId], references: [id])
+  senderId       String // ??
+  text           String?
+  isLastIn       Chat?          @relation(name: "LastMessageIn", fields: [isLastInChatId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  isLastInChatId String?        @unique
+
+  isPinned         Boolean?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  // for channel/groups?
+  isPost           Boolean?
+  replyToMessageId String?
+  postAuthor       String?
+  views            Int?
+}
+
+model MessageForward {
+  id String @id @unique @default(uuid())
+
+  fromChatId    String?
+  fromMessageId String?
+  senderUserId  String?
 }
 
 model Contact {
@@ -125,14 +280,21 @@ enum ChatType {
 model Chat {
   id String @id @default(uuid())
 
+  photo       Photo?
+  color       ColorVariants
   title       String
+  inviteLink  String?
   isPrivate   Boolean?         @map("is_private")
   createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt
   type        ChatType
   // members     ChatMember[]
   fullInfo    ChatFullInfo?
   permissions ChatPermissions?
+  messages    Message[]
+  lastMessage Message?         @relation(name: "LastMessageIn")
 
+  @@index([id])
   @@map("chats")
 }
 
@@ -141,12 +303,16 @@ model ChatFullInfo {
 
   description          String?
   historyForNewMembers Boolean? @default(true) @map("history_for_new_members")
-  //  admins
-  chat                 Chat     @relation(fields: [chatId], references: [id])
-  chatId               String   @unique @map("chat_id")
+  canViewMembers       Boolean? @default(true)
+  chat                 Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  chatId               String   @unique
 
   members ChatMember[]
+
+  // kickedMembers ChatMember[]
+
   // @@index([chatId])
+  Photo Photo[]
 
   @@map("chats_full_info")
 }
@@ -154,48 +320,60 @@ model ChatFullInfo {
 model ChatMember {
   id String @id @default(uuid())
 
-  isPinned     Boolean? @default(false) @map("is_pinned")
-  isMuted      Boolean? @default(false) @map("is_muted")
-  unreadCount  Int?     @default(0) @map("unread_count")
-  inviterId    String?  @map("inviter_id")
-  promotedById String?  @map("promoted_by_id")
-  kickedById   String?  @map("kicked_by_id")
+  isPinned     Boolean?  @default(false) @map("is_pinned")
+  isMuted      Boolean?  @default(false) @map("is_muted")
+  unreadCount  Int?      @default(0) @map("unread_count")
+  draft        String?
+  joinedDate   DateTime? @default(now())
+  inviterId    String?   @map("inviter_id")
+  promotedById String?   @map("promoted_by_id")
+  kickedById   String?   @map("kicked_by_id")
 
-  adminRights ChatAdminRights?
-  isAdmin     Boolean?
-  isOwner     Boolean?
+  // if admin - only admin permissions, else - only user
+  adminPermissions ChatAdminPermissions?
+  userPermissions  ChatPermissions?
+  isAdmin          Boolean?
+  isOwner          Boolean?
 
   chatInfo   ChatFullInfo @relation(fields: [chatInfoId], references: [chatId])
   chatInfoId String       @map("chat_id")
 
-  member User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
   userId String @map("user_id")
 
+  votedAnswers PollAnswer[]
+  messages     Message[]
   // chat   Chat   @relation(fields: [chatId], references: [id])
   // chatId String @unique @map("chat_id")
   // member ChatMember
 
+  @@index([userId])
   @@map("chat_members")
 }
+
+// model ChatMemberMessage {}
 
 model ChatPermissions {
   id String @id @default(uuid())
 
-  canSendMessage Boolean @default(true) @map("can_send_messages")
-  canSendMedia   Boolean @default(true) @map("can_send_media")
-  canInviteUsers Boolean @default(true) @map("can_invite_users")
-  canPinMessages Boolean @default(true) @map("can_pin_messages")
-  canChangeInfo  Boolean @default(true) @map("can_change_info")
+  canSendMessages Boolean @default(true) @map("can_send_messages")
+  canSendMedia    Boolean @default(true) @map("can_send_media")
+  canInviteUsers  Boolean @default(true) @map("can_invite_users")
+  canPinMessages  Boolean @default(true) @map("can_pin_messages")
+  canChangeInfo   Boolean @default(true) @map("can_change_info")
 
   chat   Chat   @relation(fields: [chatId], references: [id])
   chatId String @unique @map("chat_id")
+
+  member   ChatMember? @relation(fields: [memberId], references: [id])
+  memberId String?     @unique
 
   // @@index([chatId])
 
   @@map("chat_permissions")
 }
 
-model ChatAdminRights {
+model ChatAdminPermissions {
   id String @id @default(uuid())
 
   canChangeInfo     Boolean? @default(true) @map("can_change_info")
@@ -210,7 +388,7 @@ model ChatAdminRights {
   customTitle String?    @map("custom_title")
   // @@index([adminId])
 
-  @@map("chat_admin_rights")
+  @@map("chat_admin_permissions")
 }
 
 // USER SETTINGS
@@ -224,19 +402,8 @@ model TwoFaAuth {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String @unique @map("user_id")
 
+  @@index([userId])
   @@map("two_fa_auth")
-}
-
-model UserFullInfo {
-  id String @id @default(uuid())
-
-  avatar   ChatAvatar @relation(fields: [avatarId], references: [id])
-  avatarId String     @unique @map("avatar_id")
-  bio      String?
-
-  user User?
-
-  @@map("users_full_info")
 }
 
 enum PrivacyVisibility {

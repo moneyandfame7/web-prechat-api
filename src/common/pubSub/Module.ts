@@ -1,6 +1,9 @@
-import { Global, Module } from '@nestjs/common'
+import { Module } from '@nestjs/common'
 import { PubSub } from 'graphql-subscriptions'
 
+/**
+ * @TODO types pub sub
+ */
 @Module({
   providers: [
     {

@@ -1,91 +1,123 @@
 import type { Chat, ChatFullInfo, ChatMember, Prisma } from '@prisma/client'
-import type * as Api from '@generated/graphql'
-import { isSelf } from './users'
 
+import type { UserFieldsForBuild } from 'types/users'
+
+import { isSelf, selectUserFieldsToBuild } from './users'
+import { type PrismaPhoto, selectPhotoFields } from './photos'
+import { type PrismaMessage, selectMessageFields } from './messages'
+
+export type PrismaChatAdminPermissions = {
+  canChangeInfo: boolean | null
+  canDeleteMessages: boolean | null
+  canBanUsers: boolean | null
+  canInviteUsers: boolean | null
+  canPinMessages: boolean | null
+  canAddNewAdmins: boolean | null
+  customTitle: string | null
+}
+export type PrismaChatPermissions = {
+  canChangeInfo: boolean | null
+  canInviteUsers: boolean | null
+  canPinMessages: boolean | null
+  canSendMedia: boolean | null
+  canSendMessages: boolean | null
+}
+export type PrismaChatMember = ChatMember & {
+  user: UserFieldsForBuild
+} & { adminPermissions: PrismaChatAdminPermissions | null } & { userPermissions: PrismaChatPermissions | null }
+export type PrismaChatFull = ChatFullInfo & {
+  members: PrismaChatMember[]
+}
+export type PrismaChat = Chat & { photo: PrismaPhoto | null } & { fullInfo: PrismaChatFull | null } & {
+  lastMessage: PrismaMessage | null
+} & { permissions: PrismaChatPermissions | null }
 /* check if type of chat is private */
-export function buildApiChatSettings(members: Api.User[]): Api.ChatSettings {
-  return {
-    canAddContact: members.length === 1 && !members[0].isContact,
-    canBlockContact: true,
-    canReportSpam: true,
-    canShareContact: /* members.length===1&&members[0]. */ true /* check in privacy?? */,
-  }
-}
-export function buildApiChatFull(requesterId: string) {
-  return {
-    members: [],
-    onlineCount: 0,
-    description: '',
-    areMembersHidden: false,
-    // permissions
-    // kickedMembers
-    // inviteLink: '',
-  }
-}
-export function buildeApiChatMember() {
-  return {
-    // userId,
-    // inviterId?
-    // promotedByUserId?,
-    // kickedByUserId?,
-    // adminRights?
-    // customTitle?
-    // isAdmin?
-    // isOwner?
-    // currentUserPermissions?
-  }
-}
-
-// export function buildApiCreateChat(requesterId: string, input: Api.CreateChannelInput) {
-//   const { title, description, users } = input
-//   const members: Prisma.ChatMemberCreateNestedManyWithoutChatInfoInput = {
-//     createMany: users
-//       ? {
-//           data: users.map((u) => ({
-//             unreadCount: isSelf(requesterId, u) ? 0 : 1,
-//             isOwner: isSelf(requesterId, u),
-//             isAdmin: isSelf(requesterId, u),
-//             inviterId: requesterId,
-//             userId: u,
-//           })),
-//         }
-//       : undefined,
-//   }
-
-//   const fullInfo = {
-//     members,
-//     description,
-//   }
-
-//   return { fullInfo, title, type: Api.ChatType.chatTypeChannel }
+// export function buildApiChatSettings(members: Api.User[]): Api.ChatSettings {
+// return {
+//   canAddContact: members.length === 1 && !members[0].isContact,
+//   canBlockContact: true,
+//   canReportSpam: true,
+//   canShareContact: /* members.length===1&&members[0]. */ true /* check in privacy?? */,
+// }
 // }
 
-export function buildApiChat(
-  requesterId: string,
-  chat: Chat & {
-    fullInfo:
-      | (ChatFullInfo & {
-          members: ChatMember[]
-        })
-      | null
-  },
-): Api.Chat {
+export function createChatMembers(requesterId: string, memberIds: string[]) {
   return {
-    id: chat.id,
-    title: chat.title,
-    isSupport: false,
-    /* folderId */
-    /* joinDate */
-    type: chat.type as Api.ChatType,
-    membersCount: chat.fullInfo?.members.length,
-    isForbidden: false,
-    isNotJoined: !chat.fullInfo?.members.some((m) => m.userId === requesterId),
-    // isSupport: chat.,
-    unreadCount: 0,
+    members: {
+      createMany: {
+        data: memberIds.map((u) => ({
+          // id: u,
+          unreadCount: isSelf(requesterId, u) ? 0 : 1,
+          isOwner: isSelf(requesterId, u),
+          isAdmin: isSelf(requesterId, u),
+          inviterId: requesterId,
+          userId: u,
+        })),
+      },
+    },
   }
-  /*  */
 }
 
-export function computeChatMember(requesterId: string, members: ChatMember[]) {
-  return members.find((m) => isSelf(requesterId, m.userId))
+export function selectChatPermissions() {
+  return {
+    canChangeInfo: true,
+    canInviteUsers: true,
+    canPinMessages: true,
+    canSendMedia: true,
+    canSendMessages: true,
+  }
+}
+
+export function selectChatMembers() {
+  return {
+    fullInfo: {
+      include: {
+        members: {
+          include: {
+            user: {
+              select: {
+                ...selectUserFieldsToBuild(),
+              },
+            },
+            // adminPermissions: {},
+            userPermissions: {
+              select: {
+                ...selectChatPermissions(),
+              },
+            },
+            adminPermissions: {
+              select: {
+                canChangeInfo: true,
+                canDeleteMessages: true,
+                canBanUsers: true,
+                canInviteUsers: true,
+                canPinMessages: true,
+                canAddNewAdmins: true,
+                customTitle: true,
+              },
+            },
+          },
+        },
+      },
+    },
+  }
+}
+
+export function selectChatFields() {
+  return {
+    ...selectChatMembers(),
+    photo: {
+      ...selectPhotoFields(),
+    },
+    lastMessage: {
+      include: {
+        ...selectMessageFields(),
+      },
+    },
+    permissions: {
+      select: {
+        ...selectChatPermissions(),
+      },
+    },
+  } satisfies Prisma.ChatSelect
 }

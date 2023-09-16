@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { Global, Module } from '@nestjs/common'
 
 import { UserModule } from 'Users/Module'
 import { SessionsModule } from 'Sessions/Module'
@@ -9,6 +9,9 @@ import { FirebaseModule } from 'common/Firebase/Module'
 
 import { AuthService } from './Service'
 import { AuthResolver } from './Resolver'
+
+// Make it global for AuthGuard
+@Global()
 @Module({
   imports: [UserModule, MediaModule, SessionsModule, FirebaseModule, AccountModule],
   providers: [AuthService, AuthResolver],

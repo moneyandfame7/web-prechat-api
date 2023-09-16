@@ -26,7 +26,13 @@ export class AuthGuard implements CanActivate {
     if (!session) {
       throw new UnauthorizedError('authGuard')
     }
-    const decoded = await this.authService.getSession(session as string)
+    let decoded
+    try {
+      decoded = await this.authService.getSession(session as string)
+    } catch (e) {
+      throw new SessionInvalidError('authGuard')
+    }
+
     if (!decoded) {
       throw new SessionInvalidError('authGuard')
     }

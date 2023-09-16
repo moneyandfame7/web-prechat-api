@@ -6,8 +6,27 @@ type AuthTwoFa {
 type Query {
   # 2FA Login.
   getPassword: AuthTwoFa
+  getAuthorizations: [Session!]!
 }
 
+# type User
 type Mutation {
   checkPassword(password: String!): Any
+  terminateAuthorization(id: String!): Boolean!
+  terminateAllAuthorizations: Boolean!
+  updateAuthorizationActivity: Session!
+  updateUserStatus(online: Boolean!): Any!
+}
+
+type UpdateUserStatus {
+  userId: String!
+  # status: UserStatus!
+  status: Any!
+}
+
+type Subscription {
+  onAuthorizationTerminated: [Session!]!
+  onAuthorizationUpdated: Session!
+  onAuthorizationCreated: Session!
+  onUserStatusUpdated: UpdateUserStatus!
 }

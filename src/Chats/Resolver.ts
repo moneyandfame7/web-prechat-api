@@ -1,17 +1,8 @@
-import { Args, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql'
-import { Inject, UseGuards } from '@nestjs/common'
-import { PubSub } from 'graphql-subscriptions'
-import {
-  AddChatMembersInput,
-  ChatInput,
-  type Chat,
-  CreateChannelInput,
-  CreateGroupInput,
-  DeleteChatMemberInput,
-  type ChatCreatedUpdate,
-} from '@generated/graphql'
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql'
+import { UseGuards } from '@nestjs/common'
+import * as Api from '@generated/graphql'
 
-import { AuthGuard } from 'Auth'
+import { AuthGuard } from 'Auth/Guard'
 
 import { CurrentSession } from 'common/decorators/Session'
 import { getSession } from 'common/helpers/getSession'
@@ -19,10 +10,15 @@ import { getSession } from 'common/helpers/getSession'
 import type { GqlContext } from 'types/other'
 
 import { ChatService } from './Service'
+import { PubSub2Service } from 'common/pubsub2/Service'
+import { QueryTyped, SubscriptionBuilder } from 'types/nestjs'
+import { BuilderService } from 'common/builder/Service'
+import { isValidUsername } from 'common/helpers/isValidUsername'
+import { UsernameInvalidError } from 'common/errors'
 
-@Resolver('Chat')
+@Resolver()
 export class ChatsResolver {
-  constructor(@Inject('PUB_SUB') private pubSub: PubSub, private readonly chats: ChatService) {}
+  constructor(private pubSub: PubSub2Service, private readonly chats: ChatService, private builder: BuilderService) {}
   /**
    *  @throws "USER_RESTRICTED" - if user has many spam/flood reports
    *  @throws "CHAT_TITLE_INVALID" - if not provided title
@@ -32,69 +28,103 @@ export class ChatsResolver {
   @UseGuards(AuthGuard)
   public async createChannel(
     @CurrentSession('userId') currUserId: string,
-    @Args('input') input: CreateChannelInput,
-  ): Promise<Chat> {
-    const { chat, users } = await this.chats.createChannel(currUserId, input)
-    this.pubSub.publish('onChatCreated', {
-      onChatCreated: {
-        chat,
-        users,
-      },
+    @Args('input') input: Api.CreateChannelInput,
+  ): Promise<Api.Chat> {
+    const chatNotBuilded = await this.chats.createChannel(currUserId, input)
+
+    this.pubSub.publishNotBuilded('onChatCreated', {
+      onChatCreated: chatNotBuilded,
     })
 
-    return chat
-  }
-
-  @UseGuards(AuthGuard)
-  @Subscription('onChatCreated', {
-    /**
-     * Фільтрація підписки тільки для юзерів, які існують в створенному чаті.
-     */
-    filter(payload: { onChatCreated: ChatCreatedUpdate }, _, context: GqlContext) {
-      const session = getSession(context.req)
-
-      const mentionedUsers = payload.onChatCreated.users
-
-      return Boolean(mentionedUsers.find((u) => u.id === session.userId))
-    },
-  })
-  public async onChatCreated() {
-    return this.pubSub.asyncIterator('onChatCreated')
+    return this.builder.buildApiChat(chatNotBuilded, currUserId)
   }
 
   @Mutation('createGroup')
   @UseGuards(AuthGuard)
-  public async createGroup(@CurrentSession('userId') currUserId: string, @Args('input') input: CreateGroupInput) {
-    const update = await this.chats.createGroup(currUserId, input)
+  public async createGroup(
+    @CurrentSession('userId') currUserId: string,
+    @Args('input') input: Api.CreateGroupInput,
+  ): Promise<Api.Chat> {
+    const chatNotBuilded = await this.chats.createGroup(currUserId, input)
 
-    this.pubSub.publish('onChatCreated', { onChatCreated: update })
-    return update
+    this.pubSub.publishNotBuilded('onChatCreated', {
+      onChatCreated: chatNotBuilded,
+    })
+
+    return this.builder.buildApiChat(chatNotBuilded, currUserId)
+  }
+
+  @UseGuards(AuthGuard)
+  @SubscriptionBuilder('onChatCreated', {
+    /**
+     * Фільтрація підписки тільки для юзерів, які існують в створенному чаті. ( окрім власника, бо він отримує чат в response після мутації)
+     */
+    filter(payload, _, context) {
+      const session = getSession(context.req)
+      /**
+       * @todo якщо це створюється чат і це приватний чат ( коли додається контакт, наприклад, то не треба викликати підписку???)
+       */
+      const mentionedUsers = payload.onChatCreated.fullInfo?.members.map((m) => ({ ...m.user, isOwner: m.isOwner }))
+
+      return Boolean(mentionedUsers?.find((u) => u.id === session.userId && !u.isOwner))
+    },
+    /**
+     * Потрібно змінювати обʼєкт тут, бо змінювати в мутації не можливо
+     * ( адже там в нас айдішнік тільки того, хто створив чат, і тоді цей чат не можна
+     *  віддавати всім юзерам, бо він тільки під requester`a зроблений)
+     */
+    async resolve(this: ChatsResolver, payload, args, context) {
+      const session = getSession(context.req)
+
+      const requesterId = session.userId
+      const createdChat = payload.onChatCreated
+
+      const members = createdChat.fullInfo?.members.map((m) => m.user)
+      const users = members ? await this.builder.buildApiUsersAndStatuses(members, requesterId) : []
+      const chat = this.builder.buildApiChat(createdChat, requesterId)
+
+      return { users, chat }
+    },
+  })
+  public async onChatCreated() {
+    return this.pubSub.subscribe('onChatCreated')
   }
 
   @Query('getChats')
   @UseGuards(AuthGuard)
   public async getChats(@CurrentSession('userId') currUserId: string) {
-    return this.chats.getChats(currUserId)
+    const chats = await this.chats.getChats(currUserId)
+
+    return chats.map((c) => this.builder.buildApiChat(c, currUserId))
   }
 
-  @Mutation('addChatMembers')
-  public async addChatMembers(@Args('input') input: AddChatMembersInput) {
-    const update = await this.chats.addChatMembers(input)
-  }
-
-  @Mutation('deleteChatMember')
-  public async deleteChatMember(@Args('input') input: DeleteChatMemberInput) {
-    const update = await this.chats.deleteChatMember(input)
-  }
-
-  @Mutation('deleteChat')
-  public async deleteChat(@Args('input') input: ChatInput) {
-    const update = await this.chats.deleteChat(input)
-  }
-
-  @Query('getChatSettings')
+  @QueryTyped('getChat')
   @UseGuards(AuthGuard)
-  public async getChatSettings(@CurrentSession('userId') currentUserId: string, @Args('input') input: ChatInput) {
-    return this.chats.getChatSettings(currentUserId, input)
+  public async getChat(
+    @CurrentSession('userId') requesterId: string,
+    @Args('chatId') chatId: string,
+  ): Promise<Api.Chat> {
+    return this.chats.getChat(chatId, requesterId)
+  }
+
+  @QueryTyped('getChatFull')
+  @UseGuards(AuthGuard)
+  public async getChatFull(
+    @CurrentSession('userId') requesterId: string,
+    @Args('chatId') chatId: string,
+  ): Promise<Api.ChatFull> {
+    return this.chats.getChatFull(chatId, requesterId)
+  }
+
+  @QueryTyped('resolveUsername')
+  @UseGuards(AuthGuard)
+  public async resolveUsername(
+    @CurrentSession('userId') requesterId: string,
+    @Args('username') username: string,
+  ): Promise<Api.Peer | undefined> {
+    if (!isValidUsername(username)) {
+      throw new UsernameInvalidError('chats.resolveUsername')
+    }
+    return this.chats.resolveUsername(username, requesterId)
   }
 }

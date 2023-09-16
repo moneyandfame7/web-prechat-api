@@ -4,11 +4,12 @@ import type { Country, GetLangStringInput, Language } from '@generated/graphql'
 
 import type { LanguageStringKeys, SupportedLanguage } from 'types/other'
 import { i18n, languagesNames } from 'common/i18n'
+import type { Translation } from 'common/i18n/types'
 
 @Injectable()
 export class LangPackService {
   public getLangPack(code: SupportedLanguage): {
-    strings: Record<LanguageStringKeys, string>
+    strings: Record<LanguageStringKeys, Translation>
     langCode: SupportedLanguage
   } {
     return {
@@ -17,7 +18,7 @@ export class LangPackService {
     }
   }
 
-  public getLangString(input: GetLangStringInput): string {
+  public getLangString(input: GetLangStringInput): Translation {
     const { code, key } = input
 
     return i18n[code as SupportedLanguage].pack[key as LanguageStringKeys]

@@ -2,14 +2,14 @@ import { Injectable } from '@nestjs/common'
 import type { AddContactInput, UpdateContactInput } from '@generated/graphql'
 
 import { PrismaService } from 'common/prisma.service'
-import { buildApiUser, selectUserFieldsToBuild } from 'common/builder/users'
+import { selectUserFieldsToBuild } from 'common/builder/users'
 
 @Injectable()
 export class ContactsRepository {
   public constructor(public readonly prisma: PrismaService) {}
 
   public async add(requesterId: string, input: AddContactInput & { userId: string }) {
-    const result = await this.prisma.contact.create({
+    return this.prisma.contact.create({
       data: {
         ownerId: requesterId,
         contactId: input.userId,
@@ -24,8 +24,6 @@ export class ContactsRepository {
         },
       },
     })
-
-    return buildApiUser(requesterId, result.contact)
   }
 
   public async update(contactId: string, input: UpdateContactInput) {
@@ -63,7 +61,7 @@ export class ContactsRepository {
   }
 
   public async get(requesterId: string) {
-    const users = await this.prisma.user.findMany({
+    return this.prisma.user.findMany({
       where: {
         addedByContacts: {
           some: {
@@ -75,6 +73,5 @@ export class ContactsRepository {
         ...selectUserFieldsToBuild(),
       },
     })
-    return users.map((u) => buildApiUser(requesterId, u))
   }
 }

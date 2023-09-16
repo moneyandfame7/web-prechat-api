@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import type { SessionData } from '@generated/graphql'
+import type * as Api from '@generated/graphql'
 
 import { PrismaService } from 'common/prisma.service'
 
@@ -7,7 +7,7 @@ import { PrismaService } from 'common/prisma.service'
 export class SessionService {
   constructor(private readonly prisma: PrismaService) {}
 
-  public create(input: SessionData, userId: string) {
+  public create(input: Api.SessionData, userId: string) {
     return this.prisma.session.create({
       data: {
         ...input,
@@ -33,15 +33,45 @@ export class SessionService {
   }
 
   public async deleteById(id: string) {
-    try {
-      await this.prisma.session.delete({
+    return this.prisma.session.delete({
+      where: {
+        id,
+      },
+    })
+  }
+
+  public async updateActivity(id: string): Promise<Api.Session> {
+    return this.prisma.session.update({
+      where: {
+        id,
+      },
+      data: {
+        activeAt: new Date(),
+      },
+    })
+  }
+
+  public async deleteExceptCurrent(currentSession: Api.Session): Promise<Api.Session[]> {
+    return this.prisma.$transaction(async (tx) => {
+      const sessionsToDelete = await tx.session.findMany({
         where: {
-          id,
+          userId: currentSession.userId,
+          NOT: {
+            id: currentSession.id,
+          },
         },
       })
-      return true
-    } catch (e) {
-      return false
-    }
+      const idsToDelete = sessionsToDelete.map((s) => s.id)
+
+      await tx.session.deleteMany({
+        where: {
+          id: {
+            in: idsToDelete,
+          },
+        },
+      })
+
+      return sessionsToDelete
+    })
   }
 }

@@ -1,6 +1,7 @@
+import type { Keyset } from '../types'
+
 export default {
   LANG_NATIVE_NAME: 'Deutsch',
-  AUTH_VERIFY_CODE: 'Code-Validierungsfehler',
   Next: 'Weiter',
   Country: 'Land',
   Code: 'Code',
@@ -32,8 +33,35 @@ export default {
   'Auth.SignUp': 'Geben Sie Ihren Namen ein und fügen Sie ein Profilbild hinzu',
   'Auth.SilentAuth': 'Lautlos (ohne Benachrichtigung der Kontakte)',
   'Auth.StartMessaging': 'Start der Nachrichtenübermittlung',
-  'Translate.Ukrainian': 'Ukrainisch',
-  'Translate.English': 'Englisch',
-  'Translate.German': 'Deustch',
-  'Translate.Polish': 'Polnisch',
-}
+
+  'Error.UNAUTHORIZED':
+    'Ihre Anfrage kann nicht bearbeitet werden, da Sie keine Berechtigung haben. Bitte loggen Sie sich ein, um Zugang zu erhalten.',
+  'Error.AUTH_SESSION_TOO_FRESH':
+    'Der Vorgang kann nicht ausgeführt werden, weil die Sitzung weniger als einen Tag alt ist. Aus Sicherheitsgründen müssen die Sitzungen mindestens 24 Stunden alt sein.',
+  'Error.AUTH_SESSION_EXPIRED':
+    'Ihre Sitzung ist nicht mehr gültig, da sie abgelaufen ist. Bitte melden Sie sich an, um Ihre Sitzung zu reaktivieren.',
+  'Error.AUTH_SESSION_INVALID':
+    'Das System konnte Sie nicht mit der angegebenen Sitzung anmelden. Sie könnte beschädigt oder veraltet sein.',
+  'Error.AUTH_VERIFY_CODE': 'Firebase Code-Validierungsfehler.',
+  'Error.AUTH_SESSION_PASSWORD_NEEDED': 'Потрібен пароль.',
+  'Error.PHONE_NUMBER_NOT_FOUND': 'Passwort erforderlich.',
+  'Error.PHONE_NUMBER_INVALID':
+    'Die angegebene Rufnummer ist ungültig. Bitte überprüfen Sie die Nummer und versuchen Sie es erneut.',
+  'Error.PHONE_NUMBER_REGISTERED': 'Die Rufnummer ist bereits registriert. Bitte versuchen Sie eine andere Nummer.',
+  'Error.QUERY_IS_EMPTY': 'Die Suchanfrage ist leer.',
+  'Error.INVALID_ID': 'Der angegebene Entitätsbezeichner ist ungültig.',
+  'Error.FORBIDDEN': 'Sie haben keine Zugangsberechtigung.',
+  'Error.NOT_FOUND_ENTITY': 'Die Entität wurde anhand der angegebenen Daten nicht gefunden.',
+  'Error.BAD_REQUEST': 'Schlechte Anfrage.',
+  'Error.CONTACT_EXIST': 'Der Kontakt wurde bereits erstellt.',
+  'Error.CONTACT_NAME_EMPTY': 'Der Kontaktname ist leer.',
+  HelloInterpolate: 'Morgen, {{name}}',
+  HelloPluralize: {
+    other: 'Hallo, {{count}} Artikel',
+  },
+  CombinedPlurAndInter: {
+    other: 'Hallo, **{{count}}** __Artikel__',
+  },
+  'Notification.CreatedChatWithTitle': '{{name}} hat die Gruppe "{{title}}" erstellt',
+  'Notification.CreatedChannel': 'Kanal erstellt',
+} satisfies Keyset
