@@ -1,22 +1,61 @@
 # scalar DateTime
+type Mutation {
+  sendMessage(input: SendMessageInput!): NewMessagePayload!
+}
+type Subscription {
+  onNewMessage: NewMessagePayload!
+}
+type Query {
+  getHistory(input: GetHistoryInput!): [Message!]!
+}
+enum HistoryDirection {
+  Backwards
+  Around
+  Forwards
+}
+input GetHistoryInput {
+  direction: HistoryDirection!
+  chatId: String!
+  maxDate: DateTime
+  offsetId: String
+  limit: Int
+  includeOffset: Boolean
+}
 input SendMessageInput {
-  peer: InputPeer!
+  # I provide Id for optimistic render
+  id: String!
+  chatId: String!
+  sendAs: String
   silent: Boolean
+  entities: [MessageEntityInput!]
   text: String
-  sendAs: InputPeer
   # media later...
 }
 
-type Mutation {
-  sendMessage: Message!
+enum MessageEntityType {
+  italic
+  bold
+  underline
+  strike
+  spoiler
+  email
+  phone
+  url
+  textUrl
+  mention
+  code
+  hashtag
+}
+input MessageEntityInput {
+  start: Int!
+  end: Int!
+  type: MessageEntityType!
 }
 type NewMessagePayload {
   chat: Chat!
   message: Message!
 }
-type Subscription {
-  onNewMessage: NewMessagePayload!
-}
+
 type Message {
   text: String
   id: String!
@@ -35,9 +74,31 @@ type Message {
 
   media: MessageMedia
   action: MessageAction
+
+  content: MessageContent!
+}
+type MessageContent {
+  media: MessageMedia
+  action: MessageAction
+  photo: MessagePhoto
+  contact: MessageContact
+  poll: MessagePoll
+  document: MessageDocument
+  formattedText: MessageFormattedText
+}
+
+type MessageEntity {
+  start: Int!
+  end: Int!
+  type: MessageEntityType!
+}
+type MessageFormattedText {
+  text: String
+  entities: [MessageEntity!]
 }
 enum MessageActionType {
   chatCreate
+  channelCreate
 }
 type MessageAction {
   text: String!

@@ -15,6 +15,10 @@ import type { PrismaChat, PrismaChatMember } from './chats'
 import type { PhotoFields } from './photos'
 import type { PrismaMessage, PrismaMessageMedia } from './messages'
 
+/**
+ * @todo - Add memory Caching
+ * Devide on smaller classes
+ */
 @Injectable()
 export class BuilderService {
   public constructor(@Inject(CACHE_MANAGER) private cache: Cache) {}
@@ -100,16 +104,23 @@ export class BuilderService {
 
     const privateChatPartner =
       chat.type === 'chatTypePrivate' ? this.selectPrivateChatMember(chat, requesterId) : undefined
+
+    const title = privateChatPartner
+      ? privateChatPartner.isSelf
+        ? 'Saved Messages'
+        : this.getUserName(privateChatPartner)
+      : chat.title
+    const chatId = privateChatPartner?.id || chat.id
     return {
-      id: privateChatPartner?.id || chat.id,
+      id: chatId,
       userId: privateChatPartner?.id,
-      color: chat.color as Api.ColorVariants,
+      color: privateChatPartner?.color || (chat.color as Api.ColorVariants),
       type: chat.type as Api.ChatType,
-      title: this.getChatTitle(chat, requesterId),
+      title,
       createdAt: chat.createdAt,
       isNotJoined: !requesterMember,
       unreadCount: requesterMember?.unreadCount,
-      lastMessage: chat.lastMessage ? this.buildApiMessage(chat.lastMessage, requesterId) : undefined,
+      lastMessage: chat.lastMessage ? this.buildApiMessage(chat.lastMessage, requesterId, chatId) : undefined,
       membersCount: chat.fullInfo!.members.length,
       isSavedMessages: privateChatPartner?.id === requesterId,
       inviteLink: chat.inviteLink,
@@ -184,13 +195,20 @@ export class BuilderService {
   }
 
   /** MESSAGES */
-  public buildApiMessage(message: PrismaMessage, requesterId: string): Api.Message {
-    const { media, action, senderId, ...primaryFields } = message
+  public buildApiMessage(message: PrismaMessage, requesterId: string, chatId: string): Api.Message {
+    const { media, action, entities, senderId, ...primaryFields } = message
 
     return {
       ...primaryFields,
       _chatId: primaryFields.chatId,
-
+      chatId,
+      content: {
+        formattedText: {
+          text: primaryFields.text!,
+          entities: entities as unknown as Api.MessageEntity[],
+        },
+        action: (action as Api.MessageAction) || undefined,
+      },
       senderId: senderId,
       isOutgoing: senderId === requesterId,
       media: this.buildApiMessageMedia(media),
@@ -227,6 +245,8 @@ export class BuilderService {
       // const { results, ...pollFields } = poll
     }
   }
+
+  public createApiMessageEntity(entities: Api.MessageEntity[]) {}
 
   // public buildApiMessageAction(
   //   action?: PrismaMessageAction | null,

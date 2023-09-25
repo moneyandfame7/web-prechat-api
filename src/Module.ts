@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common/decorators/modules/module.decorator'
 import { GraphQLModule } from '@nestjs/graphql'
-import { OnModuleInit, type Provider } from '@nestjs/common'
+import { type OnModuleInit, type Provider } from '@nestjs/common'
+import { CacheModule } from '@nestjs/cache-manager'
 import { ApolloDriver, type ApolloDriverConfig } from '@nestjs/apollo'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { DateTimeResolver, GraphQLJSON, UUIDResolver } from 'graphql-scalars'
+
 import { GraphQLUpload } from 'graphql-upload'
 import * as redisStore from 'cache-manager-redis-store'
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
@@ -30,7 +32,6 @@ import { LangPackModule } from 'LangPack/Module'
 import { AppResolver } from './Resolver'
 import { PubSub2Module } from 'common/pubsub2/Module'
 import { PrismaModule } from 'common/prisma/Module'
-import { CacheModule } from '@nestjs/cache-manager'
 import { InputPeerTest } from 'common/scalars/InputPeer'
 
 const MAIN_MODULES = [
@@ -87,24 +88,11 @@ const CONFIG_MODULES = [
             const headers: Record<string, unknown> = {
               ...(ctx.connectionParams?.headers as object),
             }
-            console.log('graphql-ws-CONNECT')
-            // const session = headers['prechat-session']
-            // if (!session) {
-            //   throw new UnauthorizedError('graphql.subscribe')
-            // }
-            // const decoded = await authService.decodeSession(session as string)
-            // if (!decoded) {
-            //   throw new SessionInvalidError('authGuard')
-            // }
-
-            // ;(ctx.extra as any).prechatSession = decoded
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ;(ctx.extra as any).headers = headers
-            // /* якщо потрібно, можна і юзера знайти по айдішніку і поставити тут */
             return {
               req: {
                 headers,
-                // prechatSession: decoded,
               },
             }
           },

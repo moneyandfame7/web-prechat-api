@@ -76,29 +76,29 @@ export class AccountRepository {
      *    return {type:"userStatusRecently "}
      *  }
      */
-    return this.prisma.$transaction(async (tx) => {
-      const now = new Date()
+    // return this.prisma.$transaction(async (tx) => {
+    const now = new Date()
 
-      const user = await tx.user.update({
-        where: {
-          id: currentSession.userId,
-        },
-        data: {
-          lastActivity: now,
-          // sessions: {
-          //   update: {
-          //     where: {
-          //       id: currentSession.id,
-          //     },
-          //     data: {
-          //       activeAt: now,
-          //     },
-          //   },
-          // },
-        },
-      })
-
-      return user
+    const user = await this.prisma.user.update({
+      where: {
+        id: currentSession.userId,
+      },
+      data: {
+        lastActivity: now,
+        // sessions: {
+        //   update: {
+        //     where: {
+        //       id: currentSession.id,
+        //     },
+        //     data: {
+        //       activeAt: now,
+        //     },
+        //   },
+        // },
+      },
     })
+
+    return user
+    // })
   }
 }

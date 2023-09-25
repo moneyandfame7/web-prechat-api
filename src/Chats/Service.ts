@@ -96,12 +96,7 @@ export class ChatService {
         lastMessage: {
           create: {
             action: {
-              create: createMessageAction(
-                {
-                  '@type': 'channelCreate',
-                },
-                requesterId,
-              ),
+              create: createMessageAction({ '@type': 'channelCreate' }, requesterId),
             },
             chatId,
             senderId: requesterId,

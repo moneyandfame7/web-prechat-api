@@ -117,7 +117,7 @@ export class AccountService {
    * Check if the session was created less than 24 hours ago.
    */
   private isFreshSession(session: Api.Session) {
-    return false
+    // return false
     const sessionCreatedAt = session.createdAt.getTime()
     const now = new Date().getTime()
 

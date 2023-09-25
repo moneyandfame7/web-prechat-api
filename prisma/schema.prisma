@@ -56,26 +56,26 @@ model Session {
 }
 
 model User {
-  id           String        @id @default(uuid())
-  username     String?       @unique
-  phoneNumber  String        @unique @map("phone_number")
-  firstName    String        @map("first_name")
-  lastName     String?       @map("last_name")
-  bio          String?
-  isDeleted    Boolean       @default(false)
-  lastActivity DateTime?
-  photo        Photo?
-  createdAt    DateTime      @default(now()) @map("created_at")
-  apiToken     ApiToken?
-  color        ColorVariants
-  twoFaAuth    TwoFaAuth?
-  chats        ChatMember[]
-
+  id              String        @id @default(uuid())
+  username        String?       @unique
+  phoneNumber     String        @unique @map("phone_number")
+  firstName       String        @map("first_name")
+  lastName        String?       @map("last_name")
+  bio             String?
+  isDeleted       Boolean       @default(false)
+  lastActivity    DateTime?
+  photo           Photo?
+  createdAt       DateTime      @default(now()) @map("created_at")
+  apiToken        ApiToken?
+  color           ColorVariants
+  twoFaAuth       TwoFaAuth?
+  chats           ChatMember[]
+  messages        Message[]
   sessions        Session[]
-  contacts        Contact[]   @relation(name: "ContactToOwner")
-  addedByContacts Contact[]   @relation(name: "ContactToUser")
-  blockedUsers    UserBlock[] @relation(name: "BlockedUsers")
-  blockedByUsers  UserBlock[] @relation(name: "BlockedByUsers")
+  contacts        Contact[]     @relation(name: "ContactToOwner")
+  addedByContacts Contact[]     @relation(name: "ContactToUser")
+  blockedUsers    UserBlock[]   @relation(name: "BlockedUsers")
+  blockedByUsers  UserBlock[]   @relation(name: "BlockedByUsers")
 
   privacySettings   PrivacySettings @relation(fields: [privacySettingsId], references: [id])
   privacySettingsId String          @unique
@@ -210,7 +210,8 @@ model Message {
 
   media          MessageMedia?
   action         MessageAction?
-  sender         ChatMember     @relation(fields: [senderId], references: [id])
+  entities       Json?
+  sender         User           @relation(fields: [senderId], references: [id])
   senderId       String // ??
   text           String?
   isLastIn       Chat?          @relation(name: "LastMessageIn", fields: [isLastInChatId], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -224,8 +225,11 @@ model Message {
   replyToMessageId String?
   postAuthor       String?
   views            Int?
+
+  // add index for chatId
 }
 
+// model MessageText, MessageMedia in content: text: MessageText, contact: Media
 model MessageForward {
   id String @id @unique @default(uuid())
 
@@ -342,7 +346,7 @@ model ChatMember {
   userId String @map("user_id")
 
   votedAnswers PollAnswer[]
-  messages     Message[]
+  // messages     Message[]
   // chat   Chat   @relation(fields: [chatId], references: [id])
   // chatId String @unique @map("chat_id")
   // member ChatMember
@@ -422,6 +426,9 @@ model PrivacySettings {
   phoneNumber   PrivacyRule @relation(fields: [phoneNumberId], references: [id], name: "PrivacyPhoneNumber")
   phoneNumberId String      @unique @map("phone_number_id")
 
+  sendMessage   PrivacyRule @relation(fields: [sendMessageId], references: [id], name: "PrivacySendMessage")
+  sendMessageId String      @unique @map("send_message_id")
+
   lastSeen   PrivacyRule @relation(fields: [lastSeenId], references: [id], name: "PrivacyLastSeen")
   lastSeenId String      @unique @map("last_seen_id")
 
@@ -453,6 +460,7 @@ model PrivacyRule {
   profilePhotoSettings   PrivacySettings? @relation(name: "PrivacyProfilePhoto")
   addForwardLinkSettings PrivacySettings? @relation(name: "PrivacyAddForwardLink")
   chatInviteSettings     PrivacySettings? @relation(name: "PrivacyChatInvite")
+  sendMessageSettings    PrivacySettings? @relation(name: "PrivacySendMessage")
 
   @@map("privacy_rules")
 }

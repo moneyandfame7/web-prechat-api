@@ -3,7 +3,7 @@ import type { Contact, Prisma } from '@prisma/client'
 import type { User, InputUser } from '@generated/graphql'
 import type { UserFieldsForBuild } from 'types/users'
 import { selectPhotoFields } from './photos'
-import { pick } from 'common/utils/pick'
+import { pick } from '../utils/pick'
 
 /**
  * Just create relation for User and PrivacySettings.
@@ -37,6 +37,11 @@ export function buildPrivacySettings(): Prisma.UserCreateInput['privacySettings'
         },
       },
       profilePhoto: {
+        create: {
+          visibility: 'Everybody',
+        },
+      },
+      sendMessage: {
         create: {
           visibility: 'Everybody',
         },

@@ -29,7 +29,7 @@ export class LangPackService {
       name: languagesNames[key],
       nativeName: i18n[key].pack.LANG_NATIVE_NAME,
       langCode: key,
-      stringsCount: Object.keys(i18n[key]).length,
+      stringsCount: Object.keys(i18n[key].pack).length,
     }))
 
     return array

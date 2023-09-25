@@ -64,4 +64,15 @@ export default {
   },
   'Notification.CreatedChatWithTitle': '{{name}} hat die Gruppe "{{title}}" erstellt',
   'Notification.CreatedChannel': 'Kanal erstellt',
+  'Privacy.Everybody': 'Alle',
+  'Privacy.Contacts': 'Meine Kontakte',
+  'Privacy.Nobody': 'Niemand',
+  'Privacy.WhoCanAddByPhone': 'Wer kann mich über die Telefonnummer zu Kontakten hinzufügen?',
+  'Privacy.WhoCanAddForwardLink':
+    'Wer kann meinem Konto einen Link hinzufügen, wenn er meine Nachrichten weiterleitet?',
+  'Privacy.WhoCanInvite': 'Wer kann mich zu Gruppenchats hinzufügen?',
+  'Privacy.WhoCanSeeLastSeen': 'Wer kann meine zuletzt gesehene Zeit sehen?',
+  'Privacy.WhoCanSeePhone': 'Wer kann meine Telefonnummer sehen?',
+  'Privacy.WhoCanSeePhoto': 'Wer kann meine Profilfotos sehen?',
+  'Privacy.WhoCanSendMessage': 'Wer kann mir Nachrichten senden?',
 } satisfies Keyset

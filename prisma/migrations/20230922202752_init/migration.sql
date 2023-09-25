@@ -161,6 +161,7 @@ CREATE TABLE "Document" (
 CREATE TABLE "Message" (
     "id" TEXT NOT NULL,
     "chatId" TEXT NOT NULL,
+    "entities" JSONB,
     "senderId" TEXT NOT NULL,
     "text" TEXT,
     "isLastInChatId" TEXT,
@@ -302,6 +303,7 @@ CREATE TABLE "two_fa_auth" (
 CREATE TABLE "privacy_settings" (
     "id" TEXT NOT NULL,
     "phone_number_id" TEXT NOT NULL,
+    "send_message_id" TEXT NOT NULL,
     "last_seen_id" TEXT NOT NULL,
     "profile_photo_id" TEXT NOT NULL,
     "add_forward_link_id" TEXT NOT NULL,
@@ -458,6 +460,9 @@ CREATE INDEX "two_fa_auth_user_id_idx" ON "two_fa_auth"("user_id");
 CREATE UNIQUE INDEX "privacy_settings_phone_number_id_key" ON "privacy_settings"("phone_number_id");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "privacy_settings_send_message_id_key" ON "privacy_settings"("send_message_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "privacy_settings_last_seen_id_key" ON "privacy_settings"("last_seen_id");
 
 -- CreateIndex
@@ -542,7 +547,7 @@ ALTER TABLE "PollAnswer" ADD CONSTRAINT "PollAnswer_pollId_fkey" FOREIGN KEY ("p
 ALTER TABLE "Message" ADD CONSTRAINT "Message_chatId_fkey" FOREIGN KEY ("chatId") REFERENCES "chats"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Message" ADD CONSTRAINT "Message_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "chat_members"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Message" ADD CONSTRAINT "Message_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Message" ADD CONSTRAINT "Message_isLastInChatId_fkey" FOREIGN KEY ("isLastInChatId") REFERENCES "chats"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
@@ -585,6 +590,9 @@ ALTER TABLE "two_fa_auth" ADD CONSTRAINT "two_fa_auth_user_id_fkey" FOREIGN KEY 
 
 -- AddForeignKey
 ALTER TABLE "privacy_settings" ADD CONSTRAINT "privacy_settings_phone_number_id_fkey" FOREIGN KEY ("phone_number_id") REFERENCES "privacy_rules"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "privacy_settings" ADD CONSTRAINT "privacy_settings_send_message_id_fkey" FOREIGN KEY ("send_message_id") REFERENCES "privacy_rules"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "privacy_settings" ADD CONSTRAINT "privacy_settings_last_seen_id_fkey" FOREIGN KEY ("last_seen_id") REFERENCES "privacy_rules"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -86,6 +86,7 @@ export class ChatRepository {
   public async createPrivate(requesterId: string, userId: string) {
     return this.prisma.chat.create({
       data: {
+        // id: crypto.randomUUID(),
         type: 'chatTypePrivate',
         title: `${requesterId}+${userId}`,
 
@@ -95,12 +96,20 @@ export class ChatRepository {
               createMany: {
                 data: [
                   {
-                    id: requesterId,
+                    //
+                    /**
+                     * мейбі проблема ось тут? ( а я думаю саме тут, бо
+                     * коли створили групу - то там створились ці айдішники, і ще раз не МОЖНА їх використати? то тоді можливо просто в prisma прибрати унікальні айді?) )
+                     *
+                     * ... - ну да, я єблан просто трошки.
+                     */
+                    // id: requesterId,
                     userId: requesterId,
                   },
                   {
-                    id: userId,
+                    // id: userId,
                     userId: userId,
+                    // unreadCount: 1,
                   },
                 ],
               },
@@ -117,7 +126,6 @@ export class ChatRepository {
   }
 
   public async findById(chatId: string) {
-    console.log({ chatId })
     return this.prisma.chat.findUnique({
       where: {
         id: chatId,

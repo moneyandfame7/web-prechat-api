@@ -1,24 +1,25 @@
 import { PrismaClient } from '@prisma/client'
 import { faker } from '@faker-js/faker'
 import { getRandomColor } from './../src/Media/Helpers'
+import { buildPrivacySettings } from '../src/common/builder/users'
 const prisma = new PrismaClient()
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 class Seeder {
   public async createUsers(count = 100) {
-    const poll = await prisma.poll.findFirst({
-      include: {
-        answers: {
-          include: {
-            voters: {
-              include: {
-                user: true,
-              },
-            },
-          },
-        },
-      },
-    })
+    // const poll = await prisma.poll.findFirst({
+    //   include: {
+    //     answers: {
+    //       include: {
+    //         voters: {
+    //           include: {
+    //             user: true,
+    //           },
+    //         },
+    //       },
+    //     },
+    //   },
+    // })
     // poll?.answers[0].voters[0].
     // poll.
     for (let k = 0; k < count; k++) {
@@ -29,40 +30,7 @@ class Seeder {
           phoneNumber: faker.phone.number('+380#########'),
 
           color: getRandomColor(),
-          privacySettings: {
-            create: {
-              addByPhone: {
-                create: {
-                  visibility: 'Everybody',
-                },
-              },
-              phoneNumber: {
-                create: {
-                  visibility: 'Everybody',
-                },
-              },
-              lastSeen: {
-                create: {
-                  visibility: 'Everybody',
-                },
-              },
-              addForwardLink: {
-                create: {
-                  visibility: 'Everybody',
-                },
-              },
-              chatInvite: {
-                create: {
-                  visibility: 'Everybody',
-                },
-              },
-              profilePhoto: {
-                create: {
-                  visibility: 'Everybody',
-                },
-              },
-            },
-          },
+          privacySettings: buildPrivacySettings(),
           sessions: {
             create: {
               country: faker.address.country(),
@@ -160,6 +128,39 @@ class Seeder {
     console.log('[CONTACTS]: Deleted successfully 😈')
   }
 
+  public async createMessages(count = 100) {
+    const MOCKED_GROUP = 'c_740c5f09-e3da-423b-88e6-2cb73401f7ad'
+    const MOCKED_TWINK = 'u_6b5f8fcc-bc08-4184-92de-8008aa7a34d3'
+    const MOCKED_MAIN = 'u_8a09775b-7819-4ea2-ac33-0c93f645effc'
+    for (let i = 0; i <= count; i++) {
+      const message = await prisma.message.create({
+        data: {
+          chatId: MOCKED_GROUP,
+          senderId: i % 3 === 0 ? MOCKED_TWINK : i % 2 === 0 ? MOCKED_MAIN : MOCKED_TWINK,
+          text: faker.lorem.text(),
+          createdAt: faker.date.recent(),
+        },
+      })
+
+      if (i === count) {
+        await prisma.chat.update({
+          where: {
+            id: MOCKED_GROUP,
+          },
+          data: {
+            lastMessage: {
+              connect: {
+                id: message.id,
+              },
+            },
+          },
+        })
+      }
+      console.log(`message ${message.id} created successfully ✅`)
+    }
+    console.log(`[${count} messages] created successfully 🤝`)
+  }
+
   // public async createConversationsWithMessages() {
   //   for (let i = 0; i < 20; i++) {
   //     const conversation = await prisma.conversation.create({
@@ -186,7 +187,8 @@ class Seeder {
 
 const seed = new Seeder()
 async function main() {
-  // await seed.createUsers(100)
+  // await seed.createMessages(100)
+  await seed.createUsers(100)
   // await seed.deleteUsers()
   // await seed.addContacts(100)
   // await seed.removeContacts()

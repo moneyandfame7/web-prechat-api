@@ -7,8 +7,6 @@ import { AuthGuard } from 'Auth/Guard'
 import { CurrentSession } from 'common/decorators/Session'
 import { getSession } from 'common/helpers/getSession'
 
-import type { GqlContext } from 'types/other'
-
 import { ChatService } from './Service'
 import { PubSub2Service } from 'common/pubsub2/Service'
 import { QueryTyped, SubscriptionBuilder } from 'types/nestjs'

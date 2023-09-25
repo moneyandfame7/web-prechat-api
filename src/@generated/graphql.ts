@@ -14,8 +14,30 @@ export enum ChatType {
     chatTypePrivate = "chatTypePrivate"
 }
 
+export enum HistoryDirection {
+    Backwards = "Backwards",
+    Around = "Around",
+    Forwards = "Forwards"
+}
+
+export enum MessageEntityType {
+    italic = "italic",
+    bold = "bold",
+    underline = "underline",
+    strike = "strike",
+    spoiler = "spoiler",
+    email = "email",
+    phone = "phone",
+    url = "url",
+    textUrl = "textUrl",
+    mention = "mention",
+    code = "code",
+    hashtag = "hashtag"
+}
+
 export enum MessageActionType {
-    chatCreate = "chatCreate"
+    chatCreate = "chatCreate",
+    channelCreate = "channelCreate"
 }
 
 export enum ColorVariants {
@@ -103,11 +125,28 @@ export class GetLangStringInput {
     key: string;
 }
 
+export class GetHistoryInput {
+    direction: HistoryDirection;
+    chatId: string;
+    maxDate?: Nullable<DateTime>;
+    offsetId?: Nullable<string>;
+    limit?: Nullable<number>;
+    includeOffset?: Nullable<boolean>;
+}
+
 export class SendMessageInput {
-    peer: InputPeer;
+    id: string;
+    chatId: string;
+    sendAs?: Nullable<string>;
     silent?: Nullable<boolean>;
+    entities?: Nullable<MessageEntityInput[]>;
     text?: Nullable<string>;
-    sendAs?: Nullable<InputPeer>;
+}
+
+export class MessageEntityInput {
+    start: number;
+    end: number;
+    type: MessageEntityType;
 }
 
 export class SearchGlobalInput {
@@ -173,6 +212,8 @@ export abstract class IQuery {
 
     abstract getCountriesList(code: string): Country[] | Promise<Country[]>;
 
+    abstract getHistory(input: GetHistoryInput): Message[] | Promise<Message[]>;
+
     abstract searchGlobal(input: SearchGlobalInput): SearchGlobalResponse | Promise<SearchGlobalResponse>;
 
     abstract searchUsers(input: SearchGlobalInput): SearchUsersResponse | Promise<SearchUsersResponse>;
@@ -215,7 +256,7 @@ export abstract class IMutation {
 
     abstract deleteContact(userId: string): Nullable<Any> | Promise<Nullable<Any>>;
 
-    abstract sendMessage(): Message | Promise<Message>;
+    abstract sendMessage(input: SendMessageInput): NewMessagePayload | Promise<NewMessagePayload>;
 }
 
 export class UpdateUserStatus {
@@ -362,6 +403,28 @@ export class Message {
     views?: Nullable<number>;
     media?: Nullable<MessageMedia>;
     action?: Nullable<MessageAction>;
+    content: MessageContent;
+}
+
+export class MessageContent {
+    media?: Nullable<MessageMedia>;
+    action?: Nullable<MessageAction>;
+    photo?: Nullable<MessagePhoto>;
+    contact?: Nullable<MessageContact>;
+    poll?: Nullable<MessagePoll>;
+    document?: Nullable<MessageDocument>;
+    formattedText?: Nullable<MessageFormattedText>;
+}
+
+export class MessageEntity {
+    start: number;
+    end: number;
+    type: MessageEntityType;
+}
+
+export class MessageFormattedText {
+    text?: Nullable<string>;
+    entities?: Nullable<MessageEntity[]>;
 }
 
 export class MessageAction {

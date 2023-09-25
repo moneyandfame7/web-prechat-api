@@ -2,7 +2,7 @@ import { Args, Resolver } from '@nestjs/graphql'
 import { UseGuards } from '@nestjs/common'
 
 import * as Api from '@generated/graphql'
-import { MutationTyped, SubscriptionBuilder } from 'types/nestjs'
+import { MutationTyped, QueryTyped, SubscriptionBuilder } from 'types/nestjs'
 import { PubSub2Service } from 'common/pubsub2/Service'
 import { CurrentSession } from 'common/decorators/Session'
 import { getSession } from 'common/helpers/getSession'
@@ -28,7 +28,15 @@ export class MessagesResolver {
     })
 
     // this.pubSub.publish('onNewMessage',{})
-    return this.builder.buildApiMessage(message, requesterId)
+    return {
+      message: this.builder.buildApiMessage(message, requesterId, input.chatId),
+    }
+  }
+
+  @QueryTyped('getHistory')
+  @UseGuards(AuthGuard)
+  public async getHistory(@CurrentSession('userId') requesterId: string, @Args('input') input: Api.GetHistoryInput) {
+    return this.messages.getHistory(requesterId, input)
   }
 
   /**
@@ -45,9 +53,9 @@ export class MessagesResolver {
       const session = getSession(context.req)
       const myId = session.userId
 
-      const { chat, message } = payload.onNewMessage
+      const { chat /* message */ } = payload.onNewMessage
       const mentionedUsers = chat.fullInfo?.members.map((m) => ({ ...m.user }))
-      const senderId = message.senderId
+      // const senderId = message.senderId
 
       /* @todo як фільтрувати так, щоб якщо сесія юзера не поточна - то похуй, приймати */
       return Boolean(mentionedUsers?.find((u) => u.id === myId /* && senderId !== myId */))
@@ -59,7 +67,7 @@ export class MessagesResolver {
       const { chat, message } = payload.onNewMessage
 
       const buildedChat = this.builder.buildApiChat(chat, myId)
-      const buildedMessage = this.builder.buildApiMessage(message, myId)
+      const buildedMessage = this.builder.buildApiMessage(message, myId, buildedChat.id)
 
       return { chat: buildedChat, message: buildedMessage }
     },
