@@ -69,6 +69,7 @@ export function selectUserFieldsToBuild() /* : Required<UserFieldsToBuild> */ {
     createdAt: true,
     // fullInfoId: true,
     privacySettingsId: true,
+    orderedFoldersIds: true,
     bio: true,
     photo: {
       ...selectPhotoFields(),

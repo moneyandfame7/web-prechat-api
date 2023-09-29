@@ -9,11 +9,12 @@ import { FirebaseModule } from 'common/Firebase/Module'
 
 import { AuthService } from './Service'
 import { AuthResolver } from './Resolver'
+import { FoldersModule } from 'Folders/Module'
 
 // Make it global for AuthGuard
 @Global()
 @Module({
-  imports: [UserModule, MediaModule, SessionsModule, FirebaseModule, AccountModule],
+  imports: [UserModule, MediaModule, SessionsModule, FirebaseModule, AccountModule, FoldersModule],
   providers: [AuthService, AuthResolver],
   exports: [AuthService],
 })

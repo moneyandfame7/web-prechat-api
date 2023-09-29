@@ -1,5 +1,26 @@
 scalar InputPeer
 
+type Query {
+  # getChatSettings(input: ChatInput!): GetChatSettings!
+  getChats: [Chat!]!
+  getChatsTest(input: GetChatsInput!): [Chat!]
+  getChat(chatId: String!): Chat!
+  getChatFull(chatId: String!): ChatFull!
+  resolveUsername(username: String!): Peer
+}
+
+type Mutation {
+  createChannel(input: CreateChannelInput!): Chat!
+  createGroup(input: CreateGroupInput!): Chat!
+  addChatMembers(input: AddChatMembersInput!): Any
+  deleteChatMember(input: DeleteChatMemberInput): Any
+  deleteChat(input: InputChat!): Any
+}
+
+type Subscription {
+  onChatCreated: ChatCreatedUpdate!
+}
+
 enum ChatType {
   chatTypeGroup
   chatTypeChannel
@@ -8,8 +29,9 @@ enum ChatType {
 type Chat {
   id: String!
   userId: String
-  # folderId
+  folderId: Int
   color: ColorVariants!
+  draft: String
   type: ChatType!
   title: String!
   photo: Photo
@@ -27,7 +49,11 @@ type Chat {
   inviteLink: String
   _id: String!
 }
-
+input GetChatsInput {
+  archived: Boolean
+  offset: Int
+  limit: Int
+}
 type ChatMember {
   userId: String!
   inviterId: String
@@ -98,28 +124,8 @@ input DeleteChatMemberInput {
 #   settings: ChatSettings!
 # }
 
-type Query {
-  # getChatSettings(input: ChatInput!): GetChatSettings!
-  getChats: [Chat!]!
-  getChat(chatId: String!): Chat!
-  getChatFull(chatId: String!): ChatFull!
-  resolveUsername(username: String!): Peer
-}
-
-type Mutation {
-  createChannel(input: CreateChannelInput!): Chat!
-  createGroup(input: CreateGroupInput!): Chat!
-  addChatMembers(input: AddChatMembersInput!): Any
-  deleteChatMember(input: DeleteChatMemberInput): Any
-  deleteChat(input: InputChat!): Any
-}
-
 type ChatCreatedUpdate {
   chat: Chat!
   users: [User!]!
 }
 # мейбі зробити як в тг, тип Update або SubscribePublish або щось таке, і там зробити масив чатів, масив юзерів ( або їх айдішніки просто )
-
-type Subscription {
-  onChatCreated: ChatCreatedUpdate!
-}

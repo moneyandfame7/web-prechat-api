@@ -9,14 +9,33 @@ import { selectMessageFields } from 'common/builder/messages'
 import { InvalidEntityIdError } from 'common/errors'
 import { orderHistory } from 'common/helpers/messages'
 import { MSG_HISTORY_LIMIT } from 'common/constants'
+import { ChatRepository } from 'Chats/Repository'
+import { InvalidChatId, InvalidPeerId } from 'common/errors/Chats'
+import { isUserId } from 'common/helpers/chats'
 
 @Injectable()
 export class MessagesRepository {
-  public constructor(private prisma: PrismaService) {}
+  public constructor(private prisma: PrismaService, private chats: ChatRepository) {}
 
-  public async getHistory(input: Api.GetHistoryInput) {
+  /**
+   * @todo handle private chats
+   */
+  public async getHistory(requesterId: string, input: Api.GetHistoryInput) {
     const { direction } = input
+    const chat = await this.chats.getPeerById(requesterId, input.chatId)
 
+    if (!chat) {
+      if (isUserId(input.chatId)) {
+        return []
+      }
+      throw new InvalidPeerId('messages.getHistory')
+    }
+    /**
+     * If it's private group and history for new - false, then select messages
+     * where minDate - joinDate member.
+     */
+
+    const { id: chatId } = chat
     switch (direction) {
       case Api.HistoryDirection.Around: {
         if (!input.offsetId) {
@@ -24,9 +43,12 @@ export class MessagesRepository {
         }
         const limit = input.limit ? Math.round(input.limit / 2) : MSG_HISTORY_LIMIT / 2
 
-        console.log({ limit })
-        const backwards = await this.getHistoryBackward({ ...input, limit }, input.includeOffset ?? true)
-        const forwards = await this.getHistoryForward({ ...input, limit }, false)
+        const backwards = await this.getHistoryBackward(
+          requesterId,
+          { ...input, chatId, limit },
+          input.includeOffset ?? true,
+        )
+        const forwards = await this.getHistoryForward(requesterId, { ...input, chatId, limit }, false)
 
         const around = [...backwards, ...forwards]
 
@@ -34,27 +56,27 @@ export class MessagesRepository {
       }
 
       case Api.HistoryDirection.Backwards: {
-        const backwards = await this.getHistoryBackward(input, input.includeOffset ?? true)
+        const backwards = await this.getHistoryBackward(requesterId, { ...input, chatId }, input.includeOffset ?? true)
 
         // return backwards
         return orderHistory(backwards)
       }
 
       case Api.HistoryDirection.Forwards: {
-        const forwards = await this.getHistoryForward(input, input.includeOffset ?? true)
+        const forwards = await this.getHistoryForward(requesterId, { ...input, chatId }, input.includeOffset ?? true)
 
         return orderHistory(forwards)
       }
     }
   }
 
-  public async getHistoryBackward(input: Api.GetHistoryInput, includeOffset = false) {
+  public async getHistoryBackward(requesterId: string, input: Api.GetHistoryInput, includeOffset = false) {
     const cursor = input.offsetId ? { cursor: { id: input.offsetId } } : undefined
 
-    console.log({ input })
     return this.prisma.message.findMany({
       where: {
         chatId: input.chatId,
+        ...this.processNotDeleted(requesterId),
       },
       ...(cursor && cursor),
 
@@ -70,11 +92,12 @@ export class MessagesRepository {
     })
   }
 
-  public async getHistoryForward(input: Api.GetHistoryInput, includeOffset = false) {
+  public async getHistoryForward(requesterId: string, input: Api.GetHistoryInput, includeOffset = false) {
     const cursor = input.offsetId ? { cursor: { id: input.offsetId } } : undefined
     return this.prisma.message.findMany({
       where: {
         chatId: input.chatId,
+        ...this.processNotDeleted(requesterId),
       },
 
       ...(cursor && cursor),
@@ -89,6 +112,23 @@ export class MessagesRepository {
         createdAt: 'desc',
       },
     })
+  }
+
+  private processNotDeleted(requesterId: string) {
+    return {
+      isDeletedForAll: {
+        not: true,
+      },
+      deletedByUsers: {
+        some: {
+          users: {
+            some: {
+              id: requesterId,
+            },
+          },
+        },
+      },
+    }
   }
 
   public async create(
@@ -165,23 +205,20 @@ export class MessagesRepository {
     return { message: lastMessage!, chat: updChat }
   }
 
-  // public async createAction(requesterId: string, input: { data: any; chat: PrismaChat }) {
-  //   const message = await this.prisma.message.create({
-  //     data: {
-  //       chatId: input.chat.id,
-  //       action: {
-  //         create: {
-  //           chatCreate: {
-  //             create: {
-  //               title: input.chat.title,
-  //             },
-  //           },
-  //           memberId: requesterId,
-  //         },
-  //       },
-  //     },
-  //   })
-  // }
+  /* Drafts. */
 
-  // public delete(requsterId: string, messageId: string) {}
+  public async saveDraft(prismaChatMemberId: string, input: Api.SaveDraftInput) {
+    /* If has text - update or create new. */
+    /* @todo - переробити, щоб не створювати нові таблиці, просто змінювати draft і все */
+    return this.prisma.chatMember.update({
+      where: {
+        id: prismaChatMemberId,
+      },
+      data: {
+        draft: input.text,
+      },
+    })
+  }
+
+  /* DRAFTS IN NOT CREATED CHAT: */
 }

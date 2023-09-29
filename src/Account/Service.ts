@@ -8,17 +8,17 @@ import { SessionTooFreshError, ForbiddenError } from 'common/errors'
 import { AccountRepository } from './Repository'
 import { buildAuthorization, buildUserStatus } from 'common/builder/account'
 import type { UserStatus } from 'types/users'
-import { Cache } from 'cache-manager'
-import { CACHE_MANAGER } from '@nestjs/cache-manager'
-import { TTL_USER_STATUS } from 'common/constants'
+// import { Cache } from 'cache-manager'
+// import { CACHE_MANAGER } from '@nestjs/cache-manager'
+// import { TTL_USER_STATUS } from 'common/constants'
 
 @Injectable()
 export class AccountService {
   public constructor(
     private repository: AccountRepository,
     private sessions: SessionService,
-    @Inject(CACHE_MANAGER) private cache: Cache,
-  ) {}
+  ) // @Inject(CACHE_MANAGER) private cache: Cache,
+  {}
 
   public async getPassword(requesterId: string): Promise<Api.AuthTwoFa | undefined> {
     const twoFa = await this.repository.getPassword(requesterId)
@@ -100,7 +100,7 @@ export class AccountService {
     if (isOnline) {
       /* OR JUST CACHE ONLINE USERS IN REDIS */
       const status: UserStatus = { type: 'userStatusOnline' }
-      this.setStatusCache(currentSession.userId, status)
+      // this.setStatusCache(currentSession.userId, status)
 
       return status
     }
@@ -108,7 +108,7 @@ export class AccountService {
     const user = await this.repository.updateUserLastActivity(currentSession)
 
     const status = buildUserStatus(user)
-    this.setStatusCache(currentSession.userId, status)
+    // this.setStatusCache(currentSession.userId, status)
 
     return status
   }
@@ -128,11 +128,11 @@ export class AccountService {
     return timeDifferenceMs <= twentyFourHoursInMs
   }
 
-  public getStatusCached(userId: string) {
-    return this.cache.get<UserStatus>(`${userId}_status`)
-  }
+  // public getStatusCached(userId: string) {
+  //   return this.cache.get<UserStatus>(`${userId}_status`)
+  // }
 
-  private setStatusCache(userId: string, status: UserStatus) {
-    this.cache.set(`${userId}_status`, status, TTL_USER_STATUS)
-  }
+  // private setStatusCache(userId: string, status: UserStatus) {
+  //   this.cache.set(`${userId}_status`, status, TTL_USER_STATUS)
+  // }
 }

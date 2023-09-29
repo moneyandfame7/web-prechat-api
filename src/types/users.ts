@@ -16,6 +16,7 @@ export interface UserFieldsForBuild {
   isDeleted: boolean
   createdAt: Date
   privacySettingsId: string
+  orderedFoldersIds: number[]
 }
 export type UserStatusType =
   | 'userStatusOnline'

@@ -56,29 +56,35 @@ model Session {
 }
 
 model User {
-  id              String        @id @default(uuid())
-  username        String?       @unique
-  phoneNumber     String        @unique @map("phone_number")
-  firstName       String        @map("first_name")
-  lastName        String?       @map("last_name")
-  bio             String?
-  isDeleted       Boolean       @default(false)
-  lastActivity    DateTime?
-  photo           Photo?
-  createdAt       DateTime      @default(now()) @map("created_at")
-  apiToken        ApiToken?
-  color           ColorVariants
-  twoFaAuth       TwoFaAuth?
-  chats           ChatMember[]
-  messages        Message[]
-  sessions        Session[]
-  contacts        Contact[]     @relation(name: "ContactToOwner")
-  addedByContacts Contact[]     @relation(name: "ContactToUser")
-  blockedUsers    UserBlock[]   @relation(name: "BlockedUsers")
-  blockedByUsers  UserBlock[]   @relation(name: "BlockedByUsers")
+  id                String          @id @default(uuid())
+  username          String?         @unique
+  phoneNumber       String          @unique @map("phone_number")
+  firstName         String          @map("first_name")
+  lastName          String?         @map("last_name")
+  bio               String?
+  isDeleted         Boolean         @default(false)
+  lastActivity      DateTime?
+  photo             Photo?
+  createdAt         DateTime        @default(now()) @map("created_at")
+  // apiToken          ApiToken?
+  color             ColorVariants
+  twoFaAuth         TwoFaAuth?
+  chats             ChatMember[]
+  folders           ChatFolder[]
+  orderedFoldersIds Int[]
+  messages          Message[]
+  stories           Story[]
+  viewedStories     StoryViews[]
+  likedStories      StoryReaction[]
 
-  privacySettings   PrivacySettings @relation(fields: [privacySettingsId], references: [id])
-  privacySettingsId String          @unique
+  sessions          Session[]
+  contacts          Contact[]        @relation(name: "ContactToOwner")
+  addedByContacts   Contact[]        @relation(name: "ContactToUser")
+  blockedUsers      UserBlock[]      @relation(name: "BlockedUsers")
+  blockedByUsers    UserBlock[]      @relation(name: "BlockedByUsers")
+  deletedMessages   DeletedMessage[]
+  privacySettings   PrivacySettings  @relation(fields: [privacySettingsId], references: [id])
+  privacySettingsId String           @unique
 
   allowedInPrivacyRules PrivacyRule[] @relation(name: "AllowedUsers")
   blockedInPrivacyRules PrivacyRule[] @relation(name: "BlockedUsers")
@@ -203,30 +209,130 @@ enum DeletedFor {
   deleteForMe
 }
 
+// Model PinnedMessage -  user, message?
+model DeletedMessage {
+  id String @id @unique @default(uuid())
+
+  message   Message @relation(fields: [messageId], references: [id])
+  messageId String
+
+  users User[]
+}
+
+model Story {
+  id        String @id @unique @default(uuid())
+  orderedId Int
+
+  // Story can be created by user or by channel.
+  user   User?   @relation(fields: [userId], references: [id])
+  userId String?
+
+  chat   Chat?   @relation(fields: [chatId], references: [id])
+  chatId String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  expiredDate DateTime
+
+  edited       Boolean?
+  closeFriends Boolean?
+  contacts     Boolean?
+  caption      String?
+  views        StoryViews[]
+  reactions    StoryReaction[]
+}
+
+// доробити
+// model UserStoryViews {
+//   id      String @id @unique @default(uuid())
+// views StoryViews
+
+// reaction Boolean @default(false)
+// }
+
+// model StoryReactions {
+//   id String @id @unique @default(uuid())
+
+//   story   Story  @relation(fields: [storyId], references: [id])
+//   storyId String 
+// }
+
+model StoryReaction {
+  id      String @id @unique @default(uuid())
+  story   Story  @relation(fields: [storyId], references: [id])
+  storyId String @unique
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  // viewsCount     Int @default(0)
+  // reactionsCount Int @default(0)
+
+  // recentViewers User[]
+}
+
+model StoryViews {
+  id      String @id @unique @default(uuid())
+  story   Story  @relation(fields: [storyId], references: [id])
+  storyId String @unique
+
+  // viewsCount     Int @default(0)
+  // reactionsCount Int @default(0)
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+  // recentViewers User[]
+}
+
 model Message {
   id     String @id @unique @default(uuid())
   chat   Chat   @relation(fields: [chatId], references: [id])
   chatId String // ??
 
-  media          MessageMedia?
-  action         MessageAction?
-  entities       Json?
-  sender         User           @relation(fields: [senderId], references: [id])
-  senderId       String // ??
-  text           String?
-  isLastIn       Chat?          @relation(name: "LastMessageIn", fields: [isLastInChatId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  isLastInChatId String?        @unique
+  isDeletedForAll Boolean?         @map("deleted_for_all")
+  deletedByUsers  DeletedMessage[]
+  media           MessageMedia?
+  action          MessageAction?
+  entities        Json?
+  sender          User             @relation(fields: [senderId], references: [id])
+  senderId        String           @map("sender_id")
+  text            String?
+  isLastIn        Chat?            @relation(name: "LastMessageIn", fields: [isLastInChatId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  isLastInChatId  String?          @unique
 
-  isPinned         Boolean?
+  isSilent         Boolean? @map("silent")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   // for channel/groups?
-  isPost           Boolean?
-  replyToMessageId String?
-  postAuthor       String?
+  isPost           Boolean? @map("post")
+  replyToMessageId String?  @map("reply_to_msg_id") // ?????
+  postAuthor       String?  @map("post_author")
   views            Int?
 
   // add index for chatId
+}
+
+model ChatFolder {
+  id      String @id @unique @default(uuid())
+  orderId Int
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  icon              String?
+  title             String
+  contacts          Boolean?
+  nonContacts       Boolean?
+  groups            Boolean?
+  channels          Boolean?
+  excludeMuted      Boolean?
+  excludeReaded     Boolean?
+  excludeArchived   Boolean?
+  excludeUnarchived Boolean?
+  pinnedChats       Chat[]   @relation(name: "FolderPinnedChats")
+  includedChats     Chat[]   @relation(name: "FolderIncludedChats")
+  excludedChats     Chat[]   @relation(name: "FolderExcludedChats")
+
+  @@map("chat_folders")
 }
 
 // model MessageText, MessageMedia in content: text: MessageText, contact: Media
@@ -264,14 +370,14 @@ model UserBlock {
   @@map("user_blocks")
 }
 
-model ApiToken {
-  id     String @id @default(uuid())
-  user   User   @relation(fields: [userId], references: [id])
-  userId String @unique @map("user_id")
-  hash   String
+// model ApiToken {
+//   id     String @id @default(uuid())
+//   user   User   @relation(fields: [userId], references: [id])
+//   userId String @unique @map("user_id")
+//   hash   String
 
-  @@map("api_tokens")
-}
+//   @@map("api_tokens")
+// }
 
 enum ChatType {
   chatTypeGroup
@@ -284,19 +390,24 @@ enum ChatType {
 model Chat {
   id String @id @default(uuid())
 
-  photo       Photo?
-  color       ColorVariants
-  title       String
-  inviteLink  String?
-  isPrivate   Boolean?         @map("is_private")
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt
-  type        ChatType
+  photo             Photo?
+  color             ColorVariants
+  title             String
+  inviteLink        String?
+  isPrivate         Boolean?         @map("is_private")
+  isService         Boolean?         @default(false)
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt
+  type              ChatType
   // members     ChatMember[]
-  fullInfo    ChatFullInfo?
-  permissions ChatPermissions?
-  messages    Message[]
-  lastMessage Message?         @relation(name: "LastMessageIn")
+  fullInfo          ChatFullInfo?
+  permissions       ChatPermissions?
+  messages          Message[]
+  stories           Story[]
+  lastMessage       Message?         @relation(name: "LastMessageIn")
+  inFolders         ChatFolder[]     @relation(name: "FolderPinnedChats")
+  includedInFolders ChatFolder[]     @relation(name: "FolderIncludedChats")
+  excludedInFolders ChatFolder[]     @relation(name: "FolderExcludedChats")
 
   @@index([id])
   @@map("chats")
@@ -324,8 +435,13 @@ model ChatFullInfo {
 model ChatMember {
   id String @id @default(uuid())
 
-  isPinned     Boolean?  @default(false) @map("is_pinned")
-  isMuted      Boolean?  @default(false) @map("is_muted")
+  isPinned   Boolean? @default(false) @map("is_pinned")
+  isMuted    Boolean? @default(false) @map("is_muted")
+  isArchived Boolean? @default(false) @map("is_archived")
+
+  isAdmin Boolean?
+  isOwner Boolean?
+
   unreadCount  Int?      @default(0) @map("unread_count")
   draft        String?
   joinedDate   DateTime? @default(now())
@@ -336,8 +452,6 @@ model ChatMember {
   // if admin - only admin permissions, else - only user
   adminPermissions ChatAdminPermissions?
   userPermissions  ChatPermissions?
-  isAdmin          Boolean?
-  isOwner          Boolean?
 
   chatInfo   ChatFullInfo @relation(fields: [chatInfoId], references: [chatId])
   chatInfoId String       @map("chat_id")

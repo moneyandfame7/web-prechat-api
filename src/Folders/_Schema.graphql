@@ -1,0 +1,52 @@
+type Subscription {
+  onChatFolderUpdate: UpdateChatFolderPayload!
+}
+type Mutation {
+  deleteChatFolder(folderId: Int!): Boolean!
+  addChatFolder(input: AddChatFolderInput!): Boolean!
+}
+type Query {
+  getChatFolders: GetChatFoldersRes!
+}
+input AddChatFolderInput {
+  orderId: Int!
+  icon: String
+  title: String!
+  contacts: Boolean
+  nonContacts: Boolean
+  groups: Boolean
+  channels: Boolean
+  excludeMuted: Boolean
+  excludeReaded: Boolean
+  excludeArchived: Boolean
+  pinnedChats: [String!]
+  includedChats: [String!]
+  excludedChats: [String!]
+}
+
+type UpdateChatFolderPayload {
+  orderId: Int!
+  ownerId: String!
+  folder: ChatFolder
+}
+
+type GetChatFoldersRes {
+  folders: [ChatFolder!]!
+  orderedIds: [Int!]!
+}
+
+type ChatFolder {
+  orderId: Int!
+  icon: String
+  title: String!
+  contacts: Boolean
+  nonContacts: Boolean
+  groups: Boolean
+  channels: Boolean
+  excludeMuted: Boolean
+  excludeReaded: Boolean
+  excludeArchived: Boolean
+  pinnedChats: [String!]
+  includedChats: [String!]
+  excludedChats: [String!]
+}

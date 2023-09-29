@@ -96,6 +96,11 @@ export class ChatsResolver {
     return chats.map((c) => this.builder.buildApiChat(c, currUserId))
   }
 
+  @QueryTyped('getChatsTest')
+  @UseGuards(AuthGuard)
+  public async getChatsTest(@CurrentSession('userId') requesterId: string, @Args('input') input: Api.GetChatsInput) {
+    return this.chats.getChatsTest(requesterId, input)
+  }
   @QueryTyped('getChat')
   @UseGuards(AuthGuard)
   public async getChat(

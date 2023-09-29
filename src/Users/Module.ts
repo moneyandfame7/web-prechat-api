@@ -9,9 +9,10 @@ import { UserRepository } from './Repository'
 import { AccountModule } from 'Account/Module'
 import { ChatsModule } from 'Chats'
 import { BuilderModule } from 'common/builder/Module'
+import { FoldersModule } from 'Folders/Module'
 
 @Module({
-  imports: [FirebaseModule, forwardRef(() => AccountModule), ChatsModule, BuilderModule],
+  imports: [FirebaseModule, forwardRef(() => AccountModule), ChatsModule, BuilderModule, FoldersModule],
   providers: [UserService, UserResolver, UserRepository, PrismaService],
   exports: [UserService],
 })

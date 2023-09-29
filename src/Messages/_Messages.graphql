@@ -1,12 +1,15 @@
 # scalar DateTime
 type Mutation {
   sendMessage(input: SendMessageInput!): NewMessagePayload!
+  saveDraft(input: SaveDraftInput!): Boolean!
 }
 type Subscription {
   onNewMessage: NewMessagePayload!
+  onDraftUpdate: UpdateDraftPayload!
 }
 type Query {
   getHistory(input: GetHistoryInput!): [Message!]!
+  getPrivateChat: Any
 }
 enum HistoryDirection {
   Backwards
@@ -32,6 +35,16 @@ input SendMessageInput {
   # media later...
 }
 
+input SaveDraftInput {
+  text: String
+  chatId: String!
+}
+
+type UpdateDraftPayload {
+  chatId: String!
+  ownerId: String!
+  text: String
+}
 enum MessageEntityType {
   italic
   bold
@@ -78,7 +91,7 @@ type Message {
   content: MessageContent!
 }
 type MessageContent {
-  media: MessageMedia
+  # media: MessageMedia
   action: MessageAction
   photo: MessagePhoto
   contact: MessageContact

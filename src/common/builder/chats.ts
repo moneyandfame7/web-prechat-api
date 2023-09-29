@@ -1,4 +1,4 @@
-import type { Chat, ChatFullInfo, ChatMember, Prisma } from '@prisma/client'
+import type { Chat, ChatFullInfo, ChatMember, ChatFolder, Prisma } from '@prisma/client'
 
 import type { UserFieldsForBuild } from 'types/users'
 
@@ -31,6 +31,12 @@ export type PrismaChatFull = ChatFullInfo & {
 export type PrismaChat = Chat & { photo: PrismaPhoto | null } & { fullInfo: PrismaChatFull | null } & {
   lastMessage: PrismaMessage | null
 } & { permissions: PrismaChatPermissions | null }
+
+export type PrismaChatFolder = ChatFolder & {
+  excludedChats: PrismaChat[]
+  includedChats: PrismaChat[]
+  pinnedChats: PrismaChat[]
+}
 /* check if type of chat is private */
 // export function buildApiChatSettings(members: Api.User[]): Api.ChatSettings {
 // return {
@@ -44,16 +50,14 @@ export type PrismaChat = Chat & { photo: PrismaPhoto | null } & { fullInfo: Pris
 export function createChatMembers(requesterId: string, memberIds: string[]) {
   return {
     members: {
-      createMany: {
-        data: memberIds.map((u) => ({
-          // id: u,
-          unreadCount: isSelf(requesterId, u) ? 0 : 1,
-          isOwner: isSelf(requesterId, u),
-          isAdmin: isSelf(requesterId, u),
-          inviterId: requesterId,
-          userId: u,
-        })),
-      },
+      create: memberIds.map((u) => ({
+        // id: u,
+        unreadCount: isSelf(requesterId, u) ? 0 : 1,
+        isOwner: isSelf(requesterId, u),
+        isAdmin: isSelf(requesterId, u),
+        inviterId: requesterId,
+        userId: u,
+      })),
     },
   }
 }

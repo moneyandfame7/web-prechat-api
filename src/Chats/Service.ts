@@ -54,9 +54,7 @@ export class ChatService {
               create: createMessageAction(
                 {
                   '@type': 'chatCreate',
-                  payload: {
-                    title: input.title,
-                  },
+                  payload: { title: input.title },
                 },
                 requesterId,
               ),
@@ -102,6 +100,7 @@ export class ChatService {
             senderId: requesterId,
           },
         },
+
         color: getRandomColor(),
         isPrivate: false,
       },
@@ -139,7 +138,6 @@ export class ChatService {
    * Safari - 651fe60e-ae2f-4b9b-8aa7-dd5f7357cca4
    */
   public async getChats(requesterId: string) {
-    console.log({ requesterId })
     return this.prisma.chat.findMany({
       where: {
         fullInfo: {
@@ -153,6 +151,42 @@ export class ChatService {
       },
       include: {
         ...selectChatFields(),
+      },
+    })
+  }
+
+  public async getChatsTest(requesterId: string, input: Api.GetChatsInput) {
+    // this.prisma.chat.findMany({
+    //   where: {
+    //     fullInfo: {
+    //       members: {
+    //         some: {
+    //           userId: requesterId,
+    //         },
+    //       },
+    //     },
+    //     ...(input.archived && {
+    //       inFolders: {
+    //         some: {
+    //           orderId: FOLDER_ID_ARCHIVED,
+    //         },
+    //       },
+    //     }),
+    //   },
+    //   ...(input.offset && { skip: input.offset }),
+    //   ...(input.limit && { take: input.limit }),
+    // })
+    const test = await this.prisma.chatMember.findMany({
+      where: {
+        userId: requesterId,
+        ...(input.archived && { isArchived: true }),
+      },
+      include: {
+        chatInfo: {
+          include: {
+            chat: true,
+          },
+        },
       },
     })
   }
@@ -220,30 +254,5 @@ export class ChatService {
     }
 
     throw new UsernameNotOccupiedError('chats.resolveUsername')
-  }
-
-  public async getPrivateChatNotBuilded(requesterId: string, partnerId: string) {
-    return this.prisma.chat.findFirst({
-      where: {
-        fullInfo: {
-          members: {
-            some: {
-              AND: [
-                {
-                  userId: requesterId,
-                },
-                {
-                  userId: partnerId,
-                },
-              ],
-            },
-          },
-        },
-      },
-    })
-  }
-
-  public async getChatNotBuilded(chatId: string) {
-    return this.repo.findById(chatId)
   }
 }

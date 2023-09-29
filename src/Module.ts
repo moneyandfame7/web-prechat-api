@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common/decorators/modules/module.decorator'
 import { GraphQLModule } from '@nestjs/graphql'
 import { type OnModuleInit, type Provider } from '@nestjs/common'
-import { CacheModule } from '@nestjs/cache-manager'
+// import { CacheModule } from '@nestjs/cache-manager'
 import { ApolloDriver, type ApolloDriverConfig } from '@nestjs/apollo'
-import { ConfigModule, ConfigService } from '@nestjs/config'
+import { ConfigModule } from '@nestjs/config'
 import { DateTimeResolver, GraphQLJSON, UUIDResolver } from 'graphql-scalars'
 
 import { GraphQLUpload } from 'graphql-upload'
-import * as redisStore from 'cache-manager-redis-store'
+// import * as redisStore from 'cache-manager-redis-store'
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
 
 import { AuthModule, AuthService } from './Auth'
@@ -122,19 +122,19 @@ const CONFIG_MODULES = [
     }),
   }),
 
-  CacheModule.registerAsync({
-    isGlobal: true,
-    imports: [ConfigModule],
-    inject: [ConfigService],
-    useFactory: async (config: ConfigService) => ({
-      store: redisStore,
-      url: config.get('REDIS_URL'),
-      no_ready_check: true, // new property
+  // CacheModule.registerAsync({
+  //   isGlobal: true,
+  //   imports: [ConfigModule],
+  //   inject: [ConfigService],
+  //   useFactory: async (config: ConfigService) => ({
+  //     store: redisStore,
+  //     url: config.get('REDIS_URL'),
+  //     no_ready_check: true, // new property
 
-      ttl: 60,
-      tls: true,
-    }),
-  }),
+  //     ttl: 60,
+  //     tls: true,
+  //   }),
+  // }),
 ]
 const PROVIDERS: Provider[] = [AppResolver, PrismaService]
 

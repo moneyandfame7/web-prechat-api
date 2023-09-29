@@ -8,6 +8,8 @@ import { Injectable } from '@nestjs/common'
 import { selectChatFields } from 'common/builder/chats'
 import { getRandomColor } from 'Media'
 import type { InputPeer } from 'types/chats'
+import { isUserId } from 'common/helpers/chats'
+import { generateId } from 'common/helpers/generateId'
 
 @Injectable()
 export class ChatRepository {
@@ -25,7 +27,7 @@ export class ChatRepository {
     })
   }
 
-  private findMember(chatId: string, userId: string) {
+  public async findMember(chatId: string, userId: string) {
     return this.prisma.chatMember.findFirst({
       where: {
         userId,
@@ -36,20 +38,46 @@ export class ChatRepository {
     })
   }
   // при створюванні юзера, одразу створювати чат з айді як у юзера, а потім, коли надсилати повідомлення, перевіряти, чи існує цей чат, якщо ні - оновлювати його і додавати мене....??
-
-  public async createSavedMessages(user: Prisma.User) {
+  /**
+   * @internal
+   */
+  public async createSavedMessages(requesterId: string) {
     await this.prisma.chat.create({
       data: {
-        id: user.id,
+        id: requesterId,
         type: 'chatTypePrivate',
-        color: user.color,
-        title: getUserName(user),
+        color: getRandomColor(),
+        title: 'Saved Messages',
+        fullInfo: {
+          create: {
+            members: {
+              create: {
+                userId: requesterId,
+                // id: user.id,
+              },
+            },
+          },
+        },
+      },
+    })
+  }
+  /**
+   * @internal
+   */
+  public async createServiceChat(user: Prisma.User) {
+    await this.prisma.chat.create({
+      data: {
+        id: generateId('chat'),
+        title: 'Prechat',
+        type: 'chatTypePrivate',
+        color: 'BLUE',
+        isPrivate: true,
+        isService: true,
         fullInfo: {
           create: {
             members: {
               create: {
                 userId: user.id,
-                id: user.id,
               },
             },
           },
@@ -58,6 +86,14 @@ export class ChatRepository {
     })
   }
 
+  // public async findChatWithSelf(requesterId: string) {
+  //   return this.prisma.chat.findFirst({
+  //     where: {
+
+  //     },
+  //   })
+  // }
+
   public async getPrivateChat(requesterId: string, userId: string) {
     return this.prisma.chat.findFirst({
       where: {
@@ -65,13 +101,14 @@ export class ChatRepository {
         fullInfo: {
           members: {
             some: {
-              id: userId,
+              userId: userId,
             },
           },
+
           AND: {
             members: {
               some: {
-                id: requesterId,
+                userId: requesterId,
               },
             },
           },
@@ -81,6 +118,14 @@ export class ChatRepository {
         ...selectChatFields(),
       },
     })
+  }
+
+  public async getPeerById(requesterId: string, peerId: string) {
+    if (isUserId(peerId)) {
+      return this.getPrivateChat(requesterId, peerId)
+    }
+
+    return this.findById(peerId)
   }
 
   public async createPrivate(requesterId: string, userId: string) {
@@ -93,26 +138,25 @@ export class ChatRepository {
         fullInfo: {
           create: {
             members: {
-              createMany: {
-                data: [
-                  {
-                    //
-                    /**
-                     * мейбі проблема ось тут? ( а я думаю саме тут, бо
-                     * коли створили групу - то там створились ці айдішники, і ще раз не МОЖНА їх використати? то тоді можливо просто в prisma прибрати унікальні айді?) )
-                     *
-                     * ... - ну да, я єблан просто трошки.
-                     */
-                    // id: requesterId,
-                    userId: requesterId,
-                  },
-                  {
-                    // id: userId,
-                    userId: userId,
-                    // unreadCount: 1,
-                  },
-                ],
-              },
+              create: [
+                {
+                  //
+                  /**
+                   * мейбі проблема ось тут? ( а я думаю саме тут, бо
+                   * коли створили групу - то там створились ці айдішники, і ще раз не МОЖНА їх використати? то тоді можливо просто в prisma прибрати унікальні айді?) )
+                   *
+                   * ... - ну да, я єблан просто трошки.
+                   */
+                  // id: requesterId,
+                  userId: requesterId,
+                  unreadCount: 0,
+                },
+                {
+                  // id: userId,
+                  userId: userId,
+                  unreadCount: 1,
+                },
+              ],
             },
           },
         },

@@ -1,0 +1,12 @@
+type Story {
+  orderedId: Int!
+  expiredDate: DateTime!
+  edited: Boolean
+  closeFriend: Boolean
+  contacts: Boolean
+  caption: String
+  viewsCount: Int!
+  reactionsCount: Int!
+  userId: String!
+  photo: Photo
+}

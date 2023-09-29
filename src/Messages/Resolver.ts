@@ -1,8 +1,8 @@
-import { Args, Resolver } from '@nestjs/graphql'
+import { Args, Resolver, Query } from '@nestjs/graphql'
 import { UseGuards } from '@nestjs/common'
 
 import * as Api from '@generated/graphql'
-import { MutationTyped, QueryTyped, SubscriptionBuilder } from 'types/nestjs'
+import { MutationTyped, QueryTyped, SubscriptionBuilder, SubscriptionTyped } from 'types/nestjs'
 import { PubSub2Service } from 'common/pubsub2/Service'
 import { CurrentSession } from 'common/decorators/Session'
 import { getSession } from 'common/helpers/getSession'
@@ -53,6 +53,7 @@ export class MessagesResolver {
       const session = getSession(context.req)
       const myId = session.userId
 
+      /* а ось тут хз, а якщо учасників 1млн?))) */
       const { chat /* message */ } = payload.onNewMessage
       const mentionedUsers = chat.fullInfo?.members.map((m) => ({ ...m.user }))
       // const senderId = message.senderId
@@ -74,5 +75,41 @@ export class MessagesResolver {
   })
   public async onNewMessage() {
     return this.pubSub.subscribe('onNewMessage')
+  }
+
+  @UseGuards(AuthGuard)
+  @SubscriptionTyped('onDraftUpdate', {
+    filter(payload, _, context) {
+      const session = getSession(context.req)
+
+      return session.userId === payload.onDraftUpdate.ownerId
+    },
+  })
+  public async onDraftUpdate() {
+    return this.pubSub.subscribe('onDraftUpdate')
+  }
+
+  @UseGuards(AuthGuard)
+  @MutationTyped('saveDraft')
+  public async saveDraft(@Args('input') input: Api.SaveDraftInput, @CurrentSession('userId') requesterId: string) {
+    await this.messages.saveDraft(requesterId, input)
+    this.pubSub.publish('onDraftUpdate', {
+      onDraftUpdate: {
+        chatId: input.chatId,
+        text: input.text,
+        ownerId: requesterId,
+        /* можу додавати тут сесію айді, робити publishNotBuilded, а потім в підписці сортувати там де не дорівнює сесії і дорівнює юзеру і прибирати цей сессіон айді з payload  */
+      },
+    })
+
+    return true
+  }
+
+  @Query('getPrivateChat')
+  public async g() {
+    return this.messages.chatRepo.getPrivateChat(
+      'u_4d434ce1-c4bb-4699-adb4-48ee3f530730',
+      'u_6edb392b-758d-4382-a07f-f3b0a55e8b42',
+    )
   }
 }

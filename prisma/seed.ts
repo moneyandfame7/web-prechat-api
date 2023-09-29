@@ -2,10 +2,16 @@ import { PrismaClient } from '@prisma/client'
 import { faker } from '@faker-js/faker'
 import { getRandomColor } from './../src/Media/Helpers'
 import { buildPrivacySettings } from '../src/common/builder/users'
+import { generateId } from '../src/common/helpers/generateId'
+import { FOLDER_ID_ALL } from '../src/common/constants'
 const prisma = new PrismaClient()
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 class Seeder {
+  private mockUserId1 = generateId('user')
+  private mockUserId2 = generateId('user')
+  private mockUserId3 = generateId('user')
+  private mockUserPhone3 = faker.phone.number('+380#########')
   public async createUsers(count = 100) {
     // const poll = await prisma.poll.findFirst({
     //   include: {
@@ -25,10 +31,15 @@ class Seeder {
     for (let k = 0; k < count; k++) {
       const user = await prisma.user.create({
         data: {
+          id: generateId('user'),
+          lastActivity: k % 3 === 0 ? faker.date.past() : faker.date.recent(),
+          orderedFoldersIds: [FOLDER_ID_ALL],
+          isDeleted: k % 7 === 0,
+          bio: faker.lorem.paragraphs(),
           firstName: faker.name.firstName(),
           lastName: faker.name.lastName(),
           phoneNumber: faker.phone.number('+380#########'),
-
+          username: faker.internet.userName(),
           color: getRandomColor(),
           privacySettings: buildPrivacySettings(),
           sessions: {
@@ -40,7 +51,13 @@ class Seeder {
               browser: faker.internet.userAgent(),
             },
           },
-          username: faker.internet.userName(),
+          folders: {
+            create: {
+              orderId: FOLDER_ID_ALL,
+              title: 'All',
+              excludeArchived: true,
+            },
+          },
         },
       })
 
@@ -50,44 +67,115 @@ class Seeder {
     console.log('[100 USERS] created successfully 🤝')
   }
 
-  public async addContacts(contactsLimit = 50) {
-    const MOCKED = await prisma.user.findUnique({
-      where: {
+  public async createMockAccounts() {
+    /* First */
+    await prisma.user.create({
+      data: {
+        id: this.mockUserId1,
+        color: getRandomColor(),
         phoneNumber: '+380684178101',
-      },
-    })
-    if (!MOCKED) {
-      throw new Error('MOCK USER NOT REGISTERED')
-    }
-    const users = await prisma.user.findMany({
-      take: contactsLimit,
-      where: {
-        id: {
-          not: MOCKED.phoneNumber,
+        firstName: 'Google',
+        privacySettings: buildPrivacySettings(),
+        sessions: {
+          create: {
+            country: faker.address.country(),
+            region: faker.address.cityName(),
+            ip: faker.internet.ip(),
+            platform: faker.lorem.word(),
+            browser: faker.internet.userAgent(),
+          },
         },
       },
     })
+    /* Second */
+    await prisma.user.create({
+      data: {
+        id: this.mockUserId2,
+        color: getRandomColor(),
+        phoneNumber: '+12345678',
+        firstName: 'Safari',
+        privacySettings: buildPrivacySettings(),
+        sessions: {
+          create: {
+            country: faker.address.country(),
+            region: faker.address.cityName(),
+            ip: faker.internet.ip(),
+            platform: faker.lorem.word(),
+            browser: faker.internet.userAgent(),
+          },
+        },
+      },
+    })
+    /* Third */
+    await prisma.user.create({
+      data: {
+        id: this.mockUserId3,
+        color: getRandomColor(),
+        phoneNumber: this.mockUserId3,
+        firstName: 'Mozila',
+        privacySettings: buildPrivacySettings(),
+        sessions: {
+          create: {
+            country: faker.address.country(),
+            region: faker.address.cityName(),
+            ip: faker.internet.ip(),
+            platform: faker.lorem.word(),
+            browser: faker.internet.userAgent(),
+          },
+        },
+      },
+    })
+  }
 
-    users.map(async (newContact, idx) => {
+  public async addContacts(contactsLimit = 50) {
+    const users = await prisma.user.findMany({
+      take: contactsLimit,
+    })
+
+    users.map(async (u) => {
       await prisma.user.update({
         where: {
-          id: MOCKED.id,
+          id: this.mockUserId1,
         },
         data: {
           contacts: {
             create: {
-              contactId: newContact.id,
-              firstName: idx === 0 ? 'DOLBAEB PERWIY' : faker.internet.userName(),
-              lastName: idx === 2 ? 'DOLBAEB TRETIY' : undefined,
+              contactId: u.id,
+              firstName: faker.name.firstName(),
+              lastName: faker.name.lastName(),
             },
           },
         },
       })
-
-      console.log(`[CONTACTS]: connect to ${MOCKED.id} from - ${newContact.id}`)
+      await prisma.user.update({
+        where: {
+          id: this.mockUserId2,
+        },
+        data: {
+          contacts: {
+            create: {
+              contactId: u.id,
+              firstName: faker.name.firstName(),
+              lastName: faker.name.lastName(),
+            },
+          },
+        },
+      })
+      await prisma.user.update({
+        where: {
+          id: this.mockUserId3,
+        },
+        data: {
+          contacts: {
+            create: {
+              contactId: u.id,
+              firstName: faker.name.firstName(),
+              lastName: faker.name.lastName(),
+            },
+          },
+        },
+      })
     })
-
-    console.log('[100 CONTACTS] connected successfully 🤝')
   }
 
   public async deleteUsers() {
@@ -128,67 +216,82 @@ class Seeder {
     console.log('[CONTACTS]: Deleted successfully 😈')
   }
 
-  public async createMessages(count = 100) {
-    const MOCKED_GROUP = 'c_740c5f09-e3da-423b-88e6-2cb73401f7ad'
-    const MOCKED_TWINK = 'u_6b5f8fcc-bc08-4184-92de-8008aa7a34d3'
-    const MOCKED_MAIN = 'u_8a09775b-7819-4ea2-ac33-0c93f645effc'
-    for (let i = 0; i <= count; i++) {
-      const message = await prisma.message.create({
+  public async createChannels(count = 10) {
+    for (let k = 0; k < count; k++) {
+      await prisma.chat.create({
         data: {
-          chatId: MOCKED_GROUP,
-          senderId: i % 3 === 0 ? MOCKED_TWINK : i % 2 === 0 ? MOCKED_MAIN : MOCKED_TWINK,
-          text: faker.lorem.text(),
-          createdAt: faker.date.recent(),
+          id: generateId('chat'),
+          type: 'chatTypeChannel',
+          color: getRandomColor(),
+          title: faker.internet.userName(),
+          isPrivate: k % 3 === 0,
         },
       })
-
-      if (i === count) {
-        await prisma.chat.update({
-          where: {
-            id: MOCKED_GROUP,
-          },
-          data: {
-            lastMessage: {
-              connect: {
-                id: message.id,
-              },
-            },
-          },
-        })
-      }
-      console.log(`message ${message.id} created successfully ✅`)
     }
-    console.log(`[${count} messages] created successfully 🤝`)
   }
 
-  // public async createConversationsWithMessages() {
-  //   for (let i = 0; i < 20; i++) {
-  //     const conversation = await prisma.conversation.create({
-  //       data: {
-  //         messages: {
-  //           createMany: {
-  //             data: Array.from({ length: 300 }).map(() => ({
-  //               body: faker.lorem.sentence(),
-  //               senderId: this.users[faker.datatype.number({ min: 1, max: this.users.length - 1 })].id,
-  //             })),
-  //           },
-  //         },
-  //         participants: {
-  //           connect: {
-  //             id: this.users[faker.datatype.number({ min: 1, max: this.users.length - 1 })].id,
-  //           },
-  //         },
-  //       },
-  //     })
-  //     this.conversations.push(conversation)
-  //   }
-  // }
+  public async createGroups(count = 10) {
+    for (let k = 0; k < count; k++) {
+      await prisma.chat.create({
+        data: {
+          id: generateId('chat'),
+          type: 'chatTypeGroup',
+          color: getRandomColor(),
+          title: faker.internet.userName(),
+          isPrivate: k % 3 === 0,
+        },
+      })
+    }
+  }
+
+  public async createPrivateChats() {}
+
+  public async createMessages() {
+    // for (let i = 0; i <= count; i++) {
+    //   const message = await prisma.message.create({
+    //     data: {
+    //       chatId: MOCKED_GROUP,
+    //       senderId: i % 3 === 0 ? MOCKED_TWINK : i % 2 === 0 ? MOCKED_MAIN : MOCKED_TWINK,
+    //       text: faker.lorem.text(),
+    //       createdAt: faker.date.recent(),
+    //     },
+    //   })
+    //   if (i === count) {
+    //     await prisma.chat.update({
+    //       where: {
+    //         id: MOCKED_GROUP,
+    //       },
+    //       data: {
+    //         lastMessage: {
+    //           connect: {
+    //             id: message.id,
+    //           },
+    //         },
+    //       },
+    //     })
+    //   }
+    // }
+  }
 }
 
 const seed = new Seeder()
 async function main() {
   // await seed.createMessages(100)
-  await seed.createUsers(100)
+  await seed.createMockAccounts()
+  console.log('[SEED]: Mock accounts created 💅')
+
+  await seed.createUsers(50)
+  console.log(`[SEED]: Users created 🤝`)
+
+  await seed.addContacts(15)
+  console.log(`[SEED]: Contacts created 📞`)
+
+  await seed.createChannels()
+  console.log(`[SEED]: Channels created 📺`)
+
+  await seed.createGroups()
+  console.log(`[SEED]: Groups created 🏘️`)
+
   // await seed.deleteUsers()
   // await seed.addContacts(100)
   // await seed.removeContacts()

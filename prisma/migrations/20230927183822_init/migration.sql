@@ -53,6 +53,7 @@ CREATE TABLE "users" (
     "lastActivity" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "color" "color_variants" NOT NULL,
+    "orderedFoldersIds" INTEGER[],
     "privacySettingsId" TEXT NOT NULL,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
@@ -158,22 +159,50 @@ CREATE TABLE "Document" (
 );
 
 -- CreateTable
+CREATE TABLE "DeletedMessage" (
+    "id" TEXT NOT NULL,
+    "messageId" TEXT NOT NULL,
+
+    CONSTRAINT "DeletedMessage_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Message" (
     "id" TEXT NOT NULL,
     "chatId" TEXT NOT NULL,
+    "deleted_for_all" BOOLEAN,
     "entities" JSONB,
-    "senderId" TEXT NOT NULL,
+    "sender_id" TEXT NOT NULL,
     "text" TEXT,
     "isLastInChatId" TEXT,
-    "isPinned" BOOLEAN,
+    "silent" BOOLEAN,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "isPost" BOOLEAN,
-    "replyToMessageId" TEXT,
-    "postAuthor" TEXT,
+    "post" BOOLEAN,
+    "reply_to_msg_id" TEXT,
+    "post_author" TEXT,
     "views" INTEGER,
 
     CONSTRAINT "Message_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "chat_folders" (
+    "id" TEXT NOT NULL,
+    "orderId" INTEGER NOT NULL,
+    "userId" TEXT NOT NULL,
+    "icon" TEXT,
+    "title" TEXT NOT NULL,
+    "contacts" BOOLEAN,
+    "nonContacts" BOOLEAN,
+    "groups" BOOLEAN,
+    "channels" BOOLEAN,
+    "excludeMuted" BOOLEAN,
+    "excludeReaded" BOOLEAN,
+    "excludeArchived" BOOLEAN,
+    "excludeUnarchived" BOOLEAN,
+
+    CONSTRAINT "chat_folders_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -207,21 +236,13 @@ CREATE TABLE "user_blocks" (
 );
 
 -- CreateTable
-CREATE TABLE "api_tokens" (
-    "id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "hash" TEXT NOT NULL,
-
-    CONSTRAINT "api_tokens_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "chats" (
     "id" TEXT NOT NULL,
     "color" "color_variants" NOT NULL,
     "title" TEXT NOT NULL,
     "inviteLink" TEXT,
     "is_private" BOOLEAN,
+    "isService" BOOLEAN DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "type" "chat_types" NOT NULL,
@@ -245,14 +266,15 @@ CREATE TABLE "chat_members" (
     "id" TEXT NOT NULL,
     "is_pinned" BOOLEAN DEFAULT false,
     "is_muted" BOOLEAN DEFAULT false,
+    "is_archived" BOOLEAN DEFAULT false,
+    "isAdmin" BOOLEAN,
+    "isOwner" BOOLEAN,
     "unread_count" INTEGER DEFAULT 0,
     "draft" TEXT,
     "joinedDate" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
     "inviter_id" TEXT,
     "promoted_by_id" TEXT,
     "kicked_by_id" TEXT,
-    "isAdmin" BOOLEAN,
-    "isOwner" BOOLEAN,
     "chat_id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
 
@@ -319,6 +341,30 @@ CREATE TABLE "privacy_rules" (
     "visibility" "privacy_visibilities" NOT NULL DEFAULT 'Everybody',
 
     CONSTRAINT "privacy_rules_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "_DeletedMessageToUser" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "_FolderPinnedChats" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "_FolderIncludedChats" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "_FolderExcludedChats" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL
 );
 
 -- CreateTable
@@ -415,19 +461,22 @@ CREATE UNIQUE INDEX "Poll_id_key" ON "Poll"("id");
 CREATE UNIQUE INDEX "Document_id_key" ON "Document"("id");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "DeletedMessage_id_key" ON "DeletedMessage"("id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Message_id_key" ON "Message"("id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Message_isLastInChatId_key" ON "Message"("isLastInChatId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "chat_folders_id_key" ON "chat_folders"("id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "MessageForward_id_key" ON "MessageForward"("id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "user_blocks_blocker_id_blocked_id_key" ON "user_blocks"("blocker_id", "blocked_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "api_tokens_user_id_key" ON "api_tokens"("user_id");
 
 -- CreateIndex
 CREATE INDEX "chats_id_idx" ON "chats"("id");
@@ -476,6 +525,30 @@ CREATE UNIQUE INDEX "privacy_settings_add_by_phone_id_key" ON "privacy_settings"
 
 -- CreateIndex
 CREATE UNIQUE INDEX "privacy_settings_chat_invite_id_key" ON "privacy_settings"("chat_invite_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "_DeletedMessageToUser_AB_unique" ON "_DeletedMessageToUser"("A", "B");
+
+-- CreateIndex
+CREATE INDEX "_DeletedMessageToUser_B_index" ON "_DeletedMessageToUser"("B");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "_FolderPinnedChats_AB_unique" ON "_FolderPinnedChats"("A", "B");
+
+-- CreateIndex
+CREATE INDEX "_FolderPinnedChats_B_index" ON "_FolderPinnedChats"("B");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "_FolderIncludedChats_AB_unique" ON "_FolderIncludedChats"("A", "B");
+
+-- CreateIndex
+CREATE INDEX "_FolderIncludedChats_B_index" ON "_FolderIncludedChats"("B");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "_FolderExcludedChats_AB_unique" ON "_FolderExcludedChats"("A", "B");
+
+-- CreateIndex
+CREATE INDEX "_FolderExcludedChats_B_index" ON "_FolderExcludedChats"("B");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "_ChatMemberToPollAnswer_AB_unique" ON "_ChatMemberToPollAnswer"("A", "B");
@@ -544,13 +617,19 @@ ALTER TABLE "MessageMediaPoll" ADD CONSTRAINT "MessageMediaPoll_messageId_fkey" 
 ALTER TABLE "PollAnswer" ADD CONSTRAINT "PollAnswer_pollId_fkey" FOREIGN KEY ("pollId") REFERENCES "Poll"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "DeletedMessage" ADD CONSTRAINT "DeletedMessage_messageId_fkey" FOREIGN KEY ("messageId") REFERENCES "Message"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Message" ADD CONSTRAINT "Message_chatId_fkey" FOREIGN KEY ("chatId") REFERENCES "chats"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Message" ADD CONSTRAINT "Message_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Message" ADD CONSTRAINT "Message_sender_id_fkey" FOREIGN KEY ("sender_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Message" ADD CONSTRAINT "Message_isLastInChatId_fkey" FOREIGN KEY ("isLastInChatId") REFERENCES "chats"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "chat_folders" ADD CONSTRAINT "chat_folders_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "contacts" ADD CONSTRAINT "contacts_owner_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -563,9 +642,6 @@ ALTER TABLE "user_blocks" ADD CONSTRAINT "user_blocks_blocker_id_fkey" FOREIGN K
 
 -- AddForeignKey
 ALTER TABLE "user_blocks" ADD CONSTRAINT "user_blocks_blocked_id_fkey" FOREIGN KEY ("blocked_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "api_tokens" ADD CONSTRAINT "api_tokens_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "chats_full_info" ADD CONSTRAINT "chats_full_info_chatId_fkey" FOREIGN KEY ("chatId") REFERENCES "chats"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -608,6 +684,30 @@ ALTER TABLE "privacy_settings" ADD CONSTRAINT "privacy_settings_add_by_phone_id_
 
 -- AddForeignKey
 ALTER TABLE "privacy_settings" ADD CONSTRAINT "privacy_settings_chat_invite_id_fkey" FOREIGN KEY ("chat_invite_id") REFERENCES "privacy_rules"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_DeletedMessageToUser" ADD CONSTRAINT "_DeletedMessageToUser_A_fkey" FOREIGN KEY ("A") REFERENCES "DeletedMessage"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_DeletedMessageToUser" ADD CONSTRAINT "_DeletedMessageToUser_B_fkey" FOREIGN KEY ("B") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_FolderPinnedChats" ADD CONSTRAINT "_FolderPinnedChats_A_fkey" FOREIGN KEY ("A") REFERENCES "chats"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_FolderPinnedChats" ADD CONSTRAINT "_FolderPinnedChats_B_fkey" FOREIGN KEY ("B") REFERENCES "chat_folders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_FolderIncludedChats" ADD CONSTRAINT "_FolderIncludedChats_A_fkey" FOREIGN KEY ("A") REFERENCES "chats"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_FolderIncludedChats" ADD CONSTRAINT "_FolderIncludedChats_B_fkey" FOREIGN KEY ("B") REFERENCES "chat_folders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_FolderExcludedChats" ADD CONSTRAINT "_FolderExcludedChats_A_fkey" FOREIGN KEY ("A") REFERENCES "chats"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_FolderExcludedChats" ADD CONSTRAINT "_FolderExcludedChats_B_fkey" FOREIGN KEY ("B") REFERENCES "chat_folders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_ChatMemberToPollAnswer" ADD CONSTRAINT "_ChatMemberToPollAnswer_A_fkey" FOREIGN KEY ("A") REFERENCES "chat_members"("id") ON DELETE CASCADE ON UPDATE CASCADE;

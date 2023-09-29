@@ -81,6 +81,12 @@ export class SignInInput {
     phoneNumber: string;
 }
 
+export class GetChatsInput {
+    archived?: Nullable<boolean>;
+    offset?: Nullable<number>;
+    limit?: Nullable<number>;
+}
+
 export class InputChat {
     chatId: string;
 }
@@ -120,6 +126,22 @@ export class UpdateContactInput {
     userId: string;
 }
 
+export class AddChatFolderInput {
+    orderId: number;
+    icon?: Nullable<string>;
+    title: string;
+    contacts?: Nullable<boolean>;
+    nonContacts?: Nullable<boolean>;
+    groups?: Nullable<boolean>;
+    channels?: Nullable<boolean>;
+    excludeMuted?: Nullable<boolean>;
+    excludeReaded?: Nullable<boolean>;
+    excludeArchived?: Nullable<boolean>;
+    pinnedChats?: Nullable<string[]>;
+    includedChats?: Nullable<string[]>;
+    excludedChats?: Nullable<string[]>;
+}
+
 export class GetLangStringInput {
     code: string;
     key: string;
@@ -141,6 +163,11 @@ export class SendMessageInput {
     silent?: Nullable<boolean>;
     entities?: Nullable<MessageEntityInput[]>;
     text?: Nullable<string>;
+}
+
+export class SaveDraftInput {
+    text?: Nullable<string>;
+    chatId: string;
 }
 
 export class MessageEntityInput {
@@ -194,6 +221,8 @@ export abstract class IQuery {
 
     abstract getChats(): Chat[] | Promise<Chat[]>;
 
+    abstract getChatsTest(input: GetChatsInput): Nullable<Chat[]> | Promise<Nullable<Chat[]>>;
+
     abstract getChat(chatId: string): Chat | Promise<Chat>;
 
     abstract getChatFull(chatId: string): ChatFull | Promise<ChatFull>;
@@ -201,6 +230,8 @@ export abstract class IQuery {
     abstract resolveUsername(username: string): Nullable<Peer> | Promise<Nullable<Peer>>;
 
     abstract getContacts(): Nullable<User[]> | Promise<Nullable<User[]>>;
+
+    abstract getChatFolders(): GetChatFoldersRes | Promise<GetChatFoldersRes>;
 
     abstract getLangPack(code: string): LangPack | Promise<LangPack>;
 
@@ -213,6 +244,8 @@ export abstract class IQuery {
     abstract getCountriesList(code: string): Country[] | Promise<Country[]>;
 
     abstract getHistory(input: GetHistoryInput): Message[] | Promise<Message[]>;
+
+    abstract getPrivateChat(): Nullable<Any> | Promise<Nullable<Any>>;
 
     abstract searchGlobal(input: SearchGlobalInput): SearchGlobalResponse | Promise<SearchGlobalResponse>;
 
@@ -256,7 +289,13 @@ export abstract class IMutation {
 
     abstract deleteContact(userId: string): Nullable<Any> | Promise<Nullable<Any>>;
 
+    abstract deleteChatFolder(folderId: number): boolean | Promise<boolean>;
+
+    abstract addChatFolder(input: AddChatFolderInput): boolean | Promise<boolean>;
+
     abstract sendMessage(input: SendMessageInput): NewMessagePayload | Promise<NewMessagePayload>;
+
+    abstract saveDraft(input: SaveDraftInput): boolean | Promise<boolean>;
 }
 
 export class UpdateUserStatus {
@@ -277,7 +316,11 @@ export abstract class ISubscription {
 
     abstract onChatCreated(): ChatCreatedUpdate | Promise<ChatCreatedUpdate>;
 
+    abstract onChatFolderUpdate(): UpdateChatFolderPayload | Promise<UpdateChatFolderPayload>;
+
     abstract onNewMessage(): NewMessagePayload | Promise<NewMessagePayload>;
+
+    abstract onDraftUpdate(): UpdateDraftPayload | Promise<UpdateDraftPayload>;
 }
 
 export class TwoFactorAuth {
@@ -293,7 +336,9 @@ export class SendPhoneResponse {
 export class Chat {
     id: string;
     userId?: Nullable<string>;
+    folderId?: Nullable<number>;
     color: ColorVariants;
+    draft?: Nullable<string>;
     type: ChatType;
     title: string;
     photo?: Nullable<Photo>;
@@ -358,6 +403,33 @@ export class ChatCreatedUpdate {
     users: User[];
 }
 
+export class UpdateChatFolderPayload {
+    orderId: number;
+    ownerId: string;
+    folder?: Nullable<ChatFolder>;
+}
+
+export class GetChatFoldersRes {
+    folders: ChatFolder[];
+    orderedIds: number[];
+}
+
+export class ChatFolder {
+    orderId: number;
+    icon?: Nullable<string>;
+    title: string;
+    contacts?: Nullable<boolean>;
+    nonContacts?: Nullable<boolean>;
+    groups?: Nullable<boolean>;
+    channels?: Nullable<boolean>;
+    excludeMuted?: Nullable<boolean>;
+    excludeReaded?: Nullable<boolean>;
+    excludeArchived?: Nullable<boolean>;
+    pinnedChats?: Nullable<string[]>;
+    includedChats?: Nullable<string[]>;
+    excludedChats?: Nullable<string[]>;
+}
+
 export class LangPack {
     strings: JSON;
     langCode: string;
@@ -384,6 +456,12 @@ export class Photo {
     url: string;
 }
 
+export class UpdateDraftPayload {
+    chatId: string;
+    ownerId: string;
+    text?: Nullable<string>;
+}
+
 export class NewMessagePayload {
     chat: Chat;
     message: Message;
@@ -407,7 +485,6 @@ export class Message {
 }
 
 export class MessageContent {
-    media?: Nullable<MessageMedia>;
     action?: Nullable<MessageAction>;
     photo?: Nullable<MessagePhoto>;
     contact?: Nullable<MessageContact>;
@@ -533,6 +610,19 @@ export class Session {
     activeAt: DateTime;
     userId: string;
     isCurrent?: Nullable<boolean>;
+}
+
+export class Story {
+    orderedId: number;
+    expiredDate: DateTime;
+    edited?: Nullable<boolean>;
+    closeFriend?: Nullable<boolean>;
+    contacts?: Nullable<boolean>;
+    caption?: Nullable<string>;
+    viewsCount: number;
+    reactionsCount: number;
+    userId: string;
+    photo?: Nullable<Photo>;
 }
 
 export class User {

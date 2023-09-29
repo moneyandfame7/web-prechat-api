@@ -1,17 +1,14 @@
 import type * as Prisma from '@prisma/client'
 import type * as Api from '@generated/graphql'
 
-import { CACHE_MANAGER } from '@nestjs/cache-manager'
-import { Inject, Injectable } from '@nestjs/common'
-import { Cache } from 'cache-manager'
+import { Injectable } from '@nestjs/common'
 
 import type { UserFieldsForBuild, UserStatus } from 'types/users'
 
-import { TTL_USER_STATUS } from 'common/constants'
 import { pick } from 'common/utils/pick'
 
 import { getContact } from './users'
-import type { PrismaChat, PrismaChatMember } from './chats'
+import type { PrismaChat, PrismaChatFolder, PrismaChatMember } from './chats'
 import type { PhotoFields } from './photos'
 import type { PrismaMessage, PrismaMessageMedia } from './messages'
 
@@ -21,11 +18,11 @@ import type { PrismaMessage, PrismaMessageMedia } from './messages'
  */
 @Injectable()
 export class BuilderService {
-  public constructor(@Inject(CACHE_MANAGER) private cache: Cache) {}
+  // public constructor(@Inject(CACHE_MANAGER) private cache: Cache) {}
 
   /* USERS, можливо потім розділити по меншим класам. */
-  public async buildApiUsersAndStatuses(users: UserFieldsForBuild[], requesterId: string): Promise<Api.User[]> {
-    return Promise.all(users.map(async (u) => await this.buildApiUserAndStatus(u, requesterId)))
+  public buildApiUsersAndStatuses(users: UserFieldsForBuild[], requesterId: string): Api.User[] {
+    return users.map((u) => this.buildApiUserAndStatus(u, requesterId))
   }
   public buildApiUser(user: UserFieldsForBuild, requesterId: string) {
     const contactAddedByCurrent = getContact(user.addedByContacts, requesterId)
@@ -46,15 +43,12 @@ export class BuilderService {
       photo: this.buildApiPhoto(user.photo),
     } as Omit<Api.User, 'status'>
   }
-  public async buildApiUserAndStatus(user: UserFieldsForBuild, requesterId: string) {
+  public buildApiUserAndStatus(user: UserFieldsForBuild, requesterId: string) {
     const baseFields = this.buildApiUser(user, requesterId)
     return {
       ...baseFields,
-      status: await this.getStatusCachedOrBuild(user),
+      status: this.buildApiUserStatus(user),
     } as Api.User
-  }
-  private async getStatusCachedOrBuild(user: UserFieldsForBuild) {
-    return (await this.getStatusCached(user.id)) || this.buildApiUserStatus(user)
   }
 
   private getUserName(user: Prisma.User | Api.User | Omit<Api.User, 'status'>) {
@@ -88,14 +82,14 @@ export class BuilderService {
     // Дуже давно
     return { type: 'userStatusLongTimeAgo' }
   }
-
+  /* 
   public getStatusCached(userId: string) {
     return this.cache.get<UserStatus>(`${userId}_status`)
   }
 
   private setStatusCache(userId: string, status: UserStatus) {
     this.cache.set(`${userId}_status`, status, TTL_USER_STATUS)
-  }
+  } */
 
   /* CHATS */
 
@@ -104,19 +98,20 @@ export class BuilderService {
 
     const privateChatPartner =
       chat.type === 'chatTypePrivate' ? this.selectPrivateChatMember(chat, requesterId) : undefined
+    const chatId = privateChatPartner?.id || chat.id
 
     const title = privateChatPartner
       ? privateChatPartner.isSelf
         ? 'Saved Messages'
         : this.getUserName(privateChatPartner)
       : chat.title
-    const chatId = privateChatPartner?.id || chat.id
     return {
       id: chatId,
       userId: privateChatPartner?.id,
       color: privateChatPartner?.color || (chat.color as Api.ColorVariants),
       type: chat.type as Api.ChatType,
       title,
+      draft: requesterMember?.draft,
       createdAt: chat.createdAt,
       isNotJoined: !requesterMember,
       unreadCount: requesterMember?.unreadCount,
@@ -162,15 +157,14 @@ export class BuilderService {
       promotedByUserId: member.promotedById,
       isAdmin: member.isAdmin,
       isOwner: member.isOwner,
+      joinedDate: member.joinedDate,
     }
   }
 
   /* helpers */
   private async buildOnlineCount(members: PrismaChatMember[]) {
     return (
-      await Promise.all(
-        members.map(async (m) => (await this.getStatusCachedOrBuild(m.user)).type === 'userStatusOnline'),
-      )
+      await Promise.all(members.map(async (m) => this.buildApiUserStatus(m.user).type === 'userStatusOnline'))
     ).filter(Boolean).length
   }
   private getChatTitle(chat: PrismaChat, requesterId: string) {
@@ -205,7 +199,7 @@ export class BuilderService {
       content: {
         formattedText: {
           text: primaryFields.text!,
-          entities: entities as unknown as Api.MessageEntity[],
+          ...(entities && { entities: JSON.parse(entities as string) as Api.MessageEntity[] }),
         },
         action: (action as Api.MessageAction) || undefined,
       },
@@ -273,5 +267,16 @@ export class BuilderService {
 
   public buildApiPhoto(photo: PhotoFields): Api.Photo | undefined {
     return photo ? (photo as Api.Photo) : undefined
+  }
+
+  /* CHAT FOLDERS */
+  public buildApiChatFolder(requesterId: string, folder: PrismaChatFolder): Api.ChatFolder {
+    const { excludedChats, includedChats, pinnedChats, ...primary } = folder
+    return {
+      ...primary,
+      excludedChats: excludedChats.map((c) => this.buildApiChat(c, requesterId).id),
+      includedChats: includedChats.map((c) => this.buildApiChat(c, requesterId).id),
+      pinnedChats: pinnedChats.map((c) => this.buildApiChat(c, requesterId).id),
+    }
   }
 }

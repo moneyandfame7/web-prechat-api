@@ -11,6 +11,7 @@ import { AuthVerifyCodeError, SessionPasswordNeeded } from 'common/errors/Author
 import { PhoneNumberNotFoundError } from 'common/errors/Common'
 
 import { AccountService } from 'Account/Service'
+import { FoldersService } from 'Folders/Service'
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,7 @@ export class AuthService {
     private firebase: FirebaseService,
     private sessions: SessionService,
     private account: AccountService,
+    private folders: FoldersService,
   ) {}
 
   public async sendPhone(phoneNumber: string): Promise<SendPhoneResponse> {
@@ -54,6 +56,7 @@ export class AuthService {
       lastName,
       phoneNumber,
     })
+
     return this.account.createAuthorization(sessionData, userId)
   }
 
