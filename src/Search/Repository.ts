@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import type { SearchGlobalInput } from '@generated/graphql'
 
 import { PrismaService } from 'common/prisma.service'
-import { buildApiUser, selectUserFieldsToBuild } from 'common/builder/users'
+import { buildApiUser, selectUserFields } from 'common/builder/users'
 
 @Injectable()
 export class SearchRepository {
@@ -41,7 +41,7 @@ export class SearchRepository {
         ],
       },
       take: input.limit ?? undefined,
-      select: selectUserFieldsToBuild(),
+      select: selectUserFields(),
     })
 
     return users.map((u) => buildApiUser(requesterId, u))
@@ -59,7 +59,7 @@ export class SearchRepository {
         },
       },
       take: input.limit ?? undefined,
-      select: selectUserFieldsToBuild(),
+      select: selectUserFields(),
     })
 
     return users.map((u) => buildApiUser(requesterId, u))

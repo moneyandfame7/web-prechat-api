@@ -1,10 +1,11 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql'
+import { MediaService } from 'Media'
 import { PubSub2Service } from 'common/pubsub2/Service'
 import { SubscriptionTyped } from 'types/nestjs'
 
 @Resolver('AppResolver')
 export class AppResolver {
-  public constructor(private pubSub: PubSub2Service) {}
+  public constructor(private pubSub: PubSub2Service, private media: MediaService) {}
   @Query('ping')
   public pingPong() {
     return 'pong'

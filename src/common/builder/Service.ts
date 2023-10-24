@@ -32,14 +32,16 @@ export class BuilderService {
     const isCurrentUserAddedToContact = user.contacts.some((c) => c.contactId === requesterId)
 
     const primaryFields = pick(user, ['id', 'color', 'photo', 'username', 'phoneNumber', 'bio'])
+
+    const isBlocked = user.blockedByUsers.some((u) => u.blockerId === requesterId)
     return {
       ...primaryFields,
-
       firstName: contactAddedByCurrent?.firstName || user.firstName,
       lastName: contactAddedByCurrent?.lastName || user.lastName,
       isSelf: user.id === requesterId,
       isContact: isCurrentUserInContact,
       isMutualContact: isCurrentUserInContact && isCurrentUserAddedToContact,
+      isBlocked,
       photo: this.buildApiPhoto(user.photo),
     } as Omit<Api.User, 'status'>
   }
@@ -95,7 +97,7 @@ export class BuilderService {
 
   public buildApiChat(chat: PrismaChat, requesterId: string): Api.Chat {
     const requesterMember = this.selectChatMember(chat, requesterId)
-
+    // requesterMember?.lastMessage
     const privateChatPartner =
       chat.type === 'chatTypePrivate' ? this.selectPrivateChatMember(chat, requesterId) : undefined
     const chatId = privateChatPartner?.id || chat.id
@@ -124,6 +126,12 @@ export class BuilderService {
       isPinned: Boolean(requesterMember?.isPinned),
       _id: chat.id,
     }
+  }
+
+  public buildApiChatId(chat: PrismaChat, requesterId: string): string {
+    const privateChatPartner =
+      chat.type === 'chatTypePrivate' ? this.selectPrivateChatMember(chat, requesterId) : undefined
+    return privateChatPartner?.id || chat.id
   }
   public async buildApiChatFull(chat: PrismaChat, requesterId: string): Promise<Api.ChatFull> {
     const { fullInfo, permissions } = chat

@@ -10,8 +10,10 @@ import { InvalidEntityIdError } from 'common/errors'
 import { orderHistory } from 'common/helpers/messages'
 import { MSG_HISTORY_LIMIT } from 'common/constants'
 import { ChatRepository } from 'Chats/Repository'
-import { InvalidChatId, InvalidPeerId } from 'common/errors/Chats'
+import { InvalidPeerId } from 'common/errors/Chats'
 import { isUserId } from 'common/helpers/chats'
+import type { Prisma } from '@prisma/client'
+import { CreateMessageInput } from 'types/messages'
 
 @Injectable()
 export class MessagesRepository {
@@ -25,6 +27,7 @@ export class MessagesRepository {
     const chat = await this.chats.getPeerById(requesterId, input.chatId)
 
     if (!chat) {
+      //
       if (isUserId(input.chatId)) {
         return []
       }
@@ -36,6 +39,8 @@ export class MessagesRepository {
      */
 
     const { id: chatId } = chat
+
+    console.log({ chatId })
     switch (direction) {
       case Api.HistoryDirection.Around: {
         if (!input.offsetId) {
@@ -98,6 +103,12 @@ export class MessagesRepository {
       where: {
         chatId: input.chatId,
         ...this.processNotDeleted(requesterId),
+
+        // isDeletedForAll:{
+        //   not:{
+
+        //   }
+        // }
       },
 
       ...(cursor && cursor),
@@ -116,26 +127,31 @@ export class MessagesRepository {
 
   private processNotDeleted(requesterId: string) {
     return {
-      isDeletedForAll: {
-        not: true,
-      },
-      deletedByUsers: {
-        some: {
-          users: {
-            some: {
-              id: requesterId,
+      AND: [
+        {
+          OR: [{ isDeletedForAll: { equals: null } }, { isDeletedForAll: { not: true } }],
+          deletedByUsers: {
+            every: {
+              NOT: {
+                userId: requesterId,
+              },
             },
+            // every: {
+            //   NOT: {
+            //     userId: requesterId,
+            //   },
+            // },
+            // none: {
+            // id: requesterId,
+            // },
           },
         },
-      },
-    }
+      ],
+    } satisfies Prisma.MessageWhereInput
   }
 
-  public async create(
-    requesterId: string,
-    input: { text?: Nullable<string>; chat: PrismaChat; entities?: Nullable<MessageEntity[]>; id: string },
-  ) {
-    const { text, chat, entities, id } = input
+  public async create(requesterId: string, input: CreateMessageInput) {
+    const { text, chat, entities, id, orderedId } = input
     // const createdMessage = await this.prisma.message.create({
     //   data: {
     //     id,
@@ -158,6 +174,7 @@ export class MessagesRepository {
           create: {
             id,
             text,
+            orderedId,
             chat: {
               connect: {
                 id: chat.id,
@@ -174,6 +191,8 @@ export class MessagesRepository {
             entities: {
               toJSON: () => entities,
             },
+
+            // orderedId,
           },
         },
         fullInfo: {
@@ -197,12 +216,89 @@ export class MessagesRepository {
       },
       include: {
         ...selectChatFields(),
+        // fullInfo:{
+        //   include:{
+        //     members:{
+        //       include:{
+
+        //       }
+        //     }
+        //   }
+        // }
       },
     })
 
     const { lastMessage } = updChat
-
+    // updChat.lastMessage.
     return { message: lastMessage!, chat: updChat }
+  }
+
+  public async delete(requesterId: string, input: Api.DeleteMessagesInput) {
+    const { ids, deleteForAll } = input
+    const affectedChat = await this.prisma.$transaction(async (tx) => {
+      const promises = ids.map((id) => {
+        return tx.message.update({
+          where: {
+            id,
+          },
+          data: {
+            isDeletedForAll: deleteForAll,
+            deletedByUsers: {
+              create: {
+                userId: requesterId,
+              },
+            },
+          },
+          include: {
+            chat: {
+              include: {
+                ...selectChatFields(),
+              },
+            },
+          },
+        })
+      })
+      const result = await Promise.all(promises)
+
+      const affectedChat = result[0].chat
+
+      return affectedChat
+    })
+
+    return {
+      affectedChat,
+    }
+
+    // return this.prisma.message.updateMany({
+    //   where: {
+    //     id: {
+    //       in: input.ids,
+    //     },
+    //   },
+    //   data: {},
+    // })
+  }
+
+  public async edit(requesterId: string, input: Api.EditMessageInput) {
+    const { chatId, messageId, text } = input
+    return this.prisma.message.update({
+      where: {
+        id: messageId,
+        // chatId, // optional?
+      },
+      data: {
+        text,
+        editedAt: new Date(),
+      },
+      include: {
+        ...selectMessageFields(),
+        chat: {
+          include: {
+            ...selectChatFields(),
+          },
+        },
+      },
+    })
   }
 
   /* Drafts. */

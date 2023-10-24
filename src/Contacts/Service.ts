@@ -1,14 +1,13 @@
 import { Injectable } from '@nestjs/common'
-import { /*  isPhoneNumber, */ isUUID } from 'class-validator'
 
-import type { AddContactInput, UpdateContactInput, User, Chat } from '@generated/graphql'
+import type { AddContactInput, UpdateContactInput, User } from '@generated/graphql'
+import type * as Api from '@generated/graphql'
 
 import { UserService } from 'Users'
 
 import {
   BadRequestError,
   ContactAlreadyExistError,
-  InvalidEntityIdError,
   NotFoundEntityError,
   // PhoneNumberInvalidError,
   PhoneNumberNotFoundError,
@@ -116,13 +115,15 @@ export class ContactsService {
   }
 
   /* Deleting */
-  public async delete(requesterId: string, userId: string) {
+  public async delete(requesterId: string, userId: string): Promise<Api.User> {
     const contact = await this.repository.find(requesterId, userId)
     if (!contact) {
       throw new NotFoundEntityError('contacts.deleteContact')
     }
 
-    return this.repository.delete(contact.id)
+    const deletedContact = await this.repository.delete(contact.id)
+
+    return this.builder.buildApiUserAndStatus(deletedContact.contact, requesterId)
   }
 
   public async get(requesterId: string): Promise<User[]> {

@@ -29,7 +29,7 @@ export class ChatsResolver {
     @Args('input') input: Api.CreateChannelInput,
   ): Promise<Api.Chat> {
     const chatNotBuilded = await this.chats.createChannel(currUserId, input)
-
+    // chatNotBuilded.fullInfo?.members[0].lastMessage.
     this.pubSub.publishNotBuilded('onChatCreated', {
       onChatCreated: chatNotBuilded,
     })
@@ -94,6 +94,15 @@ export class ChatsResolver {
     const chats = await this.chats.getChats(currUserId)
 
     return chats.map((c) => this.builder.buildApiChat(c, currUserId))
+  }
+
+  @QueryTyped('getCommonGroups')
+  @UseGuards(AuthGuard)
+  public async getCommonChats(
+    @CurrentSession('userId') requesterId: string,
+    @Args('input') input: Api.GetCommonGroupsInput,
+  ): Promise<Api.Chat[]> {
+    return this.chats.getCommonGroups(requesterId, input)
   }
 
   @QueryTyped('getChatsTest')

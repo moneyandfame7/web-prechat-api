@@ -4,6 +4,7 @@ import type { GqlContext } from 'types/other'
 import { UnauthorizedError } from 'common/errors/Authorization'
 
 export function getSession(req: GqlContext['req'], data?: keyof Session): Session {
+  // console.log({ req }, 'ALO DURA')
   const session = req.prechatSession as Session
 
   if (!session) {

@@ -5,3 +5,7 @@ export function isUserId(chatId: string) {
 export function isChatId(chatId: string) {
   return chatId.startsWith('c_')
 }
+
+export function isSavedMessages(requesterId: string, peerId: string) {
+  return isUserId(peerId) && requesterId === peerId
+}

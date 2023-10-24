@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import type { AddContactInput, UpdateContactInput } from '@generated/graphql'
 
 import { PrismaService } from 'common/prisma.service'
-import { selectUserFieldsToBuild } from 'common/builder/users'
+import { selectUserFields } from 'common/builder/users'
 
 @Injectable()
 export class ContactsRepository {
@@ -19,7 +19,7 @@ export class ContactsRepository {
       include: {
         contact: {
           select: {
-            ...selectUserFieldsToBuild(),
+            ...selectUserFields(),
           },
         },
       },
@@ -43,6 +43,13 @@ export class ContactsRepository {
     return this.prisma.contact.delete({
       where: {
         id: contactEntityId,
+      },
+      include: {
+        contact: {
+          include: {
+            ...selectUserFields(),
+          },
+        },
       },
     })
   }
@@ -70,7 +77,7 @@ export class ContactsRepository {
         },
       },
       select: {
-        ...selectUserFieldsToBuild(),
+        ...selectUserFields(),
       },
     })
   }

@@ -2,7 +2,7 @@ import type { Chat, ChatFullInfo, ChatMember, ChatFolder, Prisma } from '@prisma
 
 import type { UserFieldsForBuild } from 'types/users'
 
-import { isSelf, selectUserFieldsToBuild } from './users'
+import { isSelf, selectUserFields } from './users'
 import { type PrismaPhoto, selectPhotoFields } from './photos'
 import { type PrismaMessage, selectMessageFields } from './messages'
 
@@ -24,13 +24,19 @@ export type PrismaChatPermissions = {
 }
 export type PrismaChatMember = ChatMember & {
   user: UserFieldsForBuild
-} & { adminPermissions: PrismaChatAdminPermissions | null } & { userPermissions: PrismaChatPermissions | null }
+  adminPermissions: PrismaChatAdminPermissions | null
+  userPermissions: PrismaChatPermissions | null
+  // lastMessage: PrismaMessage | null
+}
 export type PrismaChatFull = ChatFullInfo & {
   members: PrismaChatMember[]
 }
-export type PrismaChat = Chat & { photo: PrismaPhoto | null } & { fullInfo: PrismaChatFull | null } & {
+export type PrismaChat = Chat & {
+  photo: PrismaPhoto | null
+  fullInfo: PrismaChatFull | null
   lastMessage: PrismaMessage | null
-} & { permissions: PrismaChatPermissions | null }
+  permissions: PrismaChatPermissions | null
+}
 
 export type PrismaChatFolder = ChatFolder & {
   excludedChats: PrismaChat[]
@@ -57,8 +63,16 @@ export function createChatMembers(requesterId: string, memberIds: string[]) {
         isAdmin: isSelf(requesterId, u),
         inviterId: requesterId,
         userId: u,
+
+        // admin permissions created when i add new admins
+        // adminPermissions:{
+        //   create:{
+        //     canAddNewAdmins:isSelf(requesterId,u),
+
+        //   }
+        // }
       })),
-    },
+    } satisfies Prisma.ChatMemberCreateNestedManyWithoutChatInfoInput,
   }
 }
 
@@ -80,7 +94,7 @@ export function selectChatMembers() {
           include: {
             user: {
               select: {
-                ...selectUserFieldsToBuild(),
+                ...selectUserFields(),
               },
             },
             // adminPermissions: {},
@@ -100,7 +114,7 @@ export function selectChatMembers() {
                 customTitle: true,
               },
             },
-          },
+          } satisfies Prisma.ChatMemberSelect,
         },
       },
     },

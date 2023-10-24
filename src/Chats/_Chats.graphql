@@ -3,6 +3,7 @@ scalar InputPeer
 type Query {
   # getChatSettings(input: ChatInput!): GetChatSettings!
   getChats: [Chat!]!
+  getCommonGroups(input: GetCommonGroupsInput!): [Chat!]!
   getChatsTest(input: GetChatsInput!): [Chat!]
   getChat(chatId: String!): Chat!
   getChatFull(chatId: String!): ChatFull!
@@ -40,6 +41,7 @@ type Chat {
   isNotJoined: Boolean
   isForbidden: Boolean
   isSupport: Boolean
+  isRestricted: Boolean
   lastMessage: Message
   isOwner: Boolean
   createdAt: DateTime
@@ -52,6 +54,11 @@ type Chat {
 input GetChatsInput {
   archived: Boolean
   offset: Int
+  limit: Int
+}
+input GetCommonGroupsInput {
+  userId: String!
+  offsetId: String
   limit: Int
 }
 type ChatMember {

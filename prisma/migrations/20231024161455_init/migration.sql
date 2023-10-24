@@ -19,9 +19,10 @@ CREATE TABLE "Photo" (
     "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "blurHash" TEXT NOT NULL,
     "url" TEXT NOT NULL,
-    "chatId" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "chatFullId" TEXT,
+    "chatId" TEXT,
+    "userId" TEXT,
+    "width" INTEGER,
+    "height" INTEGER,
 
     CONSTRAINT "Photo_pkey" PRIMARY KEY ("id")
 );
@@ -162,21 +163,69 @@ CREATE TABLE "Document" (
 CREATE TABLE "DeletedMessage" (
     "id" TEXT NOT NULL,
     "messageId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
 
     CONSTRAINT "DeletedMessage_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
+CREATE TABLE "PinnedMessage" (
+    "id" TEXT NOT NULL,
+    "messageId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+
+    CONSTRAINT "PinnedMessage_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Story" (
+    "id" TEXT NOT NULL,
+    "orderedId" INTEGER NOT NULL,
+    "userId" TEXT,
+    "chatId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "expiredDate" TIMESTAMP(3) NOT NULL,
+    "edited" BOOLEAN,
+    "closeFriends" BOOLEAN,
+    "contacts" BOOLEAN,
+    "caption" TEXT,
+
+    CONSTRAINT "Story_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "StoryReaction" (
+    "id" TEXT NOT NULL,
+    "storyId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+
+    CONSTRAINT "StoryReaction_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "StoryViews" (
+    "id" TEXT NOT NULL,
+    "storyId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+
+    CONSTRAINT "StoryViews_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Message" (
     "id" TEXT NOT NULL,
+    "ordered_id" INTEGER NOT NULL,
     "chatId" TEXT NOT NULL,
     "deleted_for_all" BOOLEAN,
+    "pinned_for_all" BOOLEAN,
     "entities" JSONB,
     "sender_id" TEXT NOT NULL,
     "text" TEXT,
     "isLastInChatId" TEXT,
     "silent" BOOLEAN,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "editedAt" TIMESTAMP(3),
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "post" BOOLEAN,
     "reply_to_msg_id" TEXT,
@@ -277,6 +326,7 @@ CREATE TABLE "chat_members" (
     "kicked_by_id" TEXT,
     "chat_id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
+    "lastReadMessageId" TEXT,
 
     CONSTRAINT "chat_members_pkey" PRIMARY KEY ("id")
 );
@@ -341,12 +391,6 @@ CREATE TABLE "privacy_rules" (
     "visibility" "privacy_visibilities" NOT NULL DEFAULT 'Everybody',
 
     CONSTRAINT "privacy_rules_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "_DeletedMessageToUser" (
-    "A" TEXT NOT NULL,
-    "B" TEXT NOT NULL
 );
 
 -- CreateTable
@@ -464,6 +508,24 @@ CREATE UNIQUE INDEX "Document_id_key" ON "Document"("id");
 CREATE UNIQUE INDEX "DeletedMessage_id_key" ON "DeletedMessage"("id");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "PinnedMessage_id_key" ON "PinnedMessage"("id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Story_id_key" ON "Story"("id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "StoryReaction_id_key" ON "StoryReaction"("id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "StoryReaction_storyId_key" ON "StoryReaction"("storyId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "StoryViews_id_key" ON "StoryViews"("id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "StoryViews_storyId_key" ON "StoryViews"("storyId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Message_id_key" ON "Message"("id");
 
 -- CreateIndex
@@ -527,12 +589,6 @@ CREATE UNIQUE INDEX "privacy_settings_add_by_phone_id_key" ON "privacy_settings"
 CREATE UNIQUE INDEX "privacy_settings_chat_invite_id_key" ON "privacy_settings"("chat_invite_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "_DeletedMessageToUser_AB_unique" ON "_DeletedMessageToUser"("A", "B");
-
--- CreateIndex
-CREATE INDEX "_DeletedMessageToUser_B_index" ON "_DeletedMessageToUser"("B");
-
--- CreateIndex
 CREATE UNIQUE INDEX "_FolderPinnedChats_AB_unique" ON "_FolderPinnedChats"("A", "B");
 
 -- CreateIndex
@@ -569,13 +625,10 @@ CREATE UNIQUE INDEX "_BlockedUsers_AB_unique" ON "_BlockedUsers"("A", "B");
 CREATE INDEX "_BlockedUsers_B_index" ON "_BlockedUsers"("B");
 
 -- AddForeignKey
-ALTER TABLE "Photo" ADD CONSTRAINT "Photo_chatId_fkey" FOREIGN KEY ("chatId") REFERENCES "chats"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Photo" ADD CONSTRAINT "Photo_chatId_fkey" FOREIGN KEY ("chatId") REFERENCES "chats"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Photo" ADD CONSTRAINT "Photo_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Photo" ADD CONSTRAINT "Photo_chatFullId_fkey" FOREIGN KEY ("chatFullId") REFERENCES "chats_full_info"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Photo" ADD CONSTRAINT "Photo_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -620,13 +673,40 @@ ALTER TABLE "PollAnswer" ADD CONSTRAINT "PollAnswer_pollId_fkey" FOREIGN KEY ("p
 ALTER TABLE "DeletedMessage" ADD CONSTRAINT "DeletedMessage_messageId_fkey" FOREIGN KEY ("messageId") REFERENCES "Message"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "DeletedMessage" ADD CONSTRAINT "DeletedMessage_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PinnedMessage" ADD CONSTRAINT "PinnedMessage_messageId_fkey" FOREIGN KEY ("messageId") REFERENCES "Message"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PinnedMessage" ADD CONSTRAINT "PinnedMessage_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Story" ADD CONSTRAINT "Story_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Story" ADD CONSTRAINT "Story_chatId_fkey" FOREIGN KEY ("chatId") REFERENCES "chats"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "StoryReaction" ADD CONSTRAINT "StoryReaction_storyId_fkey" FOREIGN KEY ("storyId") REFERENCES "Story"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "StoryReaction" ADD CONSTRAINT "StoryReaction_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "StoryViews" ADD CONSTRAINT "StoryViews_storyId_fkey" FOREIGN KEY ("storyId") REFERENCES "Story"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "StoryViews" ADD CONSTRAINT "StoryViews_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Message" ADD CONSTRAINT "Message_chatId_fkey" FOREIGN KEY ("chatId") REFERENCES "chats"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Message" ADD CONSTRAINT "Message_sender_id_fkey" FOREIGN KEY ("sender_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Message" ADD CONSTRAINT "Message_isLastInChatId_fkey" FOREIGN KEY ("isLastInChatId") REFERENCES "chats"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE "Message" ADD CONSTRAINT "Message_isLastInChatId_fkey" FOREIGN KEY ("isLastInChatId") REFERENCES "chats"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "chat_folders" ADD CONSTRAINT "chat_folders_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -651,6 +731,9 @@ ALTER TABLE "chat_members" ADD CONSTRAINT "chat_members_chat_id_fkey" FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE "chat_members" ADD CONSTRAINT "chat_members_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "chat_members" ADD CONSTRAINT "chat_members_lastReadMessageId_fkey" FOREIGN KEY ("lastReadMessageId") REFERENCES "Message"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "chat_permissions" ADD CONSTRAINT "chat_permissions_chat_id_fkey" FOREIGN KEY ("chat_id") REFERENCES "chats"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -684,12 +767,6 @@ ALTER TABLE "privacy_settings" ADD CONSTRAINT "privacy_settings_add_by_phone_id_
 
 -- AddForeignKey
 ALTER TABLE "privacy_settings" ADD CONSTRAINT "privacy_settings_chat_invite_id_fkey" FOREIGN KEY ("chat_invite_id") REFERENCES "privacy_rules"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_DeletedMessageToUser" ADD CONSTRAINT "_DeletedMessageToUser_A_fkey" FOREIGN KEY ("A") REFERENCES "DeletedMessage"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_DeletedMessageToUser" ADD CONSTRAINT "_DeletedMessageToUser_B_fkey" FOREIGN KEY ("B") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_FolderPinnedChats" ADD CONSTRAINT "_FolderPinnedChats_A_fkey" FOREIGN KEY ("A") REFERENCES "chats"("id") ON DELETE CASCADE ON UPDATE CASCADE;

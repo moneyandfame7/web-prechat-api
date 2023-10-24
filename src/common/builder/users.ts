@@ -54,7 +54,7 @@ export function buildPrivacySettings(): Prisma.UserCreateInput['privacySettings'
  * Select default user fields.
  */
 
-export function selectUserFieldsToBuild() /* : Required<UserFieldsToBuild> */ {
+export function selectUserFields() /* : Required<UserFieldsToBuild> */ {
   return {
     id: true,
     firstName: true,
@@ -63,6 +63,7 @@ export function selectUserFieldsToBuild() /* : Required<UserFieldsToBuild> */ {
     phoneNumber: true,
     contacts: true,
     addedByContacts: true,
+    blockedByUsers: true,
     color: true,
     lastActivity: true,
     isDeleted: true,
@@ -74,7 +75,26 @@ export function selectUserFieldsToBuild() /* : Required<UserFieldsToBuild> */ {
     photo: {
       ...selectPhotoFields(),
     },
-  }
+    // privacySettings: {
+    //   include: {
+    //     phoneNumber: {
+    //       select: {
+    //         visibility: true,
+    //         allowedUsers: {
+    //           select: {
+    //             id: true,
+    //           },
+    //         },
+    //         blockedUsers: {
+    //           select: {
+    //             id: true,
+    //           },
+    //         },
+    //       },
+    //     },
+    //   },
+    // },
+  } satisfies Prisma.UserSelect
 }
 export function getContact(contacts: Contact[], currentUserId: string) {
   return contacts.find((c) => c.ownerId === currentUserId)

@@ -2,6 +2,8 @@ scalar Any
 scalar JSON
 scalar UUID
 scalar DateTime
+scalar Upload
+
 type Query {
   ping: Any
 }

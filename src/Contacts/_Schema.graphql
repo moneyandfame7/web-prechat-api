@@ -18,6 +18,6 @@ type Query {
 
 type Mutation {
   addContact(input: AddContactInput): User!
-  updateContact(input: UpdateContactInput!): Any
-  deleteContact(userId: String!): Any
+  updateContact(input: UpdateContactInput!): Boolean!
+  deleteContact(userId: String!): User!
 }

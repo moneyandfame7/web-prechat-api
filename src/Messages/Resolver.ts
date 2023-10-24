@@ -11,6 +11,10 @@ import { AuthGuard } from 'Auth'
 
 import { MessagesService } from './Service'
 
+/**
+ * @todo можливо, треба передавати в самій підписці змінну/массив і від них
+ * вже сортувати ( передавати масив айдішніків-чатів ???)
+ */
 @Resolver('Message')
 export class MessagesResolver {
   constructor(private messages: MessagesService, private pubSub: PubSub2Service, private builder: BuilderService) {}
@@ -33,6 +37,84 @@ export class MessagesResolver {
     }
   }
 
+  @MutationTyped('deleteMessages')
+  @UseGuards(AuthGuard)
+  public async deleteMessages(
+    @CurrentSession('userId') requesterId: string,
+    @Args('input') input: Api.DeleteMessagesInput,
+  ) {
+    const { affectedChat } = await this.messages.deleteMessages(requesterId, input)
+
+    this.pubSub.publishNotBuilded('onDeleteMessages', {
+      onDeleteMessages: {
+        ...input,
+        affectedChat,
+      },
+    })
+
+    return true
+  }
+
+  @UseGuards(AuthGuard)
+  @SubscriptionBuilder('onDeleteMessages', {
+    filter(payload, _, context) {
+      const session = getSession(context.req)
+      const myId = session.userId
+
+      const { affectedChat, deleteForAll } = payload.onDeleteMessages
+
+      return Boolean(deleteForAll) && Boolean(affectedChat.fullInfo?.members.find((m) => m.userId === myId))
+    },
+    resolve(this: MessagesResolver, payload, args, context) {
+      const session = getSession(context.req)
+
+      const myId = session.userId
+      const chatId = this.builder.buildApiChatId(payload.onDeleteMessages.affectedChat, myId)
+      return { ids: payload.onDeleteMessages.ids, chatId }
+    },
+  })
+  public async onDeleteMessages() {
+    return this.pubSub.subscribe('onDeleteMessages')
+  }
+
+  @UseGuards(AuthGuard)
+  @MutationTyped('editMessage')
+  public async editMessage(@Args('input') input: Api.EditMessageInput, @CurrentSession('userId') requesterId: string) {
+    const { chat, message } = await this.messages.editMessage(requesterId, input)
+
+    this.pubSub.publishNotBuilded('onEditMessage', {
+      onEditMessage: {
+        message,
+        affectedChat: chat,
+      },
+    })
+    return this.builder.buildApiMessage(message, requesterId, input.chatId)
+    // return this.builder.buildApiMessage()
+  }
+
+  @UseGuards(AuthGuard)
+  @SubscriptionBuilder('onEditMessage', {
+    filter(payload, _, context) {
+      const session = getSession(context.req)
+      const myId = session.userId
+
+      const { affectedChat } = payload.onEditMessage
+      return Boolean(affectedChat.fullInfo?.members.find((m) => m.userId === myId)) /*  && message.senderId !== myId */
+    },
+    resolve(this: MessagesResolver, payload, args, ctx) {
+      const session = getSession(ctx.req)
+      const myId = session.userId
+
+      const message = payload.onEditMessage.message
+      const chat = this.builder.buildApiChat(payload.onEditMessage.affectedChat, myId)
+
+      return { message: this.builder.buildApiMessage(message, myId, chat.id) }
+    },
+  })
+  public async onEditMessage() {
+    return this.pubSub.subscribe('onEditMessage')
+  }
+
   @QueryTyped('getHistory')
   @UseGuards(AuthGuard)
   public async getHistory(@CurrentSession('userId') requesterId: string, @Args('input') input: Api.GetHistoryInput) {
@@ -48,6 +130,7 @@ export class MessagesResolver {
    * Фільтруємо підписку для юзерів, які є мемберами в чаті.
    */
 
+  @UseGuards(AuthGuard)
   @SubscriptionBuilder('onNewMessage', {
     filter(payload, _, context) {
       const session = getSession(context.req)

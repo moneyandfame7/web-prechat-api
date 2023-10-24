@@ -1,14 +1,14 @@
-import { Injectable, type CanActivate, type ExecutionContext } from '@nestjs/common'
+import { Injectable, type CanActivate, type ExecutionContext, Inject } from '@nestjs/common'
 import { GqlExecutionContext } from '@nestjs/graphql'
 
 import { SessionInvalidError, UnauthorizedError } from 'common/errors/Authorization'
 
-import { AuthService } from './Service'
 import type { GqlContext } from 'types/other'
+import { SessionService } from 'Sessions'
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly authService: AuthService) {}
+  constructor(@Inject(SessionService) private readonly sessions: SessionService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const ctx = GqlExecutionContext.create(context).getContext()
@@ -28,7 +28,7 @@ export class AuthGuard implements CanActivate {
     }
     let decoded
     try {
-      decoded = await this.authService.getSession(session as string)
+      decoded = await this.sessions.getById(session as string)
     } catch (e) {
       throw new SessionInvalidError('authGuard')
     }
@@ -38,6 +38,12 @@ export class AuthGuard implements CanActivate {
     }
 
     request.prechatSession = decoded
+
+    // ctx.req = {
+    //   ...ctx.req,
+    //   prechatSession: decoded,
+    // }
+    // req
     // ctx.req.extra = {
     //   ...ctx?.req?.extra,
     //   SOSU_HUI: decoded,

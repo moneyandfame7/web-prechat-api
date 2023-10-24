@@ -10,7 +10,7 @@ import { GraphQLUpload } from 'graphql-upload'
 // import * as redisStore from 'cache-manager-redis-store'
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
 
-import { AuthModule, AuthService } from './Auth'
+import { AuthGuard, AuthModule, AuthService } from './Auth'
 import { UserModule } from './Users'
 import { ChatsModule } from './Chats'
 import { SessionsModule } from './Sessions'
@@ -33,6 +33,7 @@ import { AppResolver } from './Resolver'
 import { PubSub2Module } from 'common/pubsub2/Module'
 import { PrismaModule } from 'common/prisma/Module'
 import { InputPeerTest } from 'common/scalars/InputPeer'
+import { APP_GUARD } from '@nestjs/core'
 
 const MAIN_MODULES = [
   // ApiModule,
@@ -136,7 +137,14 @@ const CONFIG_MODULES = [
   //   }),
   // }),
 ]
-const PROVIDERS: Provider[] = [AppResolver, PrismaService]
+const PROVIDERS: Provider[] = [
+  AppResolver,
+  PrismaService,
+  // {
+  //   provide: APP_GUARD,
+  //   useClass: AuthGuard,
+  // },
+]
 
 @Module({
   imports: [...MAIN_MODULES, ...CONFIG_MODULES],

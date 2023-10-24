@@ -48,15 +48,7 @@ export interface PrismaMessageMedia {
 
 export interface PrismaMessageAction {
   text: string
-  photo: {
-    id: string
-    date: Date
-    blurHash: string
-    url: string
-    chatId: string
-    userId: string
-    chatFullId: string | null
-  } | null
+  photo: Photo | null
   type: $Enums.MessageActionType
   users: string[]
 }
@@ -108,6 +100,7 @@ export function selectMessageFields() {
         values: true,
       },
     },
+    // isDeletedForAll: true,
   } satisfies Prisma.MessageSelect
 }
 // interface MessageActionPayload {

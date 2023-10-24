@@ -3,4 +3,10 @@ type Photo {
   date: DateTime!
   blurHash: String!
   url: String!
+  width: Int
+  height: Int
+}
+
+type Mutation {
+  uploadProfilePhoto(file: Upload!): Photo!
 }

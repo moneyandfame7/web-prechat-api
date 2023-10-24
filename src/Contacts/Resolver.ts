@@ -1,12 +1,12 @@
 import { UseGuards } from '@nestjs/common'
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql'
-import { isEmpty, isUUID } from 'class-validator'
+import { isEmpty } from 'class-validator'
 
 import { AuthGuard } from 'Auth/Guard'
-
+import type * as Api from '@generated/graphql'
 import { CurrentSession } from 'common/decorators/Session'
-import { AddContactInput, Chat, Session, UpdateContactInput, type User } from '@generated/graphql'
-import { ContactNameEmpty, InvalidEntityIdError } from 'common/errors/Common'
+import { AddContactInput, Session, UpdateContactInput, type User } from '@generated/graphql'
+import { ContactNameEmpty } from 'common/errors/Common'
 
 import { ContactsService } from './Service'
 
@@ -35,17 +35,28 @@ export class ContactsResolver {
    */
   @Mutation('updateContact')
   @UseGuards(AuthGuard)
-  public async updateContact(@CurrentSession() session: Session, @Args('input') input: UpdateContactInput) {
+  public async updateContact(
+    @CurrentSession() session: Session,
+    @Args('input') input: UpdateContactInput,
+  ): Promise<boolean> {
     // if (!isUUID(input.userId)) {
     //   throw new InvalidEntityIdError('contacts.addContact')
     // }
 
-    return this.contacts.update(session.userId, input)
+    const result = await this.contacts.update(session.userId, input)
+
+    return Boolean(result)
   }
 
+  /**
+   * @returns Deleted user.
+   */
   @Mutation('deleteContact')
   @UseGuards(AuthGuard)
-  public async deleteContact(@CurrentSession('userId') currentUserId: string, @Args('userId') id: string) {
+  public async deleteContact(
+    @CurrentSession('userId') currentUserId: string,
+    @Args('userId') id: string,
+  ): Promise<Api.User> {
     // if (!isUUID(id)) {
     //   throw new InvalidEntityIdError('contacts.deleteContact')
     // }

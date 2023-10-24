@@ -87,6 +87,12 @@ export class GetChatsInput {
     limit?: Nullable<number>;
 }
 
+export class GetCommonGroupsInput {
+    userId: string;
+    offsetId?: Nullable<string>;
+    limit?: Nullable<number>;
+}
+
 export class InputChat {
     chatId: string;
 }
@@ -156,13 +162,25 @@ export class GetHistoryInput {
     includeOffset?: Nullable<boolean>;
 }
 
+export class DeleteMessagesInput {
+    ids: string[];
+    deleteForAll?: Nullable<boolean>;
+}
+
 export class SendMessageInput {
     id: string;
+    orderedId: number;
     chatId: string;
     sendAs?: Nullable<string>;
     silent?: Nullable<boolean>;
     entities?: Nullable<MessageEntityInput[]>;
     text?: Nullable<string>;
+}
+
+export class EditMessageInput {
+    chatId: string;
+    messageId: string;
+    text: string;
 }
 
 export class SaveDraftInput {
@@ -220,6 +238,8 @@ export abstract class IQuery {
     abstract sendPhone(phone: string): SendPhoneResponse | Promise<SendPhoneResponse>;
 
     abstract getChats(): Chat[] | Promise<Chat[]>;
+
+    abstract getCommonGroups(input: GetCommonGroupsInput): Chat[] | Promise<Chat[]>;
 
     abstract getChatsTest(input: GetChatsInput): Nullable<Chat[]> | Promise<Nullable<Chat[]>>;
 
@@ -285,15 +305,21 @@ export abstract class IMutation {
 
     abstract addContact(input?: Nullable<AddContactInput>): User | Promise<User>;
 
-    abstract updateContact(input: UpdateContactInput): Nullable<Any> | Promise<Nullable<Any>>;
+    abstract updateContact(input: UpdateContactInput): boolean | Promise<boolean>;
 
-    abstract deleteContact(userId: string): Nullable<Any> | Promise<Nullable<Any>>;
+    abstract deleteContact(userId: string): User | Promise<User>;
 
     abstract deleteChatFolder(folderId: number): boolean | Promise<boolean>;
 
     abstract addChatFolder(input: AddChatFolderInput): boolean | Promise<boolean>;
 
+    abstract uploadProfilePhoto(file: Upload): Photo | Promise<Photo>;
+
     abstract sendMessage(input: SendMessageInput): NewMessagePayload | Promise<NewMessagePayload>;
+
+    abstract deleteMessages(input: DeleteMessagesInput): boolean | Promise<boolean>;
+
+    abstract editMessage(input: EditMessageInput): Message | Promise<Message>;
 
     abstract saveDraft(input: SaveDraftInput): boolean | Promise<boolean>;
 }
@@ -319,6 +345,10 @@ export abstract class ISubscription {
     abstract onChatFolderUpdate(): UpdateChatFolderPayload | Promise<UpdateChatFolderPayload>;
 
     abstract onNewMessage(): NewMessagePayload | Promise<NewMessagePayload>;
+
+    abstract onDeleteMessages(): DeleteMessagesPayload | Promise<DeleteMessagesPayload>;
+
+    abstract onEditMessage(): EditMessagePayload | Promise<EditMessagePayload>;
 
     abstract onDraftUpdate(): UpdateDraftPayload | Promise<UpdateDraftPayload>;
 }
@@ -347,6 +377,7 @@ export class Chat {
     isNotJoined?: Nullable<boolean>;
     isForbidden?: Nullable<boolean>;
     isSupport?: Nullable<boolean>;
+    isRestricted?: Nullable<boolean>;
     lastMessage?: Nullable<Message>;
     isOwner?: Nullable<boolean>;
     createdAt?: Nullable<DateTime>;
@@ -454,6 +485,8 @@ export class Photo {
     date: DateTime;
     blurHash: string;
     url: string;
+    width?: Nullable<number>;
+    height?: Nullable<number>;
 }
 
 export class UpdateDraftPayload {
@@ -462,19 +495,30 @@ export class UpdateDraftPayload {
     text?: Nullable<string>;
 }
 
+export class DeleteMessagesPayload {
+    ids: string[];
+    chatId: string;
+}
+
 export class NewMessagePayload {
     chat: Chat;
     message: Message;
 }
 
+export class EditMessagePayload {
+    message: Message;
+}
+
 export class Message {
-    text?: Nullable<string>;
     id: string;
+    orderedId: number;
     senderId?: Nullable<string>;
     chatId: string;
     _chatId?: Nullable<string>;
+    text?: Nullable<string>;
     createdAt: DateTime;
     updatedAt?: Nullable<DateTime>;
+    editedAt?: Nullable<DateTime>;
     isPost?: Nullable<boolean>;
     isOutgoing: boolean;
     postAuthor?: Nullable<string>;
@@ -632,9 +676,10 @@ export class User {
     lastName?: Nullable<string>;
     username?: Nullable<string>;
     bio?: Nullable<string>;
-    isContact: boolean;
     isSelf: boolean;
+    isContact: boolean;
     isMutualContact: boolean;
+    isBlocked?: Nullable<boolean>;
     color: ColorVariants;
     status: UserStatus;
     photo?: Nullable<Photo>;
@@ -654,8 +699,8 @@ export type Any = any;
 export type JSON = any;
 export type UUID = any;
 export type DateTime = any;
-export type InputPeer = any;
 export type Upload = any;
+export type InputPeer = any;
 export type Peer = Chat | User;
 export type MessageMedia = MessageMediaPhoto | MessageMediaDocument | MessageMediaContact | MessageMediaPoll;
 type Nullable<T> = T | null;

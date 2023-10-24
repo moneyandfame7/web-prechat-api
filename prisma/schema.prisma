@@ -24,17 +24,16 @@ enum ColorVariants {
 }
 
 model Photo {
-  id       String   @id @unique @default(uuid())
-  date     DateTime @default(now())
-  blurHash String
-  url      String
-  chat     Chat     @relation(fields: [chatId], references: [id])
-  chatId   String   @unique
-  user     User     @relation(fields: [userId], references: [id])
-  userId   String   @unique
-
-  chatFull          ChatFullInfo?      @relation(fields: [chatFullId], references: [id])
-  chatFullId        String?
+  id                String             @id @unique @default(uuid())
+  date              DateTime           @default(now())
+  blurHash          String
+  url               String
+  chat              Chat?              @relation(fields: [chatId], references: [id])
+  chatId            String?            @unique
+  user              User?              @relation(fields: [userId], references: [id])
+  userId            String?            @unique
+  width             Int?
+  height            Int?
   messageMediaPhoto MessageMediaPhoto?
   messageAction     MessageAction?
 }
@@ -83,6 +82,7 @@ model User {
   blockedUsers      UserBlock[]      @relation(name: "BlockedUsers")
   blockedByUsers    UserBlock[]      @relation(name: "BlockedByUsers")
   deletedMessages   DeletedMessage[]
+  pinnedMessages    PinnedMessage[]
   privacySettings   PrivacySettings  @relation(fields: [privacySettingsId], references: [id])
   privacySettingsId String           @unique
 
@@ -216,7 +216,18 @@ model DeletedMessage {
   message   Message @relation(fields: [messageId], references: [id])
   messageId String
 
-  users User[]
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+}
+
+model PinnedMessage {
+  id String @id @unique @default(uuid())
+
+  message   Message @relation(fields: [messageId], references: [id])
+  messageId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
 }
 
 model Story {
@@ -284,30 +295,35 @@ model StoryViews {
 }
 
 model Message {
-  id     String @id @unique @default(uuid())
-  chat   Chat   @relation(fields: [chatId], references: [id])
-  chatId String // ??
-
+  id              String           @id @unique @default(uuid())
+  orderedId       Int              @map("ordered_id")
+  chat            Chat             @relation(fields: [chatId], references: [id])
+  chatId          String // ??
+  // orderId? index???
   isDeletedForAll Boolean?         @map("deleted_for_all")
   deletedByUsers  DeletedMessage[]
+  isPinnedForAll  Boolean?         @map("pinned_for_all")
+  pinnedByUsers   PinnedMessage[]
   media           MessageMedia?
   action          MessageAction?
   entities        Json?
   sender          User             @relation(fields: [senderId], references: [id])
   senderId        String           @map("sender_id")
   text            String?
-  isLastIn        Chat?            @relation(name: "LastMessageIn", fields: [isLastInChatId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  isLastIn        Chat?            @relation(name: "LastMessageIn", fields: [isLastInChatId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   isLastInChatId  String?          @unique
 
-  isSilent         Boolean? @map("silent")
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  isSilent         Boolean?  @map("silent")
+  createdAt        DateTime  @default(now())
+  editedAt         DateTime?
+  updatedAt        DateTime  @updatedAt
   // for channel/groups?
-  isPost           Boolean? @map("post")
-  replyToMessageId String?  @map("reply_to_msg_id") // ?????
-  postAuthor       String?  @map("post_author")
+  isPost           Boolean?  @map("post")
+  replyToMessageId String?   @map("reply_to_msg_id") // ?????
+  postAuthor       String?   @map("post_author")
   views            Int?
 
+  lastReadedBy ChatMember[]
   // add index for chatId
 }
 
@@ -427,7 +443,6 @@ model ChatFullInfo {
   // kickedMembers ChatMember[]
 
   // @@index([chatId])
-  Photo Photo[]
 
   @@map("chats_full_info")
 }
@@ -459,7 +474,12 @@ model ChatMember {
   user   User   @relation(fields: [userId], references: [id])
   userId String @map("user_id")
 
-  votedAnswers PollAnswer[]
+  votedAnswers      PollAnswer[]
+  lastReadMessage   Message?     @relation(fields: [lastReadMessageId], references: [id])
+  lastReadMessageId String?
+
+  // /* lastReadOutgoing */
+  // /* lastReadIncoming 
   // messages     Message[]
   // chat   Chat   @relation(fields: [chatId], references: [id])
   // chatId String @unique @map("chat_id")

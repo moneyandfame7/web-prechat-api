@@ -56,7 +56,7 @@ export class MessagesService {
    */
   public async sendMessage(requesterId: string, input: Api.SendMessageInput) {
     // const message = this.repo.create()
-    const { chatId, text, entities, id /*  sendAs, silent */ } = input
+    const { chatId, text, entities, id, orderedId /*  sendAs, silent */ } = input
     // let chat: Chat | null
     const foundedChat = await this.findOrCreate(requesterId, chatId)
 
@@ -69,6 +69,7 @@ export class MessagesService {
       chat: foundedChat,
       entities,
       id,
+      orderedId,
     })
 
     // return { chat: foundedChat, message }
@@ -80,6 +81,17 @@ export class MessagesService {
     /* check if user is blocked? */
     // const chat=
     /* check if chat exist, if not - create and then send message ? */
+  }
+
+  public async deleteMessages(requesterId: string, input: Api.DeleteMessagesInput) {
+    return this.repo.delete(requesterId, input)
+    /*  */
+  }
+
+  public async editMessage(requesterId: string, input: Api.EditMessageInput) {
+    const { chat, ...message } = await this.repo.edit(requesterId, input)
+
+    return { chat, message }
   }
 
   /**

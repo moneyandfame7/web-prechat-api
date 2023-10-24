@@ -3,13 +3,13 @@ import type * as Prisma from '@prisma/client'
 import { NotFoundEntityError } from 'common/errors'
 import { PrismaService } from 'common/prisma.service'
 
-import { getUserName } from 'common/helpers/users'
 import { Injectable } from '@nestjs/common'
 import { selectChatFields } from 'common/builder/chats'
 import { getRandomColor } from 'Media'
 import type { InputPeer } from 'types/chats'
-import { isUserId } from 'common/helpers/chats'
+import { isSavedMessages, isUserId } from 'common/helpers/chats'
 import { generateId } from 'common/helpers/generateId'
+import { CreateMessageInput } from 'types/messages'
 
 @Injectable()
 export class ChatRepository {
@@ -37,6 +37,7 @@ export class ChatRepository {
       },
     })
   }
+
   // при створюванні юзера, одразу створювати чат з айді як у юзера, а потім, коли надсилати повідомлення, перевіряти, чи існує цей чат, якщо ні - оновлювати його і додавати мене....??
   /**
    * @internal
@@ -119,8 +120,21 @@ export class ChatRepository {
       },
     })
   }
+  public async getSavedMessages(requesterId: string) {
+    return this.prisma.chat.findUnique({
+      where: {
+        id: requesterId,
+      },
+      include: {
+        ...selectChatFields(),
+      },
+    })
+  }
 
   public async getPeerById(requesterId: string, peerId: string) {
+    if (isSavedMessages(requesterId, peerId)) {
+      return this.getSavedMessages(requesterId)
+    }
     if (isUserId(peerId)) {
       return this.getPrivateChat(requesterId, peerId)
     }
@@ -129,8 +143,11 @@ export class ChatRepository {
   }
 
   public async createPrivate(requesterId: string, userId: string) {
+    const chatId = generateId('chat')
+
     return this.prisma.chat.create({
       data: {
+        id: chatId,
         // id: crypto.randomUUID(),
         type: 'chatTypePrivate',
         title: `${requesterId}+${userId}`,

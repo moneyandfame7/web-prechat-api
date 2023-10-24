@@ -1,10 +1,14 @@
 # scalar DateTime
 type Mutation {
   sendMessage(input: SendMessageInput!): NewMessagePayload!
+  deleteMessages(input: DeleteMessagesInput!): Boolean!
+  editMessage(input: EditMessageInput!): Message!
   saveDraft(input: SaveDraftInput!): Boolean!
 }
 type Subscription {
   onNewMessage: NewMessagePayload!
+  onDeleteMessages: DeleteMessagesPayload!
+  onEditMessage: EditMessagePayload!
   onDraftUpdate: UpdateDraftPayload!
 }
 type Query {
@@ -24,15 +28,26 @@ input GetHistoryInput {
   limit: Int
   includeOffset: Boolean
 }
+input DeleteMessagesInput {
+  ids: [String!]!
+  deleteForAll: Boolean
+}
 input SendMessageInput {
   # I provide Id for optimistic render
+  # мейбі прибрати айді, залишити тільки ордер
   id: String!
+  orderedId: Int!
   chatId: String!
   sendAs: String
   silent: Boolean
   entities: [MessageEntityInput!]
   text: String
   # media later...
+}
+input EditMessageInput {
+  chatId: String!
+  messageId: String!
+  text: String!
 }
 
 input SaveDraftInput {
@@ -44,6 +59,10 @@ type UpdateDraftPayload {
   chatId: String!
   ownerId: String!
   text: String
+}
+type DeleteMessagesPayload {
+  ids: [String!]!
+  chatId: String!
 }
 enum MessageEntityType {
   italic
@@ -68,16 +87,21 @@ type NewMessagePayload {
   chat: Chat!
   message: Message!
 }
+type EditMessagePayload {
+  message: Message!
+}
 
 type Message {
-  text: String
   id: String!
+  orderedId: Int!
   senderId: String
   chatId: String!
   _chatId: String
+  text: String
+
   createdAt: DateTime!
   updatedAt: DateTime
-
+  editedAt: DateTime
   # noForwards - check privacy in builder?
   isPost: Boolean
   isOutgoing: Boolean!

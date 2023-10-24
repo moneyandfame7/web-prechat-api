@@ -1,15 +1,16 @@
 scalar DateTime
-scalar Upload
 type User {
   id: String!
   firstName: String!
   phoneNumber: String!
   lastName: String
   username: String
+
   bio: String
-  isContact: Boolean!
   isSelf: Boolean!
+  isContact: Boolean!
   isMutualContact: Boolean!
+  isBlocked: Boolean
   color: ColorVariants!
   status: UserStatus!
   photo: Photo

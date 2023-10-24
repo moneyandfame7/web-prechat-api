@@ -8,11 +8,12 @@ import { PrismaService } from '../common/prisma.service'
 import { ChatRepository } from './Repository'
 import { getRandomColor } from 'Media'
 import { BuilderService } from 'common/builder/Service'
-import { selectUserFieldsToBuild } from 'common/builder/users'
+import { isSelf, selectUserFields } from 'common/builder/users'
 import { NotFoundEntityError, UsernameNotOccupiedError } from 'common/errors'
 import type { WithTypename } from 'types/other'
 import { createMessageAction } from 'common/builder/messages'
 import { generateId } from 'common/helpers/generateId'
+import { Prisma } from '@prisma/client'
 
 @Injectable()
 export class ChatService {
@@ -25,7 +26,8 @@ export class ChatService {
   public async createGroup(requesterId: string, input: Api.CreateGroupInput) {
     const memberIds = [...(input.users ? new Set([...input.users, requesterId]) : requesterId)]
     const chatId = generateId('chat')
-    await this.prisma.chat.create({
+
+    return this.prisma.chat.create({
       data: {
         id: chatId,
         type: 'chatTypeGroup',
@@ -33,6 +35,39 @@ export class ChatService {
         fullInfo: {
           create: {
             ...createChatMembers(requesterId, memberIds),
+            members: {
+              create: memberIds.map((u) => ({
+                // id: u,
+                unreadCount: isSelf(requesterId, u) ? 0 : 1,
+                isOwner: isSelf(requesterId, u),
+                isAdmin: isSelf(requesterId, u),
+                inviterId: requesterId,
+                userId: u,
+                lastMessage: {
+                  create: {
+                    action: {
+                      create: createMessageAction(
+                        {
+                          '@type': 'chatCreate',
+                          payload: { title: input.title },
+                        },
+                        requesterId,
+                      ),
+                    },
+                    chatId,
+                    orderedId: 1,
+                    senderId: requesterId,
+                  },
+                },
+                // admin permissions created when i add new admins
+                // adminPermissions:{
+                //   create:{
+                //     canAddNewAdmins:isSelf(requesterId,u),
+
+                //   }
+                // }
+              })),
+            },
           },
         },
         isPrivate: true,
@@ -42,43 +77,12 @@ export class ChatService {
         ...selectChatFields(),
       },
     })
-
-    const updated = await this.prisma.chat.update({
-      where: {
-        id: chatId,
-      },
-      data: {
-        lastMessage: {
-          create: {
-            action: {
-              create: createMessageAction(
-                {
-                  '@type': 'chatCreate',
-                  payload: { title: input.title },
-                },
-                requesterId,
-              ),
-            },
-            chatId,
-            senderId: requesterId,
-          },
-        },
-      },
-      include: {
-        ...selectChatFields(),
-      },
-    })
-    // result.lastMessage?.action.
-    // const members = result.fullInfo?.members.map((m) => m.user)
-    // const users = members ? await this.users.buildApiUserAndStatuses(members, requesterId) : []
-    // const chat = buildApiChat(requesterId, result)
-
-    return updated
   }
 
   public async createChannel(requesterId: string, input: Api.CreateChannelInput) /* : Promise<ChatCreatedUpdate> */ {
     const memberIds = [...(input.users ? new Set([...input.users, requesterId]) : requesterId)]
     const chatId = generateId('chat')
+
     const result = await this.prisma.chat.create({
       data: {
         id: chatId,
@@ -88,7 +92,27 @@ export class ChatService {
         fullInfo: {
           create: {
             ...createChatMembers(requesterId, memberIds),
+
             description: input.description,
+            members: {
+              create: memberIds.map((u) => ({
+                unreadCount: isSelf(requesterId, u) ? 0 : 1,
+                isOwner: isSelf(requesterId, u),
+                isAdmin: isSelf(requesterId, u),
+                inviterId: requesterId,
+                userId: u,
+                lastMessage: {
+                  create: {
+                    action: {
+                      create: createMessageAction({ '@type': 'channelCreate' }, requesterId),
+                    },
+                    chatId,
+                    orderedId: 1,
+                    senderId: requesterId,
+                  },
+                },
+              })),
+            },
           },
         },
         lastMessage: {
@@ -97,6 +121,7 @@ export class ChatService {
               create: createMessageAction({ '@type': 'channelCreate' }, requesterId),
             },
             chatId,
+            orderedId: 1,
             senderId: requesterId,
           },
         },
@@ -153,6 +178,27 @@ export class ChatService {
         ...selectChatFields(),
       },
     })
+  }
+
+  public async getCommonGroups(requesterId: string, input: Api.GetCommonGroupsInput): Promise<Api.Chat[]> {
+    const result = await this.prisma.chat.findMany({
+      where: {
+        type: 'chatTypeGroup',
+        fullInfo: {
+          members: {
+            some: {
+              AND: [{ userId: requesterId }, { userId: input.userId }],
+            },
+          },
+        },
+      },
+      ...(input.limit && { take: input.limit }),
+      include: {
+        ...selectChatFields(),
+      },
+    })
+
+    return result.map((c) => this.builder.buildApiChat(c, requesterId))
   }
 
   public async getChatsTest(requesterId: string, input: Api.GetChatsInput) {
@@ -222,7 +268,7 @@ export class ChatService {
         // id: requesterId,
       },
       select: {
-        ...selectUserFieldsToBuild(),
+        ...selectUserFields(),
       },
     })
     if (user) {

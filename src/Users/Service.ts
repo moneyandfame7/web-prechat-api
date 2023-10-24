@@ -4,7 +4,7 @@ import type * as Api from '@generated/graphql'
 
 import { PrismaService } from '../common/prisma.service'
 
-import { buildApiUser, selectUserFieldsToBuild } from 'common/builder/users'
+import { buildApiUser, selectUserFields } from 'common/builder/users'
 import { UserRepository } from './Repository'
 import { BuilderService } from 'common/builder/Service'
 
@@ -26,7 +26,7 @@ export class UserService {
         },
       },
       select: {
-        ...selectUserFieldsToBuild(),
+        ...selectUserFields(),
       },
     })
 
@@ -56,7 +56,7 @@ export class UserService {
         id,
       },
       select: {
-        ...selectUserFieldsToBuild(),
+        ...selectUserFields(),
         photo: {
           select: {
             blurHash: true,
@@ -80,13 +80,13 @@ export class UserService {
         phoneNumber,
       },
       select: {
-        ...selectUserFieldsToBuild(),
+        ...selectUserFields(),
       },
     })
     if (!result) {
       return undefined
     }
-
+    // result.blo
     return buildApiUser(requesterId, result) as Api.User
   }
 
