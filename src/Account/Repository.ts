@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import type * as Api from '@generated/graphql'
 
-import { PrismaService } from 'common/prisma'
+import { PrismaService } from 'common/prisma.service'
+
 @Injectable()
 export class AccountRepository {
   public constructor(private prisma: PrismaService) {}

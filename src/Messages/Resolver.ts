@@ -4,7 +4,7 @@ import { UseGuards } from '@nestjs/common'
 import * as Api from '@generated/graphql'
 import { AuthGuard } from 'Auth'
 
-import { PubSub2Service } from 'common/pubsub2/Service'
+import { PubSubService } from 'common/pubSub/Service'
 import { CurrentSession } from 'common/decorators/Session'
 import { getSession } from 'common/helpers/getSession'
 import { BuilderService } from 'common/builder/Service'
@@ -19,7 +19,7 @@ import { MessagesService } from './Service'
  */
 @Resolver('Message')
 export class MessagesResolver {
-  constructor(private messages: MessagesService, private pubSub: PubSub2Service, private builder: BuilderService) {}
+  constructor(private messages: MessagesService, private pubSub: PubSubService, private builder: BuilderService) {}
 
   @MutationTyped('sendMessage')
   @UseGuards(AuthGuard)

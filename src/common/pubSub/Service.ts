@@ -9,7 +9,7 @@ import type {
 } from 'types/nestjs'
 
 @Injectable()
-export class PubSub2Service {
+export class PubSubService {
   constructor(@Inject('PUB_SUB') private _pubSub: PubSub) {}
 
   public subscribe<N extends SubscriptionName | SubscriptionName[]>(name: N) {

@@ -57,7 +57,7 @@ export class BuilderService {
     return user.firstName ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ''}` : user.lastName || ''
   }
 
-  private buildApiUserStatus(user: Prisma.User): UserStatus {
+  public buildApiUserStatus(user: Prisma.User): UserStatus {
     const lastActiveDate = user.lastActivity
     if (!lastActiveDate) {
       return { type: 'userStatusRecently' }
@@ -201,5 +201,12 @@ export class BuilderService {
   /* OTHER */
   public buildApiPhoto(photo: PhotoFields): Api.Photo | undefined {
     return photo ? (photo as Api.Photo) : undefined
+  }
+
+  public buildApiAuthorization(session: Prisma.Session, requesterSession: Api.Session): Api.Session {
+    return {
+      ...session,
+      isCurrent: session.id === requesterSession.id,
+    }
   }
 }

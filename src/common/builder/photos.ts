@@ -1,5 +1,4 @@
 import type { Prisma } from '@prisma/client'
-import type * as Api from '@generated/graphql'
 export type SelectPhotoFields = Pick<Prisma.PhotoSelect, 'id' | 'date' | 'blurHash' | 'url' | 'width' | 'height'>
 export type PhotoFields = {
   id?: string | undefined
@@ -25,8 +24,4 @@ export function selectPhotoFields(): { select: SelectPhotoFields } {
       height: true,
     },
   }
-}
-
-export function buildApiPhoto(photo: PhotoFields): Api.Photo | undefined {
-  return photo ? (photo as Api.Photo) : undefined
 }

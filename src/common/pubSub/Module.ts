@@ -1,16 +1,18 @@
-import { Module } from '@nestjs/common'
+import { Global, Module } from '@nestjs/common'
 import { PubSub } from 'graphql-subscriptions'
 
-/**
- * @TODO types pub sub
- */
+import { PubSubService } from './Service'
+
+// we just need to past it to AppModule and it work
+@Global()
 @Module({
   providers: [
     {
       provide: 'PUB_SUB',
       useClass: PubSub,
     },
+    PubSubService,
   ],
-  exports: ['PUB_SUB'],
+  exports: [PubSubService],
 })
-export class PubSubModule {}
+export class PubSub2Module {}

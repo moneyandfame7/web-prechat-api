@@ -4,26 +4,30 @@ import type * as Api from '@generated/graphql'
 
 import { SessionService } from 'Sessions'
 import { SessionTooFreshError, ForbiddenError } from 'common/errors'
-import { buildAuthorization, buildUserStatus } from 'common/builder/account'
 
 import type { UserStatus } from 'types/users'
 
 import { AccountRepository } from './Repository'
+import { BuilderService } from 'common/builder/Service'
 
 @Injectable()
 export class AccountService {
-  public constructor(private repository: AccountRepository, private sessions: SessionService) {}
+  public constructor(
+    private repository: AccountRepository,
+    private sessions: SessionService,
+    private builder: BuilderService,
+  ) {}
 
   public async getAuthorizations(currentSession: Api.Session): Promise<Api.Session[]> {
     const activeSessions = await this.repository.getActiveSessions(currentSession.userId)
 
-    return activeSessions.map((s) => buildAuthorization(s, currentSession))
+    return activeSessions.map((s) => this.builder.buildApiAuthorization(s, currentSession))
   }
 
   public async createAuthorization(input: Api.SessionData, requsterId: string): Promise<Api.Session> {
     const created = await this.repository.createAuthorization(input, requsterId)
 
-    return buildAuthorization(created, created)
+    return this.builder.buildApiAuthorization(created, created)
     // // or just in Auth Module???
 
     // this.pubSub.publish('onAuthorizationCreated', {
@@ -46,7 +50,7 @@ export class AccountService {
     if (needToTerminate && needToTerminate.userId === currentSession.userId) {
       const deleted = await this.sessions.deleteById(id)
 
-      return buildAuthorization(deleted, currentSession)
+      return this.builder.buildApiAuthorization(deleted, currentSession)
     }
 
     throw new ForbiddenError('account.terminateAuthorization')
@@ -82,7 +86,7 @@ export class AccountService {
 
     const user = await this.repository.updateUserLastActivity(currentSession)
 
-    const status = buildUserStatus(user)
+    const status = this.builder.buildApiUserStatus(user)
     // this.setStatusCache(currentSession.userId, status)
 
     return status

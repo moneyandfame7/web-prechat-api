@@ -9,7 +9,7 @@ import { getSession } from 'common/helpers/getSession'
 import { BuilderService } from 'common/builder/Service'
 import { isValidUsername } from 'common/helpers/isValidUsername'
 import { UsernameInvalidError } from 'common/errors'
-import { PubSub2Service } from 'common/pubsub2/Service'
+import { PubSubService } from 'common/pubSub/Service'
 
 import { QueryTyped, SubscriptionBuilder } from 'types/nestjs'
 
@@ -17,7 +17,7 @@ import { ChatService } from './Service'
 
 @Resolver()
 export class ChatsResolver {
-  constructor(private pubSub: PubSub2Service, private readonly chats: ChatService, private builder: BuilderService) {}
+  constructor(private pubSub: PubSubService, private readonly chats: ChatService, private builder: BuilderService) {}
   /**
    *  @throws "USER_RESTRICTED" - if user has many spam/flood reports
    *  @throws "CHAT_TITLE_INVALID" - if not provided title

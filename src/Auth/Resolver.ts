@@ -4,13 +4,13 @@ import { isPhoneNumber } from 'class-validator'
 import * as Api from '@generated/graphql'
 
 import { PhoneNumberInvalidError } from 'common/errors/Common'
-import { PubSub2Service } from 'common/pubsub2/Service'
+import { PubSubService } from 'common/pubSub/Service'
 
 import { AuthService } from './Service'
 
 @Resolver()
 export class AuthResolver {
-  constructor(private readonly auth: AuthService, private pubSub: PubSub2Service) {}
+  constructor(private readonly auth: AuthService, private pubSub: PubSubService) {}
   /**
    *  @throws "PHONE_NUMBER_INVALID" - if the entered phone is invalid
    */

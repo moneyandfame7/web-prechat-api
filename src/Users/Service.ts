@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common'
 import type * as Api from '@generated/graphql'
 
 import { PrismaService } from 'common/prisma.service'
-import { buildApiUser, selectUserFields } from 'common/builder/users'
+import { selectUserFields } from 'common/builder/users'
 import { BuilderService } from 'common/builder/Service'
 
 import { UserRepository } from './Repository'
@@ -54,7 +54,7 @@ export class UserService {
       return undefined
     }
 
-    return buildApiUser(requesterId, result) as Api.User
+    return this.builder.buildApiUser(result, requesterId) as Api.User
   }
 
   public async getApiByPhone(requesterId: string, phoneNumber: string) {
@@ -70,7 +70,7 @@ export class UserService {
       return undefined
     }
     // result.blo
-    return buildApiUser(requesterId, result) as Api.User
+    return this.builder.buildApiUser(result, requesterId) as Api.User
   }
 
   public async getById(userId: string) {

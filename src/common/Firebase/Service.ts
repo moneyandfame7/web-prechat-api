@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+
 import { initializeApp, cert, type App, type ServiceAccount } from 'firebase-admin/app'
 import { getStorage } from 'firebase-admin/storage'
 import { type Auth, getAuth } from 'firebase-admin/auth'
 
 import { v4 as uuid } from 'uuid'
 import * as mime from 'mime-types'
-import { ConfigService } from '@nestjs/config'
 
 import type { FileUpload } from './Types'
 
@@ -28,7 +29,6 @@ export class FirebaseService {
     console.log({ file })
     const stream = file.createReadStream()
     const storageRef = getStorage(this.app).bucket().file(fileName)
-    console.log({ storageRef })
     const firebaseStorageUrl = `https://firebasestorage.googleapis.com/v0/b/nestjs-chat-a42f4.appspot.com/o/${encodeURIComponent(
       fileName,
     )}?alt=media`
@@ -50,12 +50,5 @@ export class FirebaseService {
 
       stream.pipe(writeStream)
     })
-  }
-
-  private concatExtension(filename: string, str: string) {
-    // Get the file extension by splitting the filename string at the last period and getting the last element of the resulting array
-    const extension = filename.split('.').pop()
-    // Concatenate the specified string with the file extension and return the result
-    return `${str}.${extension}`
   }
 }

@@ -10,6 +10,17 @@ export interface PrismaMessageAction {
   users: string[]
 }
 
+type MessageActionPayload =
+  | {
+      '@type': 'chatCreate'
+      payload: {
+        title: string
+      }
+    }
+  | {
+      '@type': 'channelCreate'
+    }
+
 export function selectMessageFields() {
   return {
     action: {
@@ -23,17 +34,6 @@ export function selectMessageFields() {
     },
   } satisfies Prisma.MessageSelect
 }
-
-type MessageActionPayload =
-  | {
-      '@type': 'chatCreate'
-      payload: {
-        title: string
-      }
-    }
-  | {
-      '@type': 'channelCreate'
-    }
 
 export function createMessageAction(action: MessageActionPayload, requesterId: string) {
   let translateKey: LanguageStringKeys

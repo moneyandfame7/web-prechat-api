@@ -6,9 +6,9 @@ import * as Api from '@generated/graphql'
 import { AuthGuard } from 'Auth/Guard'
 
 import { CurrentSession } from 'common/decorators/Session'
-import { buildAuthorization } from 'common/builder/account'
-import { PubSub2Service } from 'common/pubsub2/Service'
+import { PubSubService } from 'common/pubSub/Service'
 import { getSession } from 'common/helpers/getSession'
+import { BuilderService } from 'common/builder/Service'
 
 import { MutationTyped, QueryTyped, SubscriptionTyped } from 'types/nestjs'
 import type { UserStatus } from 'types/users'
@@ -17,7 +17,7 @@ import { AccountService } from './Service'
 
 @Resolver('Account')
 export class AccountResolver {
-  public constructor(private pubSub: PubSub2Service, private account: AccountService) {}
+  public constructor(private pubSub: PubSubService, private account: AccountService, private builder: BuilderService) {}
 
   @UseGuards(AuthGuard)
   @QueryTyped('getAuthorizations')
@@ -90,10 +90,10 @@ export class AccountResolver {
 
       return terminatedIds.every((s) => s.userId === session.userId)
     },
-    resolve: (payload, _args, context) => {
+    resolve(this: AccountResolver, payload, _args, context) {
       const session = getSession(context.req)
 
-      return payload.onAuthorizationTerminated.map((s) => buildAuthorization(s, session))
+      return payload.onAuthorizationTerminated.map((s) => this.builder.buildApiAuthorization(s, session))
     },
   })
   public async onAuthorizationTerminated() {

@@ -8,7 +8,6 @@ import { type PrismaMessage, selectMessageFields } from './messages'
 
 export type PrismaChatMember = ChatMember & {
   user: UserFieldsForBuild
-  // lastMessage: PrismaMessage | null
 }
 export type PrismaChatFull = ChatFullInfo & {
   members: PrismaChatMember[]

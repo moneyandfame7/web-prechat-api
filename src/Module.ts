@@ -19,10 +19,8 @@ import { MessagesModule } from './Messages'
 import { ContactsModule } from './Contacts'
 
 import { FirebaseModule } from 'common/Firebase'
-import { PubSubModule } from 'common/pubSub/Module'
 import { PrismaService } from 'common/prisma.service'
-import { PubSub2Module } from 'common/pubsub2/Module'
-import { PrismaModule } from 'common/prisma/Module'
+import { PubSub2Module } from 'common/pubSub/Module'
 
 import { ApiErrorFormatted } from 'common/errors'
 
@@ -35,7 +33,6 @@ import { AppResolver } from './Resolver'
 const MAIN_MODULES = [
   // ApiModule,
   AuthModule,
-  PubSubModule,
   UserModule,
   MessagesModule,
   ChatsModule,
@@ -47,7 +44,6 @@ const MAIN_MODULES = [
   LangPackModule,
   // Wrappers for libs
   PubSub2Module,
-  PrismaModule,
 ]
 const CONFIG_MODULES = [
   ConfigModule.forRoot({
