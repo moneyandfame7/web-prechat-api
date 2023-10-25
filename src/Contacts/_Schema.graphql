@@ -1,3 +1,16 @@
+# QUERIES, MUTATIONS, SUBSCRIPTIONS #
+type Query {
+  getContacts: [User!]
+}
+
+type Mutation {
+  addContact(input: AddContactInput): User!
+  updateContact(input: UpdateContactInput!): Boolean!
+  deleteContact(userId: String!): User!
+}
+
+# ------------------------ #
+
 input AddContactInput {
   firstName: String!
   lastName: String
@@ -10,14 +23,4 @@ input UpdateContactInput {
   firstName: String!
   lastName: String
   userId: String!
-}
-
-type Query {
-  getContacts: [User!]
-}
-
-type Mutation {
-  addContact(input: AddContactInput): User!
-  updateContact(input: UpdateContactInput!): Boolean!
-  deleteContact(userId: String!): User!
 }

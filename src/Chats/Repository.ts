@@ -1,18 +1,19 @@
 import type * as Prisma from '@prisma/client'
 
+import { Injectable } from '@nestjs/common'
+
+import { getRandomColor } from 'Media'
+
 import { NotFoundEntityError } from 'common/errors'
 import { PrismaService } from 'common/prisma.service'
-
-import { Injectable } from '@nestjs/common'
 import { selectChatFields } from 'common/builder/chats'
-import { getRandomColor } from 'Media'
-import type { InputPeer } from 'types/chats'
 import { isSavedMessages, isUserId } from 'common/helpers/chats'
 import { generateId } from 'common/helpers/generateId'
-import { CreateMessageInput } from 'types/messages'
+
+import type { InputPeer } from 'types/chats'
 
 @Injectable()
-export class ChatRepository {
+export class ChatsRepository {
   constructor(private prisma: PrismaService) {}
 
   public async leaveChat(chatId: string, requesterId: string) {

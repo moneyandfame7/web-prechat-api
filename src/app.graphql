@@ -7,11 +7,3 @@ scalar Upload
 type Query {
   ping: Any
 }
-
-type Mutation {
-  testSub(number: Int!): Any
-}
-
-type Subscription {
-  onTest: Float!
-}

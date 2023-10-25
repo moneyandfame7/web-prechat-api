@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable no-console */
 import { PrismaClient } from '@prisma/client'
 import { faker } from '@faker-js/faker'
 import { getRandomColor } from './../src/Media/Helpers'
-import { buildPrivacySettings } from '../src/common/builder/users'
 import { generateId } from '../src/common/helpers/generateId'
-import { FOLDER_ID_ALL } from '../src/common/constants'
 import sharp from 'sharp'
 import { encode } from 'blurhash'
 const prisma = new PrismaClient()
@@ -40,29 +40,11 @@ class Seeder {
     }
   }
   public async createUsers(count = 100) {
-    // const poll = await prisma.poll.findFirst({
-    //   include: {
-    //     answers: {
-    //       include: {
-    //         voters: {
-    //           include: {
-    //             user: true,
-    //           },
-    //         },
-    //       },
-    //     },
-    //   },
-    // })
-    // poll?.answers[0].voters[0].
-    // poll.
-    // faker.system.
-
     for (let k = 0; k < count; k++) {
       const user = await prisma.user.create({
         data: {
           id: generateId('user'),
           lastActivity: k % 3 === 0 ? faker.date.past() : faker.date.recent(),
-          orderedFoldersIds: [FOLDER_ID_ALL],
           isDeleted: k % 7 === 0,
           bio: faker.lorem.paragraphs(),
           firstName: faker.name.firstName(),
@@ -70,7 +52,6 @@ class Seeder {
           phoneNumber: faker.phone.number('+380#########'),
           username: faker.internet.userName(),
           color: getRandomColor(),
-          privacySettings: buildPrivacySettings(),
           sessions: {
             create: {
               country: faker.address.country(),
@@ -82,13 +63,6 @@ class Seeder {
           },
           photo: {
             create: await this.createPhoto(),
-          },
-          folders: {
-            create: {
-              orderId: FOLDER_ID_ALL,
-              title: 'All',
-              excludeArchived: true,
-            },
           },
         },
       })
@@ -108,7 +82,6 @@ class Seeder {
         color: getRandomColor(),
         phoneNumber: '+380684178101',
         firstName: 'Google',
-        privacySettings: buildPrivacySettings(),
         sessions: {
           create: {
             country: faker.address.country(),
@@ -131,7 +104,6 @@ class Seeder {
         color: getRandomColor(),
         phoneNumber: '+12345678',
         firstName: 'Safari',
-        privacySettings: buildPrivacySettings(),
         sessions: {
           create: {
             country: faker.address.country(),
@@ -154,7 +126,6 @@ class Seeder {
         color: getRandomColor(),
         phoneNumber: '+380123456789',
         firstName: 'Mozila',
-        privacySettings: buildPrivacySettings(),
         sessions: {
           create: {
             country: faker.address.country(),
@@ -225,20 +196,6 @@ class Seeder {
           },
         },
       })
-      // await prisma.user.update({
-      //   where: {
-      //     id: this.mockUserId3,
-      //   },
-      //   data: {
-      //     contacts: {
-      //       create: {
-      //         contactId: u.id,
-      //         firstName: faker.name.firstName(),
-      //         lastName: faker.name.lastName(),
-      //       },
-      //     },
-      //   },
-      // })
     })
   }
 
@@ -424,45 +381,6 @@ class Seeder {
       })
     })
   }
-
-  // public async addChatMembers() {
-  //   await this.findMockAccounts()
-  //   const chats = await prisma.chat.findMany()
-  //   const users = await prisma.user.findMany({
-  //     where: {
-  //       id: {
-  //         notIn: [this.mockUserId1, this.mockUserId2],
-  //       },
-  //     },
-  //   })
-  //   chats.map(async (c) => {
-  //     await prisma.chat.update({
-  //       where: {
-  //         id: c.id,
-  //       },
-  //       data: {
-  //         fullInfo: {
-  //           update: {
-  //             members: {
-  //               create: users.map((u, idx) => ({
-  //                 // userId: u.id,
-  //                 user: {
-  //                   connect: {
-  //                     id: u.id,
-  //                   },
-  //                 },
-  //                 isOwner: idx % 7 === 0,
-  //                 inviterId: idx % 2 === 0 ? this.mockUserId1 : this.mockUserId2,
-  //               })),
-  //             },
-  //           },
-  //         },
-  //       },
-  //     })
-  //   })
-  //   // users.map()
-  //   // chats.map()
-  // }
 }
 
 const seed = new Seeder()

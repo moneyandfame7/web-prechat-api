@@ -2,10 +2,11 @@ import { UseGuards } from '@nestjs/common'
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql'
 import { isEmpty } from 'class-validator'
 
+import * as Api from '@generated/graphql'
+
 import { AuthGuard } from 'Auth/Guard'
-import type * as Api from '@generated/graphql'
+
 import { CurrentSession } from 'common/decorators/Session'
-import { AddContactInput, Session, UpdateContactInput, type User } from '@generated/graphql'
 import { ContactNameEmpty } from 'common/errors/Common'
 
 import { ContactsService } from './Service'
@@ -22,7 +23,10 @@ export class ContactsResolver {
    */
   @Mutation('addContact')
   @UseGuards(AuthGuard)
-  public async addContact(@CurrentSession() session: Session, @Args('input') input: AddContactInput): Promise<User> {
+  public async addContact(
+    @CurrentSession() session: Api.Session,
+    @Args('input') input: Api.AddContactInput,
+  ): Promise<Api.User> {
     if (isEmpty(input.firstName)) {
       throw new ContactNameEmpty('contacts.addContact')
     }
@@ -36,8 +40,8 @@ export class ContactsResolver {
   @Mutation('updateContact')
   @UseGuards(AuthGuard)
   public async updateContact(
-    @CurrentSession() session: Session,
-    @Args('input') input: UpdateContactInput,
+    @CurrentSession() session: Api.Session,
+    @Args('input') input: Api.UpdateContactInput,
   ): Promise<boolean> {
     // if (!isUUID(input.userId)) {
     //   throw new InvalidEntityIdError('contacts.addContact')
@@ -69,7 +73,7 @@ export class ContactsResolver {
    */
   @Query('getContacts')
   @UseGuards(AuthGuard)
-  public async getContacts(@CurrentSession('userId') currentUserId: string): Promise<User[]> {
+  public async getContacts(@CurrentSession('userId') currentUserId: string): Promise<Api.User[]> {
     return this.contacts.get(currentUserId)
   }
 }

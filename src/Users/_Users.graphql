@@ -1,4 +1,11 @@
-scalar DateTime
+# QUERIES, MUTATIONS, SUBSCRIPTIONS #
+type Query {
+  getUsers(input: GetUsersInput!): [User!]!
+  getUserFull(input: InputUser!): UserFull!
+}
+
+# ------------------------ #
+
 type User {
   id: String!
   firstName: String!
@@ -15,7 +22,6 @@ type User {
   status: UserStatus!
   photo: Photo
 }
-# type UserStatus ...
 type UserStatus {
   wasOnline: Float
   type: String!
@@ -45,9 +51,4 @@ input GetUsersInput {
 
 input InputUser {
   userId: String!
-}
-
-type Query {
-  getUsers(input: GetUsersInput!): [User!]!
-  getUserFull(input: InputUser!): UserFull!
 }

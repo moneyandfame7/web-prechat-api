@@ -1,32 +1,23 @@
 import { UseGuards } from '@nestjs/common'
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql'
-import * as Api from '@generated/graphql'
-import { CurrentSession } from 'common/decorators/Session'
+import { Args, Mutation, Resolver } from '@nestjs/graphql'
 
+import * as Api from '@generated/graphql'
+
+import { AuthGuard } from 'Auth/Guard'
+
+import { CurrentSession } from 'common/decorators/Session'
+import { buildAuthorization } from 'common/builder/account'
 import { PubSub2Service } from 'common/pubsub2/Service'
-import { MutationTyped, QueryTyped, SubscriptionTyped } from 'types/nestjs'
 import { getSession } from 'common/helpers/getSession'
 
-import { AccountService } from './Service'
-import { AuthGuard } from '../Auth/Guard'
+import { MutationTyped, QueryTyped, SubscriptionTyped } from 'types/nestjs'
 import type { UserStatus } from 'types/users'
-import { buildAuthorization } from 'common/builder/account'
+
+import { AccountService } from './Service'
 
 @Resolver('Account')
 export class AccountResolver {
   public constructor(private pubSub: PubSub2Service, private account: AccountService) {}
-
-  @UseGuards(AuthGuard)
-  @Query('getPassword')
-  public async getPassword(@CurrentSession('userId') currentUserId: string) {
-    return this.account.getPassword(currentUserId)
-  }
-
-  @UseGuards(AuthGuard)
-  @Mutation('checkPassword')
-  public async checkPassword(@CurrentSession('userId') currentUserId: string, @Args('password') password: string) {
-    return this.account.checkPassword(currentUserId, password)
-  }
 
   @UseGuards(AuthGuard)
   @QueryTyped('getAuthorizations')

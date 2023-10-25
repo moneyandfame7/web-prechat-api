@@ -1,4 +1,8 @@
-# scalar DateTime
+# QUERIES, MUTATIONS, SUBSCRIPTIONS #
+type Query {
+  getHistory(input: GetHistoryInput!): [Message!]!
+  getPrivateChat: Any
+}
 type Mutation {
   sendMessage(input: SendMessageInput!): NewMessagePayload!
   deleteMessages(input: DeleteMessagesInput!): Boolean!
@@ -11,10 +15,9 @@ type Subscription {
   onEditMessage: EditMessagePayload!
   onDraftUpdate: UpdateDraftPayload!
 }
-type Query {
-  getHistory(input: GetHistoryInput!): [Message!]!
-  getPrivateChat: Any
-}
+
+# ------------------------ #
+
 enum HistoryDirection {
   Backwards
   Around
@@ -42,7 +45,6 @@ input SendMessageInput {
   silent: Boolean
   entities: [MessageEntityInput!]
   text: String
-  # media later...
 }
 input EditMessageInput {
   chatId: String!
@@ -109,18 +111,12 @@ type Message {
   postAuthor: String
   views: Int
 
-  media: MessageMedia
   action: MessageAction
 
   content: MessageContent!
 }
 type MessageContent {
-  # media: MessageMedia
   action: MessageAction
-  photo: MessagePhoto
-  contact: MessageContact
-  poll: MessagePoll
-  document: MessageDocument
   formattedText: MessageFormattedText
 }
 
@@ -143,74 +139,4 @@ type MessageAction {
   users: [String!]!
   photo: Photo
   values: [String!]
-}
-union MessageMedia = MessageMediaPhoto | MessageMediaDocument | MessageMediaContact | MessageMediaPoll
-
-type MessagePhoto {
-  photo: Photo!
-  ttlSeconds: Int
-  spoiler: Boolean
-}
-type MessageMediaPhoto {
-  photo: MessagePhoto!
-}
-type MessageDocument {
-  document: Document!
-  ttlSeconds: Int
-  spoiler: Boolean
-}
-type MessageMediaDocument {
-  document: MessageDocument!
-}
-
-type MessageContact {
-  phoneNumber: String!
-  firstName: String!
-  lastName: String
-  userId: String
-}
-type MessageMediaContact {
-  contact: MessageContact!
-}
-
-type MessagePoll {
-  poll: Poll!
-  results: PollResults
-}
-type MessageMediaPoll {
-  poll: MessagePoll!
-}
-
-# розібратись з poll!
-type Poll {
-  isClosed: Boolean
-  isAnonymous: Boolean
-  isQuiz: Boolean
-  withMultiplieChoise: Boolean
-  closeDate: DateTime
-  answers: [PollAnswer!]!
-  question: String
-}
-type PollAnswer {
-  id: Int! ## is equal to id in PollAnswerVoter
-  text: String!
-}
-type PollAnswerVoter {
-  id: Int! ## is equal to id in PollAnswer
-  isChosen: Boolean
-  isCorrect: Boolean
-  votersCount: Int!
-}
-type PollResults {
-  results: [PollAnswerVoter!]!
-  solution: String
-}
-
-type Document {
-  id: String!
-
-  blurHash: String
-  size: Int
-  mimeType: String
-  createdAt: DateTime!
 }

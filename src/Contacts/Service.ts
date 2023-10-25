@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common'
 
-import type { AddContactInput, UpdateContactInput, User } from '@generated/graphql'
 import type * as Api from '@generated/graphql'
 
 import { UserService } from 'Users'
@@ -9,13 +8,11 @@ import {
   BadRequestError,
   ContactAlreadyExistError,
   NotFoundEntityError,
-  // PhoneNumberInvalidError,
   PhoneNumberNotFoundError,
 } from 'common/errors/Common'
+import { BuilderService } from 'common/builder/Service'
 
 import { ContactsRepository } from './Repository'
-import { BuilderService } from 'common/builder/Service'
-import { ChatService } from 'Chats'
 
 @Injectable()
 export class ContactsService {
@@ -23,11 +20,10 @@ export class ContactsService {
     private repository: ContactsRepository,
     private users: UserService,
     private builder: BuilderService,
-    private chats: ChatService,
   ) {}
 
   /* Adding  */
-  public async add(requesterId: string, input: AddContactInput): Promise<User> {
+  public async add(requesterId: string, input: Api.AddContactInput): Promise<Api.User> {
     if (input.userId) {
       // if (!isUUID(input.userId)) {
       //   throw new InvalidEntityIdError('contacts.addContact')
@@ -55,7 +51,10 @@ export class ContactsService {
     throw new BadRequestError('contacts.addContact', 'User id or phone number not provided.')
   }
 
-  private async addByPhone(requesterId: string, input: AddContactInput & { phoneNumber: string }): Promise<User> {
+  private async addByPhone(
+    requesterId: string,
+    input: Api.AddContactInput & { phoneNumber: string },
+  ): Promise<Api.User> {
     const user = await this.users.getApiByPhone(requesterId, input.phoneNumber)
 
     if (!user) {
@@ -74,7 +73,7 @@ export class ContactsService {
     // return { chat, user: contact }
   }
 
-  private async addById(requesterId: string, input: AddContactInput & { userId: string }): Promise<User> {
+  private async addById(requesterId: string, input: Api.AddContactInput & { userId: string }): Promise<Api.User> {
     const user = await this.users.getApiById(requesterId, input.userId)
 
     if (!user) {
@@ -94,7 +93,7 @@ export class ContactsService {
     // return user
   }
 
-  private validateContact(user: User) {
+  private validateContact(user: Api.User) {
     if (user.isSelf) {
       throw new BadRequestError('contacts.addContact', "You can't add yourself to contacts :)")
     }
@@ -104,7 +103,7 @@ export class ContactsService {
   }
 
   /* Updating */
-  public async update(requesterId: string, input: UpdateContactInput) {
+  public async update(requesterId: string, input: Api.UpdateContactInput) {
     const contactToUpdate = await this.repository.find(requesterId, input.userId)
 
     if (!contactToUpdate) {
@@ -126,7 +125,7 @@ export class ContactsService {
     return this.builder.buildApiUserAndStatus(deletedContact.contact, requesterId)
   }
 
-  public async get(requesterId: string): Promise<User[]> {
+  public async get(requesterId: string): Promise<Api.User[]> {
     const contacts = await this.repository.get(requesterId)
     return this.builder.buildApiUsersAndStatuses(contacts, requesterId)
   }

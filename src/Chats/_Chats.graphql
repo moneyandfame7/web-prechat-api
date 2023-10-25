@@ -1,7 +1,5 @@
-scalar InputPeer
-
+# QUERIES, MUTATIONS, SUBSCRIPTIONS #
 type Query {
-  # getChatSettings(input: ChatInput!): GetChatSettings!
   getChats: [Chat!]!
   getCommonGroups(input: GetCommonGroupsInput!): [Chat!]!
   getChatsTest(input: GetChatsInput!): [Chat!]
@@ -9,7 +7,6 @@ type Query {
   getChatFull(chatId: String!): ChatFull!
   resolveUsername(username: String!): Peer
 }
-
 type Mutation {
   createChannel(input: CreateChannelInput!): Chat!
   createGroup(input: CreateGroupInput!): Chat!
@@ -17,10 +14,11 @@ type Mutation {
   deleteChatMember(input: DeleteChatMemberInput): Any
   deleteChat(input: InputChat!): Any
 }
-
 type Subscription {
   onChatCreated: ChatCreatedUpdate!
 }
+
+# ------------------------ #
 
 enum ChatType {
   chatTypeGroup
@@ -126,13 +124,7 @@ input DeleteChatMemberInput {
   userId: String!
 }
 
-# type GetChatSettings {
-#   users: [User!]!
-#   settings: ChatSettings!
-# }
-
 type ChatCreatedUpdate {
   chat: Chat!
   users: [User!]!
 }
-# мейбі зробити як в тг, тип Update або SubscribePublish або щось таке, і там зробити масив чатів, масив юзерів ( або їх айдішніки просто )

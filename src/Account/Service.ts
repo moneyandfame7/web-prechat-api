@@ -1,43 +1,18 @@
-import { Inject, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 
 import type * as Api from '@generated/graphql'
 
 import { SessionService } from 'Sessions'
 import { SessionTooFreshError, ForbiddenError } from 'common/errors'
+import { buildAuthorization, buildUserStatus } from 'common/builder/account'
+
+import type { UserStatus } from 'types/users'
 
 import { AccountRepository } from './Repository'
-import { buildAuthorization, buildUserStatus } from 'common/builder/account'
-import type { UserStatus } from 'types/users'
-// import { Cache } from 'cache-manager'
-// import { CACHE_MANAGER } from '@nestjs/cache-manager'
-// import { TTL_USER_STATUS } from 'common/constants'
 
 @Injectable()
 export class AccountService {
-  public constructor(
-    private repository: AccountRepository,
-    private sessions: SessionService,
-  ) // @Inject(CACHE_MANAGER) private cache: Cache,
-  {}
-
-  public async getPassword(requesterId: string): Promise<Api.AuthTwoFa | undefined> {
-    const twoFa = await this.repository.getPassword(requesterId)
-
-    if (!twoFa) {
-      return undefined
-    }
-
-    return {
-      email: twoFa?.email,
-      hint: twoFa?.hint,
-    }
-  }
-
-  public async checkPassword(requesterId: string, password: string) {
-    const twoFa = await this.repository.getPassword(requesterId)
-
-    return twoFa?.password === password
-  }
+  public constructor(private repository: AccountRepository, private sessions: SessionService) {}
 
   public async getAuthorizations(currentSession: Api.Session): Promise<Api.Session[]> {
     const activeSessions = await this.repository.getActiveSessions(currentSession.userId)
@@ -114,7 +89,7 @@ export class AccountService {
   }
 
   /**
-   * Check if the session was created less than 24 hours ago.
+   * Check the session was created less than 24 hours ago.
    */
   private isFreshSession(session: Api.Session) {
     // return false
@@ -127,12 +102,4 @@ export class AccountService {
 
     return timeDifferenceMs <= twentyFourHoursInMs
   }
-
-  // public getStatusCached(userId: string) {
-  //   return this.cache.get<UserStatus>(`${userId}_status`)
-  // }
-
-  // private setStatusCache(userId: string, status: UserStatus) {
-  //   this.cache.set(`${userId}_status`, status, TTL_USER_STATUS)
-  // }
 }

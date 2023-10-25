@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common'
 
 import type * as Api from '@generated/graphql'
 
-import { PrismaService } from '../common/prisma.service'
-
+import { PrismaService } from 'common/prisma.service'
 import { buildApiUser, selectUserFields } from 'common/builder/users'
-import { UserRepository } from './Repository'
 import { BuilderService } from 'common/builder/Service'
+
+import { UserRepository } from './Repository'
 
 @Injectable()
 export class UserService {
@@ -31,23 +31,6 @@ export class UserService {
     })
 
     return this.builder.buildApiUsersAndStatuses(users, requesterId)
-  }
-
-  public async getTwoFaByPhone(phoneNumber: string) {
-    return this.prisma.user.findUnique({
-      where: {
-        phoneNumber,
-      },
-      select: {
-        twoFaAuth: {
-          select: {
-            email: true,
-            hint: true,
-            // password:true
-          },
-        },
-      },
-    })
   }
 
   public async getApiById(requesterId: string, id: string) {

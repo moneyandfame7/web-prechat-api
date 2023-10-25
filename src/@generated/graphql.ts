@@ -132,22 +132,6 @@ export class UpdateContactInput {
     userId: string;
 }
 
-export class AddChatFolderInput {
-    orderId: number;
-    icon?: Nullable<string>;
-    title: string;
-    contacts?: Nullable<boolean>;
-    nonContacts?: Nullable<boolean>;
-    groups?: Nullable<boolean>;
-    channels?: Nullable<boolean>;
-    excludeMuted?: Nullable<boolean>;
-    excludeReaded?: Nullable<boolean>;
-    excludeArchived?: Nullable<boolean>;
-    pinnedChats?: Nullable<string[]>;
-    includedChats?: Nullable<string[]>;
-    excludedChats?: Nullable<string[]>;
-}
-
 export class GetLangStringInput {
     code: string;
     key: string;
@@ -194,11 +178,6 @@ export class MessageEntityInput {
     type: MessageEntityType;
 }
 
-export class SearchGlobalInput {
-    query: string;
-    limit?: Nullable<number>;
-}
-
 export class SessionData {
     ip: string;
     region: string;
@@ -221,14 +200,7 @@ export class InputUser {
     userId: string;
 }
 
-export class AuthTwoFa {
-    hint?: Nullable<string>;
-    email?: Nullable<string>;
-}
-
 export abstract class IQuery {
-    abstract getPassword(): Nullable<AuthTwoFa> | Promise<Nullable<AuthTwoFa>>;
-
     abstract getAuthorizations(): Session[] | Promise<Session[]>;
 
     abstract ping(): Nullable<Any> | Promise<Nullable<Any>>;
@@ -251,8 +223,6 @@ export abstract class IQuery {
 
     abstract getContacts(): Nullable<User[]> | Promise<Nullable<User[]>>;
 
-    abstract getChatFolders(): GetChatFoldersRes | Promise<GetChatFoldersRes>;
-
     abstract getLangPack(code: string): LangPack | Promise<LangPack>;
 
     abstract getLangString(input: GetLangStringInput): string | Promise<string>;
@@ -267,18 +237,12 @@ export abstract class IQuery {
 
     abstract getPrivateChat(): Nullable<Any> | Promise<Nullable<Any>>;
 
-    abstract searchGlobal(input: SearchGlobalInput): SearchGlobalResponse | Promise<SearchGlobalResponse>;
-
-    abstract searchUsers(input: SearchGlobalInput): SearchUsersResponse | Promise<SearchUsersResponse>;
-
     abstract getUsers(input: GetUsersInput): User[] | Promise<User[]>;
 
     abstract getUserFull(input: InputUser): UserFull | Promise<UserFull>;
 }
 
 export abstract class IMutation {
-    abstract checkPassword(password: string): Nullable<Any> | Promise<Nullable<Any>>;
-
     abstract terminateAuthorization(id: string): boolean | Promise<boolean>;
 
     abstract terminateAllAuthorizations(): boolean | Promise<boolean>;
@@ -286,8 +250,6 @@ export abstract class IMutation {
     abstract updateAuthorizationActivity(): Session | Promise<Session>;
 
     abstract updateUserStatus(online: boolean): Any | Promise<Any>;
-
-    abstract testSub(number: number): Nullable<Any> | Promise<Nullable<Any>>;
 
     abstract signUp(input: SignUpInput): Session | Promise<Session>;
 
@@ -309,10 +271,6 @@ export abstract class IMutation {
 
     abstract deleteContact(userId: string): User | Promise<User>;
 
-    abstract deleteChatFolder(folderId: number): boolean | Promise<boolean>;
-
-    abstract addChatFolder(input: AddChatFolderInput): boolean | Promise<boolean>;
-
     abstract uploadProfilePhoto(file: Upload): Photo | Promise<Photo>;
 
     abstract sendMessage(input: SendMessageInput): NewMessagePayload | Promise<NewMessagePayload>;
@@ -324,11 +282,6 @@ export abstract class IMutation {
     abstract saveDraft(input: SaveDraftInput): boolean | Promise<boolean>;
 }
 
-export class UpdateUserStatus {
-    userId: string;
-    status: Any;
-}
-
 export abstract class ISubscription {
     abstract onAuthorizationTerminated(): Session[] | Promise<Session[]>;
 
@@ -338,11 +291,7 @@ export abstract class ISubscription {
 
     abstract onUserStatusUpdated(): UpdateUserStatus | Promise<UpdateUserStatus>;
 
-    abstract onTest(): number | Promise<number>;
-
     abstract onChatCreated(): ChatCreatedUpdate | Promise<ChatCreatedUpdate>;
-
-    abstract onChatFolderUpdate(): UpdateChatFolderPayload | Promise<UpdateChatFolderPayload>;
 
     abstract onNewMessage(): NewMessagePayload | Promise<NewMessagePayload>;
 
@@ -351,6 +300,16 @@ export abstract class ISubscription {
     abstract onEditMessage(): EditMessagePayload | Promise<EditMessagePayload>;
 
     abstract onDraftUpdate(): UpdateDraftPayload | Promise<UpdateDraftPayload>;
+}
+
+export class AuthTwoFa {
+    hint?: Nullable<string>;
+    email?: Nullable<string>;
+}
+
+export class UpdateUserStatus {
+    userId: string;
+    status: Any;
 }
 
 export class TwoFactorAuth {
@@ -434,33 +393,6 @@ export class ChatCreatedUpdate {
     users: User[];
 }
 
-export class UpdateChatFolderPayload {
-    orderId: number;
-    ownerId: string;
-    folder?: Nullable<ChatFolder>;
-}
-
-export class GetChatFoldersRes {
-    folders: ChatFolder[];
-    orderedIds: number[];
-}
-
-export class ChatFolder {
-    orderId: number;
-    icon?: Nullable<string>;
-    title: string;
-    contacts?: Nullable<boolean>;
-    nonContacts?: Nullable<boolean>;
-    groups?: Nullable<boolean>;
-    channels?: Nullable<boolean>;
-    excludeMuted?: Nullable<boolean>;
-    excludeReaded?: Nullable<boolean>;
-    excludeArchived?: Nullable<boolean>;
-    pinnedChats?: Nullable<string[]>;
-    includedChats?: Nullable<string[]>;
-    excludedChats?: Nullable<string[]>;
-}
-
 export class LangPack {
     strings: JSON;
     langCode: string;
@@ -523,17 +455,12 @@ export class Message {
     isOutgoing: boolean;
     postAuthor?: Nullable<string>;
     views?: Nullable<number>;
-    media?: Nullable<MessageMedia>;
     action?: Nullable<MessageAction>;
     content: MessageContent;
 }
 
 export class MessageContent {
     action?: Nullable<MessageAction>;
-    photo?: Nullable<MessagePhoto>;
-    contact?: Nullable<MessageContact>;
-    poll?: Nullable<MessagePoll>;
-    document?: Nullable<MessageDocument>;
     formattedText?: Nullable<MessageFormattedText>;
 }
 
@@ -556,93 +483,6 @@ export class MessageAction {
     values?: Nullable<string[]>;
 }
 
-export class MessagePhoto {
-    photo: Photo;
-    ttlSeconds?: Nullable<number>;
-    spoiler?: Nullable<boolean>;
-}
-
-export class MessageMediaPhoto {
-    photo: MessagePhoto;
-}
-
-export class MessageDocument {
-    document: Document;
-    ttlSeconds?: Nullable<number>;
-    spoiler?: Nullable<boolean>;
-}
-
-export class MessageMediaDocument {
-    document: MessageDocument;
-}
-
-export class MessageContact {
-    phoneNumber: string;
-    firstName: string;
-    lastName?: Nullable<string>;
-    userId?: Nullable<string>;
-}
-
-export class MessageMediaContact {
-    contact: MessageContact;
-}
-
-export class MessagePoll {
-    poll: Poll;
-    results?: Nullable<PollResults>;
-}
-
-export class MessageMediaPoll {
-    poll: MessagePoll;
-}
-
-export class Poll {
-    isClosed?: Nullable<boolean>;
-    isAnonymous?: Nullable<boolean>;
-    isQuiz?: Nullable<boolean>;
-    withMultiplieChoise?: Nullable<boolean>;
-    closeDate?: Nullable<DateTime>;
-    answers: PollAnswer[];
-    question?: Nullable<string>;
-}
-
-export class PollAnswer {
-    id: number;
-    text: string;
-}
-
-export class PollAnswerVoter {
-    id: number;
-    isChosen?: Nullable<boolean>;
-    isCorrect?: Nullable<boolean>;
-    votersCount: number;
-}
-
-export class PollResults {
-    results: PollAnswerVoter[];
-    solution?: Nullable<string>;
-}
-
-export class Document {
-    id: string;
-    blurHash?: Nullable<string>;
-    size?: Nullable<number>;
-    mimeType?: Nullable<string>;
-    createdAt: DateTime;
-}
-
-export class SearchGlobalResponse {
-    knownChats?: Nullable<Any>;
-    knownUsers?: Nullable<User[]>;
-    globalChats?: Nullable<Any>;
-    globalUsers?: Nullable<User[]>;
-}
-
-export class SearchUsersResponse {
-    globalUsers?: Nullable<User[]>;
-    knownUsers?: Nullable<User[]>;
-}
-
 export class Session {
     id: string;
     ip: string;
@@ -654,19 +494,6 @@ export class Session {
     activeAt: DateTime;
     userId: string;
     isCurrent?: Nullable<boolean>;
-}
-
-export class Story {
-    orderedId: number;
-    expiredDate: DateTime;
-    edited?: Nullable<boolean>;
-    closeFriend?: Nullable<boolean>;
-    contacts?: Nullable<boolean>;
-    caption?: Nullable<string>;
-    viewsCount: number;
-    reactionsCount: number;
-    userId: string;
-    photo?: Nullable<Photo>;
 }
 
 export class User {
@@ -700,7 +527,5 @@ export type JSON = any;
 export type UUID = any;
 export type DateTime = any;
 export type Upload = any;
-export type InputPeer = any;
 export type Peer = Chat | User;
-export type MessageMedia = MessageMediaPhoto | MessageMediaDocument | MessageMediaContact | MessageMediaPoll;
 type Nullable<T> = T | null;

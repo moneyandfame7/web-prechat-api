@@ -6,13 +6,14 @@ import { AuthGuard } from 'Auth/Guard'
 
 import { CurrentSession } from 'common/decorators/Session'
 import { getSession } from 'common/helpers/getSession'
-
-import { ChatService } from './Service'
-import { PubSub2Service } from 'common/pubsub2/Service'
-import { QueryTyped, SubscriptionBuilder } from 'types/nestjs'
 import { BuilderService } from 'common/builder/Service'
 import { isValidUsername } from 'common/helpers/isValidUsername'
 import { UsernameInvalidError } from 'common/errors'
+import { PubSub2Service } from 'common/pubsub2/Service'
+
+import { QueryTyped, SubscriptionBuilder } from 'types/nestjs'
+
+import { ChatService } from './Service'
 
 @Resolver()
 export class ChatsResolver {
@@ -105,11 +106,6 @@ export class ChatsResolver {
     return this.chats.getCommonGroups(requesterId, input)
   }
 
-  @QueryTyped('getChatsTest')
-  @UseGuards(AuthGuard)
-  public async getChatsTest(@CurrentSession('userId') requesterId: string, @Args('input') input: Api.GetChatsInput) {
-    return this.chats.getChatsTest(requesterId, input)
-  }
   @QueryTyped('getChat')
   @UseGuards(AuthGuard)
   public async getChat(

@@ -6,51 +6,6 @@ import { selectPhotoFields } from './photos'
 import { pick } from '../utils/pick'
 
 /**
- * Just create relation for User and PrivacySettings.
- */
-export function buildPrivacySettings(): Prisma.UserCreateInput['privacySettings'] {
-  return {
-    create: {
-      addByPhone: {
-        create: {
-          visibility: 'Everybody',
-        },
-      },
-      phoneNumber: {
-        create: {
-          visibility: 'Everybody',
-        },
-      },
-      lastSeen: {
-        create: {
-          visibility: 'Everybody',
-        },
-      },
-      addForwardLink: {
-        create: {
-          visibility: 'Everybody',
-        },
-      },
-      chatInvite: {
-        create: {
-          visibility: 'Everybody',
-        },
-      },
-      profilePhoto: {
-        create: {
-          visibility: 'Everybody',
-        },
-      },
-      sendMessage: {
-        create: {
-          visibility: 'Everybody',
-        },
-      },
-    },
-  }
-}
-
-/**
  * Select default user fields.
  */
 
@@ -63,37 +18,15 @@ export function selectUserFields() /* : Required<UserFieldsToBuild> */ {
     phoneNumber: true,
     contacts: true,
     addedByContacts: true,
-    blockedByUsers: true,
     color: true,
     lastActivity: true,
     isDeleted: true,
     createdAt: true,
     // fullInfoId: true,
-    privacySettingsId: true,
-    orderedFoldersIds: true,
     bio: true,
     photo: {
       ...selectPhotoFields(),
     },
-    // privacySettings: {
-    //   include: {
-    //     phoneNumber: {
-    //       select: {
-    //         visibility: true,
-    //         allowedUsers: {
-    //           select: {
-    //             id: true,
-    //           },
-    //         },
-    //         blockedUsers: {
-    //           select: {
-    //             id: true,
-    //           },
-    //         },
-    //       },
-    //     },
-    //   },
-    // },
   } satisfies Prisma.UserSelect
 }
 export function getContact(contacts: Contact[], currentUserId: string) {

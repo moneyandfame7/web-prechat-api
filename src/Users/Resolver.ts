@@ -3,6 +3,7 @@ import { UseGuards } from '@nestjs/common'
 import { GetUsersInput } from '@generated/graphql'
 
 import { AuthGuard } from 'Auth/Guard'
+
 import { CurrentSession } from 'common/decorators/Session'
 
 import { UserService } from './Service'

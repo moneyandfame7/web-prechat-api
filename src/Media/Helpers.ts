@@ -1,5 +1,6 @@
 import type { ColorVariants } from '@prisma/client'
-import { getRandomArbitrary } from '../common/functions'
+
+import { getRandomArbitrary } from 'common/functions'
 
 const COLOR_VARIANTS: ColorVariants[] = ['BLUE', 'ORANGE', 'GREEN', 'PINK', 'PURPLE', 'YELLOW']
 

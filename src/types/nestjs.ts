@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Mutation, Query, Subscription } from '@nestjs/graphql'
 
-import type { IMutation, IQuery, ISubscription, Message } from '@generated/graphql'
+import type { IMutation, IQuery, ISubscription } from '@generated/graphql'
 
 import type { PrismaChat } from 'common/builder/chats'
 import type { PrismaMessage } from 'common/builder/messages'

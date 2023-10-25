@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Request } from 'express'
 import type { Session } from '@generated/graphql'
 import type en from 'common/i18n/en'
@@ -22,7 +23,7 @@ export type FunctionNames<T> = {
 export type FunctionReturnType<T> = {
   [K in keyof T]: T[K] extends (...args: any[]) => any ? ReturnType<T[K]> : never
 }
-type UnwrapPromise<T> = T extends Promise<infer U> ? U : T
+export type UnwrapPromise<T> = T extends Promise<infer U> ? U : T
 
 export type MapClassReturnTypes<T> = {
   [K in keyof T]: T[K] extends (...args: any[]) => any ? { [P in K]: Awaited<ReturnType<T[K]>> } : never

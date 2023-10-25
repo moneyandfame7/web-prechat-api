@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import type { Prisma } from '@prisma/client'
+
 import { BuilderService } from 'common/builder/Service'
-import { selectUserFields } from 'common/builder/users'
 import { PrismaService } from 'common/prisma'
 
 @Injectable()
@@ -17,7 +17,6 @@ export class MediaRepository {
             id: requesterId,
           },
         },
-        // userId: requesterId,
       },
       select: {
         date: true,
@@ -28,7 +27,5 @@ export class MediaRepository {
         url: true,
       },
     })
-
-    // return this.builder.build(result, requesterId)
   }
 }

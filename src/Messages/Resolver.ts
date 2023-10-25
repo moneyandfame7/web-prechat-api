@@ -2,12 +2,14 @@ import { Args, Resolver, Query } from '@nestjs/graphql'
 import { UseGuards } from '@nestjs/common'
 
 import * as Api from '@generated/graphql'
-import { MutationTyped, QueryTyped, SubscriptionBuilder, SubscriptionTyped } from 'types/nestjs'
+import { AuthGuard } from 'Auth'
+
 import { PubSub2Service } from 'common/pubsub2/Service'
 import { CurrentSession } from 'common/decorators/Session'
 import { getSession } from 'common/helpers/getSession'
 import { BuilderService } from 'common/builder/Service'
-import { AuthGuard } from 'Auth'
+
+import { MutationTyped, QueryTyped, SubscriptionBuilder, SubscriptionTyped } from 'types/nestjs'
 
 import { MessagesService } from './Service'
 
@@ -43,7 +45,7 @@ export class MessagesResolver {
     @CurrentSession('userId') requesterId: string,
     @Args('input') input: Api.DeleteMessagesInput,
   ) {
-    const { affectedChat } = await this.messages.deleteMessages(requesterId, input)
+    const affectedChat = await this.messages.deleteMessages(requesterId, input)
 
     this.pubSub.publishNotBuilded('onDeleteMessages', {
       onDeleteMessages: {

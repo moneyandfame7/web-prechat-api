@@ -1,19 +1,21 @@
-import type { $Enums } from '@prisma/client'
 import { Injectable } from '@nestjs/common'
+import type { $Enums } from '@prisma/client'
+
 import type * as Api from '@generated/graphql'
 
 import { InvalidChatId, InvalidPeerId } from 'common/errors/Chats'
-
-import { ChatRepository } from 'Chats/Repository'
-import { MessagesRepository } from './Repository'
 import { isUserId } from 'common/helpers/chats'
 import { BuilderService } from 'common/builder/Service'
+
+import { ChatsRepository } from 'Chats'
+
+import { MessagesRepository } from './Repository'
 
 @Injectable()
 export class MessagesService {
   public constructor(
     private repo: MessagesRepository,
-    public chatRepo: ChatRepository,
+    public chatRepo: ChatsRepository,
     private builder: BuilderService,
   ) {}
   /**

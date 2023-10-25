@@ -8,9 +8,9 @@ import type { UserFieldsForBuild, UserStatus } from 'types/users'
 import { pick } from 'common/utils/pick'
 
 import { getContact } from './users'
-import type { PrismaChat, PrismaChatFolder, PrismaChatMember } from './chats'
+import type { PrismaChat, PrismaChatMember } from './chats'
 import type { PhotoFields } from './photos'
-import type { PrismaMessage, PrismaMessageMedia } from './messages'
+import type { PrismaMessage } from './messages'
 
 /**
  * @todo - Add memory Caching
@@ -33,7 +33,7 @@ export class BuilderService {
 
     const primaryFields = pick(user, ['id', 'color', 'photo', 'username', 'phoneNumber', 'bio'])
 
-    const isBlocked = user.blockedByUsers.some((u) => u.blockerId === requesterId)
+    // const isBlocked = user.blockedByUsers.some((u) => u.blockerId === requesterId)
     return {
       ...primaryFields,
       firstName: contactAddedByCurrent?.firstName || user.firstName,
@@ -41,7 +41,7 @@ export class BuilderService {
       isSelf: user.id === requesterId,
       isContact: isCurrentUserInContact,
       isMutualContact: isCurrentUserInContact && isCurrentUserAddedToContact,
-      isBlocked,
+      // isBlocked,
       photo: this.buildApiPhoto(user.photo),
     } as Omit<Api.User, 'status'>
   }
@@ -84,20 +84,9 @@ export class BuilderService {
     // Дуже давно
     return { type: 'userStatusLongTimeAgo' }
   }
-  /* 
-  public getStatusCached(userId: string) {
-    return this.cache.get<UserStatus>(`${userId}_status`)
-  }
-
-  private setStatusCache(userId: string, status: UserStatus) {
-    this.cache.set(`${userId}_status`, status, TTL_USER_STATUS)
-  } */
-
-  /* CHATS */
 
   public buildApiChat(chat: PrismaChat, requesterId: string): Api.Chat {
     const requesterMember = this.selectChatMember(chat, requesterId)
-    // requesterMember?.lastMessage
     const privateChatPartner =
       chat.type === 'chatTypePrivate' ? this.selectPrivateChatMember(chat, requesterId) : undefined
     const chatId = privateChatPartner?.id || chat.id
@@ -134,10 +123,10 @@ export class BuilderService {
     return privateChatPartner?.id || chat.id
   }
   public async buildApiChatFull(chat: PrismaChat, requesterId: string): Promise<Api.ChatFull> {
-    const { fullInfo, permissions } = chat
+    const { fullInfo /* permissions */ } = chat
     const { canViewMembers, description, members, historyForNewMembers } = fullInfo!
 
-    const requesterMember = this.selectChatMember(chat, requesterId)
+    // const requesterMember = this.selectChatMember(chat, requesterId)
 
     return {
       members: members.map((m) => this.buildApiChatMember(m)),
@@ -145,21 +134,21 @@ export class BuilderService {
       areMembersHidden: !canViewMembers,
       description,
       onlineCount: await this.buildOnlineCount(members),
-      permissions,
-      currentUserPermissions: requesterMember?.userPermissions,
-      currentAdminPermissions: requesterMember?.adminPermissions,
+      // permissions,
+      // currentUserPermissions: requesterMember?.userPermissions,
+      // currentAdminPermissions: requesterMember?.adminPermissions,
     }
   }
   public buildApiChatMember(member: PrismaChatMember): Api.ChatMember {
-    const adminPermissions = member.adminPermissions
-    const userPermissions = member.userPermissions
-    const { customTitle, ...adminPermissionFields } = adminPermissions ?? {}
+    // const adminPermissions = member.adminPermissions
+    // const userPermissions = member.userPermissions
+    // const { customTitle, ...adminPermissionFields } = adminPermissions ?? {}
 
     return {
       userId: member.userId,
-      adminPermissions: adminPermissionFields,
-      userPermissions: userPermissions,
-      customTitle: customTitle,
+      // adminPermissions: adminPermissionFields,
+      // userPermissions: userPermissions,
+      // customTitle: customTitle,
       inviterId: member.inviterId,
       kickedByUserId: member.kickedById,
       promotedByUserId: member.promotedById,
@@ -175,15 +164,7 @@ export class BuilderService {
       await Promise.all(members.map(async (m) => this.buildApiUserStatus(m.user).type === 'userStatusOnline'))
     ).filter(Boolean).length
   }
-  private getChatTitle(chat: PrismaChat, requesterId: string) {
-    if (chat.type === 'chatTypePrivate') {
-      const member = this.selectPrivateChatMember(chat, requesterId)
 
-      return member.isSelf ? 'Saved Messages' : this.getUserName(member)
-    }
-
-    return chat.title
-  }
   private selectChatMember(chat: PrismaChat, userId: string) {
     return chat.fullInfo?.members.find((m) => m.userId === userId)
   }
@@ -198,7 +179,7 @@ export class BuilderService {
 
   /** MESSAGES */
   public buildApiMessage(message: PrismaMessage, requesterId: string, chatId: string): Api.Message {
-    const { media, action, entities, senderId, ...primaryFields } = message
+    const { action, entities, senderId, ...primaryFields } = message
 
     return {
       ...primaryFields,
@@ -213,78 +194,12 @@ export class BuilderService {
       },
       senderId: senderId,
       isOutgoing: senderId === requesterId,
-      media: this.buildApiMessageMedia(media),
       action: action as Api.MessageAction,
     }
   }
 
-  // @todo перероби цю хуйню
-  public buildApiMessageMedia(prismaMedia?: PrismaMessageMedia | null) {
-    if (!prismaMedia) {
-      return undefined
-    }
-    const { messageMediaContact, messageMediaDocument, messageMediaPhoto, messageMediaPoll } = prismaMedia
-    // rewrite to content: "contact", "document", "photo", "poll"
-    if (messageMediaContact) {
-      return {
-        contact: messageMediaContact,
-      } satisfies Api.MessageMediaContact
-    }
-    if (messageMediaDocument) {
-      return {
-        document: messageMediaDocument,
-      } satisfies Api.MessageMediaDocument
-    }
-    if (messageMediaPhoto) {
-      return {
-        photo: messageMediaPhoto,
-      } satisfies Api.MessageMediaPhoto
-    }
-    if (messageMediaPoll) {
-      // messageMediaPoll.poll.
-      return { poll: messageMediaPoll } satisfies Api.MessageMediaPoll
-      // const { id, poll } = messageMediaPoll
-      // const { results, ...pollFields } = poll
-    }
-  }
-
-  public createApiMessageEntity(entities: Api.MessageEntity[]) {}
-
-  // public buildApiMessageAction(
-  //   action?: PrismaMessageAction | null,
-  //   // requesterId: string,
-  // ): Api.MessageAction | undefined {
-  //   if (!action) {
-  //     return undefined
-  //   }
-  //   const {
-  //     /* addUser, deletePhoto, deleteUser, */
-  //     /* editTitle */
-  //   } = action
-
-  //   if (chatCreate) {
-  //     return {
-  //       chatCreate: {
-  //         title: chatCreate.title,
-  //       },
-  //     }
-  //   }
-  // }
-
   /* OTHER */
-
   public buildApiPhoto(photo: PhotoFields): Api.Photo | undefined {
     return photo ? (photo as Api.Photo) : undefined
-  }
-
-  /* CHAT FOLDERS */
-  public buildApiChatFolder(requesterId: string, folder: PrismaChatFolder): Api.ChatFolder {
-    const { excludedChats, includedChats, pinnedChats, ...primary } = folder
-    return {
-      ...primary,
-      excludedChats: excludedChats.map((c) => this.buildApiChat(c, requesterId).id),
-      includedChats: includedChats.map((c) => this.buildApiChat(c, requesterId).id),
-      pinnedChats: pinnedChats.map((c) => this.buildApiChat(c, requesterId).id),
-    }
   }
 }

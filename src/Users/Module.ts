@@ -1,17 +1,16 @@
 import { Module, forwardRef } from '@nestjs/common'
 
-// import { FirebaseModule } from 'common/Firebase'
-import { PrismaService } from 'common/prisma.service'
-
-import { UserService } from './Service'
-import { UserResolver } from './Resolver'
-import { UserRepository } from './Repository'
 import { ChatsModule } from 'Chats'
+
+import { PrismaService } from 'common/prisma.service'
 import { BuilderModule } from 'common/builder/Module'
-import { FoldersModule } from 'Folders/Module'
+
+import { UserResolver } from './Resolver'
+import { UserService } from './Service'
+import { UserRepository } from './Repository'
 
 @Module({
-  imports: [forwardRef(() => ChatsModule), BuilderModule, FoldersModule],
+  imports: [forwardRef(() => ChatsModule), BuilderModule],
   providers: [UserService, UserResolver, UserRepository, PrismaService],
   exports: [UserService],
 })

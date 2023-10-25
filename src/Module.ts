@@ -10,7 +10,7 @@ import { GraphQLUpload } from 'graphql-upload'
 // import * as redisStore from 'cache-manager-redis-store'
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
 
-import { AuthGuard, AuthModule, AuthService } from './Auth'
+import { AuthModule, AuthService } from './Auth'
 import { UserModule } from './Users'
 import { ChatsModule } from './Chats'
 import { SessionsModule } from './Sessions'
@@ -21,26 +21,22 @@ import { ContactsModule } from './Contacts'
 import { FirebaseModule } from 'common/Firebase'
 import { PubSubModule } from 'common/pubSub/Module'
 import { PrismaService } from 'common/prisma.service'
+import { PubSub2Module } from 'common/pubsub2/Module'
+import { PrismaModule } from 'common/prisma/Module'
 
 import { ApiErrorFormatted } from 'common/errors'
 
 /** App  */
-import { SearchModule } from 'Search/Module'
 import { AccountModule } from 'Account/Module'
 import { LangPackModule } from 'LangPack/Module'
 
 import { AppResolver } from './Resolver'
-import { PubSub2Module } from 'common/pubsub2/Module'
-import { PrismaModule } from 'common/prisma/Module'
-import { InputPeerTest } from 'common/scalars/InputPeer'
-import { APP_GUARD } from '@nestjs/core'
 
 const MAIN_MODULES = [
   // ApiModule,
   AuthModule,
   PubSubModule,
   UserModule,
-  SearchModule,
   MessagesModule,
   ChatsModule,
   ContactsModule,
@@ -76,7 +72,6 @@ const CONFIG_MODULES = [
         Upload: GraphQLUpload,
         JSON: GraphQLJSON,
         UUID: UUIDResolver,
-        InputPeer: InputPeerTest,
       },
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -154,6 +149,7 @@ export class AppModule implements OnModuleInit {
   /* DATABASE FOR SCHEDULE MESSAGES, DATE ON IT SENDING!!! INIT HERE. */
   /** get cron jobs, check names etc.. */
   public onModuleInit() {
+    // eslint-disable-next-line no-console
     console.log('APP MODULE INITIALIZE')
   }
 }

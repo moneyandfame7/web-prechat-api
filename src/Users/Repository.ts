@@ -2,17 +2,15 @@ import { Injectable } from '@nestjs/common'
 import type * as Api from '@generated/graphql'
 
 import { getRandomColor } from 'Media'
+import { ChatsRepository } from 'Chats/Repository'
 
 import { PrismaService } from 'common/prisma.service'
 import { unformatString } from 'common/utils/unformatString'
-import { buildPrivacySettings } from 'common/builder/users'
-import { ChatRepository } from 'Chats/Repository'
 import { generateId } from 'common/helpers/generateId'
-import { FoldersRepository } from 'Folders/Repository'
 
 @Injectable()
 export class UserRepository {
-  constructor(private prisma: PrismaService, private chats: ChatRepository, private folders: FoldersRepository) {}
+  constructor(private prisma: PrismaService, private chats: ChatsRepository) {}
 
   public async create(input: Api.CreateUserInput) {
     const created = await this.prisma.user.create({
@@ -21,7 +19,6 @@ export class UserRepository {
         firstName: input.firstName,
         lastName: input.lastName,
         phoneNumber: unformatString(input.phoneNumber),
-        privacySettings: buildPrivacySettings(),
         color: getRandomColor(),
       },
     })
@@ -30,7 +27,7 @@ export class UserRepository {
      */
     // this.chats.createSavedMessages(created)
     this.chats.createServiceChat(created)
-    this.folders.createDefaultFolder(created.id)
+    // this.folders.createDefaultFolder(created.id)
 
     return created.id
   }

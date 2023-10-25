@@ -2,24 +2,25 @@ import { Injectable } from '@nestjs/common'
 
 import type * as Api from '@generated/graphql'
 
-import { selectChatFields, createChatMembers } from 'common/builder/chats'
-
-import { PrismaService } from '../common/prisma.service'
-import { ChatRepository } from './Repository'
 import { getRandomColor } from 'Media'
+
+import { selectChatFields, createChatMembers } from 'common/builder/chats'
+import { PrismaService } from 'common/prisma.service'
 import { BuilderService } from 'common/builder/Service'
-import { isSelf, selectUserFields } from 'common/builder/users'
-import { NotFoundEntityError, UsernameNotOccupiedError } from 'common/errors'
-import type { WithTypename } from 'types/other'
 import { createMessageAction } from 'common/builder/messages'
 import { generateId } from 'common/helpers/generateId'
-import { Prisma } from '@prisma/client'
+import { isSelf, selectUserFields } from 'common/builder/users'
+import { NotFoundEntityError, UsernameNotOccupiedError } from 'common/errors'
+
+import type { WithTypename } from 'types/other'
+
+import { ChatsRepository } from './Repository'
 
 @Injectable()
 export class ChatService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly repo: ChatRepository,
+    private readonly repo: ChatsRepository,
     private builder: BuilderService,
   ) {}
 
@@ -199,42 +200,6 @@ export class ChatService {
     })
 
     return result.map((c) => this.builder.buildApiChat(c, requesterId))
-  }
-
-  public async getChatsTest(requesterId: string, input: Api.GetChatsInput) {
-    // this.prisma.chat.findMany({
-    //   where: {
-    //     fullInfo: {
-    //       members: {
-    //         some: {
-    //           userId: requesterId,
-    //         },
-    //       },
-    //     },
-    //     ...(input.archived && {
-    //       inFolders: {
-    //         some: {
-    //           orderId: FOLDER_ID_ARCHIVED,
-    //         },
-    //       },
-    //     }),
-    //   },
-    //   ...(input.offset && { skip: input.offset }),
-    //   ...(input.limit && { take: input.limit }),
-    // })
-    const test = await this.prisma.chatMember.findMany({
-      where: {
-        userId: requesterId,
-        ...(input.archived && { isArchived: true }),
-      },
-      include: {
-        chatInfo: {
-          include: {
-            chat: true,
-          },
-        },
-      },
-    })
   }
 
   public async getChat(chatId: string, requesterId: string): Promise<Api.Chat> {

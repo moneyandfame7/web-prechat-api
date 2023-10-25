@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common'
 
 import type { Country, GetLangStringInput, Language } from '@generated/graphql'
 
-import type { LanguageStringKeys, SupportedLanguage } from 'types/other'
 import { i18n, languagesNames } from 'common/i18n'
 import type { Translation } from 'common/i18n/types'
+
+import type { LanguageStringKeys, SupportedLanguage } from 'types/other'
 
 @Injectable()
 export class LangPackService {

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common'
 
-import { SessionsModule } from 'Sessions'
+import { SessionsModule } from 'Sessions/Module'
 
 import { AccountService } from './Service'
 import { AccountRepository } from './Repository'

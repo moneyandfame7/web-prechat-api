@@ -8,10 +8,11 @@ import { UserModule } from 'Users'
 
 import { ChatsResolver } from './Resolver'
 import { ChatService } from './Service'
-import { ChatRepository } from './Repository'
+import { ChatsRepository } from './Repository'
+
 @Module({
   imports: [PubSubModule, forwardRef(() => UserModule), BuilderModule],
-  providers: [ChatsResolver, ChatService, ChatRepository, PrismaService],
-  exports: [ChatService, ChatRepository],
+  providers: [ChatsResolver, ChatService, ChatsRepository, PrismaService],
+  exports: [ChatService, ChatsRepository],
 })
 export class ChatsModule {}

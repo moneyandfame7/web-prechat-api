@@ -1,3 +1,16 @@
+# QUERIES, MUTATIONS, SUBSCRIPTIONS #
+type Query {
+  getLangPack(code: String!): LangPack!
+  getLangString(input: GetLangStringInput!): String!
+
+  getLanguages: [Language!]!
+  getLanguage(code: String!): Language!
+
+  getCountriesList(code: String!): [Country!]!
+}
+
+# ------------------------ #
+
 type LangPack {
   strings: JSON!
   langCode: String!
@@ -20,14 +33,4 @@ type Country {
 input GetLangStringInput {
   code: String!
   key: String!
-}
-
-type Query {
-  getLangPack(code: String!): LangPack!
-  getLangString(input: GetLangStringInput!): String!
-
-  getLanguages: [Language!]!
-  getLanguage(code: String!): Language!
-
-  getCountriesList(code: String!): [Country!]!
 }

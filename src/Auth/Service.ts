@@ -4,14 +4,12 @@ import type { SessionData, Connection, SendPhoneResponse, SignInInput, SignUpInp
 
 import { UserService } from 'Users'
 import { SessionService } from 'Sessions'
+import { AccountService } from 'Account'
 
 import { unformatString } from 'common/utils/unformatString'
 import { FirebaseService } from 'common/Firebase'
-import { AuthVerifyCodeError, SessionPasswordNeeded } from 'common/errors/Authorization'
+import { AuthVerifyCodeError } from 'common/errors/Authorization'
 import { PhoneNumberNotFoundError } from 'common/errors/Common'
-
-import { AccountService } from 'Account/Service'
-import { FoldersService } from 'Folders/Service'
 
 @Injectable()
 export class AuthService {
@@ -20,7 +18,6 @@ export class AuthService {
     private firebase: FirebaseService,
     private sessions: SessionService,
     private account: AccountService,
-    private folders: FoldersService,
   ) {}
 
   public async sendPhone(phoneNumber: string): Promise<SendPhoneResponse> {
@@ -71,10 +68,7 @@ export class AuthService {
     if (verified.phone_number !== unformatted) {
       throw new Error('Token invalid')
     }
-    const password = await this.account.getPassword(user.id)
-    if (password) {
-      throw new SessionPasswordNeeded('auth.signIn')
-    }
+
     return this.account.createAuthorization(this.getSessionData(input.connection), user.id)
   }
 
