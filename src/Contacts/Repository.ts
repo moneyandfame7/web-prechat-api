@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import type { AddContactInput, UpdateContactInput } from '@generated/graphql'
 
 import { PrismaService } from 'common/prisma.service'
-import { selectUserFields } from 'common/builder/users'
+import { selectUserFields } from 'common/selectors'
 
 @Injectable()
 export class ContactsRepository {
@@ -63,6 +63,9 @@ export class ContactsRepository {
     })
   }
 
+  /**
+   * @deprecated This method should be used with UsersRepository.
+   */
   public async findUser(id: string) {
     return this.prisma.user.findUnique({ where: { id } })
   }

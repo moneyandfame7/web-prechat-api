@@ -1,6 +1,8 @@
 import type { MessageEntity } from '@generated/graphql'
-import type { PrismaChat } from 'common/builder/chats'
-import type { Nullable } from './other'
+import type { $Enums, Message, Photo } from '@prisma/client'
+
+import type { Nullable } from './helpers'
+import type { PrismaChat } from './Chats'
 
 export interface CreateMessageInput {
   text?: Nullable<string>
@@ -9,3 +11,23 @@ export interface CreateMessageInput {
   id: string
   orderedId: number
 }
+
+export type PrismaMessage = Message & { action: PrismaMessageAction | null }
+
+export interface PrismaMessageAction {
+  text: string
+  photo: Photo | null
+  type: $Enums.MessageActionType
+  users: string[]
+}
+
+export type MessageActionPayload =
+  | {
+      '@type': 'chatCreate'
+      payload: {
+        title: string
+      }
+    }
+  | {
+      '@type': 'channelCreate'
+    }

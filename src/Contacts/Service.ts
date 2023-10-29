@@ -10,7 +10,9 @@ import {
   NotFoundEntityError,
   PhoneNumberNotFoundError,
 } from 'common/errors/Common'
-import { BuilderService } from 'common/builder/Service'
+import { BuilderService } from 'common/builders/Service'
+
+import type { UserWithoutStatus } from 'types/Users'
 
 import { ContactsRepository } from './Repository'
 
@@ -68,7 +70,7 @@ export class ContactsService {
       lastName: input.lastName,
     })
     // const chat = await this.chats.createPrivate(requesterId, { userId: user.id })
-    /* const contact = await */ return this.builder.buildApiUserAndStatus(added.contact, requesterId)
+    /* const contact = await */ return this.builder.users.buildWithStatus(requesterId, added.contact)
 
     // return { chat, user: contact }
   }
@@ -88,12 +90,12 @@ export class ContactsService {
       lastName: input.lastName,
     })
     // const chat = await this.chats.createPrivate(requesterId, { userId: user.id })
-    return this.builder.buildApiUserAndStatus(added.contact, requesterId)
+    return this.builder.users.buildWithStatus(requesterId, added.contact)
 
     // return user
   }
 
-  private validateContact(user: Api.User) {
+  private validateContact(user: Api.User | UserWithoutStatus) {
     if (user.isSelf) {
       throw new BadRequestError('contacts.addContact', "You can't add yourself to contacts :)")
     }
@@ -122,11 +124,11 @@ export class ContactsService {
 
     const deletedContact = await this.repository.delete(contact.id)
 
-    return this.builder.buildApiUserAndStatus(deletedContact.contact, requesterId)
+    return this.builder.users.buildWithStatus(requesterId, deletedContact.contact)
   }
 
   public async get(requesterId: string): Promise<Api.User[]> {
     const contacts = await this.repository.get(requesterId)
-    return this.builder.buildApiUsersAndStatuses(contacts, requesterId)
+    return this.builder.users.buildManyWithStatus(requesterId, contacts)
   }
 }

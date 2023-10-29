@@ -1,5 +1,5 @@
 import type { Session } from '@generated/graphql'
-import type { GqlContext } from 'types/other'
+import type { GqlContext } from 'types/helpers'
 
 import { UnauthorizedError } from 'common/errors/Authorization'
 

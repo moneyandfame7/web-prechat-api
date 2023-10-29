@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import type * as Api from '@generated/graphql'
 
 import { PrismaService } from 'common/prisma.service'
+import { selectUserFields } from 'common/selectors'
 
 @Injectable()
 export class AccountRepository {
@@ -33,6 +34,9 @@ export class AccountRepository {
       },
       data: {
         lastActivity: now,
+      },
+      select: {
+        ...selectUserFields(),
       },
     })
 

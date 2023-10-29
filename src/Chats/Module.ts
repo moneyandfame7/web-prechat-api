@@ -1,7 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common'
 
 import { PrismaService } from 'common/prisma.service'
-import { BuilderModule } from 'common/builder/Module'
+import { BuilderModule } from 'common/builders/Module'
 
 import { UserModule } from 'Users'
 

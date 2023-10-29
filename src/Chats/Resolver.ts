@@ -6,7 +6,7 @@ import { AuthGuard } from 'Auth/Guard'
 
 import { CurrentSession } from 'common/decorators/Session'
 import { getSession } from 'common/helpers/getSession'
-import { BuilderService } from 'common/builder/Service'
+import { BuilderService } from 'common/builders/Service'
 import { isValidUsername } from 'common/helpers/isValidUsername'
 import { UsernameInvalidError } from 'common/errors'
 import { PubSubService } from 'common/pubSub/Service'
@@ -26,31 +26,31 @@ export class ChatsResolver {
   @Mutation('createChannel')
   @UseGuards(AuthGuard)
   public async createChannel(
-    @CurrentSession('userId') currUserId: string,
+    @CurrentSession('userId') requesterId: string,
     @Args('input') input: Api.CreateChannelInput,
   ): Promise<Api.Chat> {
-    const chatNotBuilded = await this.chats.createChannel(currUserId, input)
+    const chatNotBuilded = await this.chats.createChannel(requesterId, input)
     // chatNotBuilded.fullInfo?.members[0].lastMessage.
     this.pubSub.publishNotBuilded('onChatCreated', {
       onChatCreated: chatNotBuilded,
     })
 
-    return this.builder.buildApiChat(chatNotBuilded, currUserId)
+    return this.builder.chats.build(requesterId, chatNotBuilded)
   }
 
   @Mutation('createGroup')
   @UseGuards(AuthGuard)
   public async createGroup(
-    @CurrentSession('userId') currUserId: string,
+    @CurrentSession('userId') requesterId: string,
     @Args('input') input: Api.CreateGroupInput,
   ): Promise<Api.Chat> {
-    const chatNotBuilded = await this.chats.createGroup(currUserId, input)
+    const chatNotBuilded = await this.chats.createGroup(requesterId, input)
 
     this.pubSub.publishNotBuilded('onChatCreated', {
       onChatCreated: chatNotBuilded,
     })
 
-    return this.builder.buildApiChat(chatNotBuilded, currUserId)
+    return this.builder.chats.build(requesterId, chatNotBuilded)
   }
 
   @UseGuards(AuthGuard)
@@ -79,8 +79,8 @@ export class ChatsResolver {
       const createdChat = payload.onChatCreated
 
       const members = createdChat.fullInfo?.members.map((m) => m.user)
-      const users = members ? await this.builder.buildApiUsersAndStatuses(members, requesterId) : []
-      const chat = this.builder.buildApiChat(createdChat, requesterId)
+      const users = members ? this.builder.users.buildManyWithStatus(requesterId, members) : []
+      const chat = this.builder.chats.build(requesterId, createdChat)
 
       return { users, chat }
     },
@@ -91,10 +91,10 @@ export class ChatsResolver {
 
   @Query('getChats')
   @UseGuards(AuthGuard)
-  public async getChats(@CurrentSession('userId') currUserId: string) {
-    const chats = await this.chats.getChats(currUserId)
+  public async getChats(@CurrentSession('userId') requesterId: string) {
+    const chats = await this.chats.getChats(requesterId)
 
-    return chats.map((c) => this.builder.buildApiChat(c, currUserId))
+    return this.builder.chats.buildMany(requesterId, chats)
   }
 
   @QueryTyped('getCommonGroups')

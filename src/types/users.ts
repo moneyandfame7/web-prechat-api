@@ -1,7 +1,8 @@
-import type { ColorVariants, Contact } from '@prisma/client'
-import type { PhotoFields } from 'common/builder/photos'
+import type { ColorVariants, Contact, User } from '@prisma/client'
+import type * as Api from '@generated/graphql'
+import type { PhotoFields } from 'types/Diff'
 
-export interface UserFieldsForBuild {
+export interface PrismaUser {
   id: string
   firstName: string
   lastName: string | null
@@ -16,6 +17,10 @@ export interface UserFieldsForBuild {
   isDeleted: boolean
   createdAt: Date
 }
+
+export type UserWithoutStatus = Omit<Api.User, 'status'>
+export type AnyUser = User | Api.User | UserWithoutStatus
+
 export type UserStatusType =
   | 'userStatusOnline'
   | 'userStatusRecently'

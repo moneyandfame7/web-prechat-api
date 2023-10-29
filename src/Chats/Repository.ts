@@ -6,11 +6,11 @@ import { getRandomColor } from 'Media'
 
 import { NotFoundEntityError } from 'common/errors'
 import { PrismaService } from 'common/prisma.service'
-import { selectChatFields } from 'common/builder/chats'
 import { isSavedMessages, isUserId } from 'common/helpers/chats'
 import { generateId } from 'common/helpers/generateId'
 
-import type { InputPeer } from 'types/chats'
+import type { InputPeer } from 'types/Chats'
+import { selectChatFields } from 'common/selectors'
 
 @Injectable()
 export class ChatsRepository {

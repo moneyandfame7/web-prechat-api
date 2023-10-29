@@ -1,15 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Request } from 'express'
 import type { Session } from '@generated/graphql'
-import type en from 'common/i18n/en'
-
-export type SupportedLanguage = 'en' | 'uk' | 'pl' | 'de'
-export type LanguageStringKeys = keyof typeof en.pack
-
-export interface LanguageStringInput {
-  language: SupportedLanguage
-  string: LanguageStringKeys
-}
 
 export type Nullable<T> = T | null
 

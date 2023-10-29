@@ -5,10 +5,10 @@ import type * as Api from '@generated/graphql'
 import { SessionService } from 'Sessions'
 import { SessionTooFreshError, ForbiddenError } from 'common/errors'
 
-import type { UserStatus } from 'types/users'
+import type { UserStatus } from 'types/Users'
 
 import { AccountRepository } from './Repository'
-import { BuilderService } from 'common/builder/Service'
+import { BuilderService } from 'common/builders/Service'
 
 @Injectable()
 export class AccountService {
@@ -21,13 +21,13 @@ export class AccountService {
   public async getAuthorizations(currentSession: Api.Session): Promise<Api.Session[]> {
     const activeSessions = await this.repository.getActiveSessions(currentSession.userId)
 
-    return activeSessions.map((s) => this.builder.buildApiAuthorization(s, currentSession))
+    return activeSessions.map((s) => this.builder.buildSession(currentSession, s))
   }
 
   public async createAuthorization(input: Api.SessionData, requsterId: string): Promise<Api.Session> {
     const created = await this.repository.createAuthorization(input, requsterId)
 
-    return this.builder.buildApiAuthorization(created, created)
+    return this.builder.buildSession(created, created)
     // // or just in Auth Module???
 
     // this.pubSub.publish('onAuthorizationCreated', {
@@ -50,7 +50,7 @@ export class AccountService {
     if (needToTerminate && needToTerminate.userId === currentSession.userId) {
       const deleted = await this.sessions.deleteById(id)
 
-      return this.builder.buildApiAuthorization(deleted, currentSession)
+      return this.builder.buildSession(currentSession, deleted)
     }
 
     throw new ForbiddenError('account.terminateAuthorization')
@@ -86,7 +86,7 @@ export class AccountService {
 
     const user = await this.repository.updateUserLastActivity(currentSession)
 
-    const status = this.builder.buildApiUserStatus(user)
+    const status = this.builder.users.buildStatus(user)
     // this.setStatusCache(currentSession.userId, status)
 
     return status

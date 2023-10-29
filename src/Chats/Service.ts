@@ -4,18 +4,17 @@ import type * as Api from '@generated/graphql'
 
 import { getRandomColor } from 'Media'
 
-import { selectChatFields, createChatMembers } from 'common/builder/chats'
 import { PrismaService } from 'common/prisma.service'
-import { BuilderService } from 'common/builder/Service'
-import { createMessageAction } from 'common/builder/messages'
+import { BuilderService } from 'common/builders/Service'
+import { createMessageAction } from 'common/selectors'
 import { generateId } from 'common/helpers/generateId'
-import { isSelf, selectUserFields } from 'common/builder/users'
 import { NotFoundEntityError, UsernameNotOccupiedError } from 'common/errors'
 
-import type { WithTypename } from 'types/other'
+import type { WithTypename } from 'types/helpers'
 
 import { ChatsRepository } from './Repository'
 import { FIRST_MSG_ID } from 'common/constants'
+import { createChatMembers, isSelf, selectChatFields, selectUserFields } from 'common/selectors'
 
 @Injectable()
 export class ChatService {
@@ -146,12 +145,12 @@ export class ChatService {
   public async createPrivate(requesterId: string, input: { userId: string }) {
     const exist = await this.repo.getPrivateChat(requesterId, input.userId)
     if (exist) {
-      return this.builder.buildApiChat(exist, requesterId)
+      return this.builder.chats.build(requesterId, exist)
     }
 
     const result = await this.repo.createPrivate(requesterId, input.userId)
 
-    return this.builder.buildApiChat(result, requesterId)
+    return this.builder.chats.build(requesterId, result)
   }
 
   /**
@@ -179,6 +178,17 @@ export class ChatService {
       include: {
         ...selectChatFields(),
       },
+      // select:{
+      //   fullInfo:{
+      //     select:{
+      //       _count:{
+      //         select:{
+      //           members:true
+      //         }
+      //       }
+      //     }
+      //   }
+      // }
     })
   }
 
@@ -200,7 +210,7 @@ export class ChatService {
       },
     })
 
-    return result.map((c) => this.builder.buildApiChat(c, requesterId))
+    return this.builder.chats.buildMany(requesterId, result)
   }
 
   public async getChat(chatId: string, requesterId: string): Promise<Api.Chat> {
@@ -209,7 +219,7 @@ export class ChatService {
       throw new NotFoundEntityError('chats.getChatFull')
     }
 
-    return this.builder.buildApiChat(chat, requesterId)
+    return this.builder.chats.build(requesterId, chat)
   }
 
   public async getChatFull(chatId: string, requesterId: string): Promise<Api.ChatFull> {
@@ -218,7 +228,7 @@ export class ChatService {
       throw new NotFoundEntityError('chats.getChatFull')
     }
 
-    return this.builder.buildApiChatFull(chat, requesterId)
+    return this.builder.chats.buildFull(requesterId, chat)
   }
 
   public async resolveUsername(username: string, requesterId: string): Promise<WithTypename<Api.Peer> | undefined> {
@@ -238,7 +248,7 @@ export class ChatService {
       },
     })
     if (user) {
-      const builded = await this.builder.buildApiUserAndStatus(user, requesterId)
+      const builded = this.builder.users.buildWithStatus(requesterId, user)
       return {
         ...builded,
         __typename: 'User',
@@ -258,7 +268,7 @@ export class ChatService {
     })
 
     if (chat[0]) {
-      const builded = this.builder.buildApiChat(chat[0], requesterId)
+      const builded = this.builder.chats.build(requesterId, chat[0])
       return {
         ...builded,
         __typename: 'Chat',

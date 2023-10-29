@@ -5,7 +5,7 @@ import type { Session } from '@generated/graphql'
 
 import { getSession } from 'common/helpers/getSession'
 
-import type { GqlContext } from 'types/other'
+import type { GqlContext } from 'types/helpers'
 
 export const CurrentSession = createParamDecorator((data: keyof Session, context: ExecutionContext) => {
   const ctx = GqlExecutionContext.create(context)

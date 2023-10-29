@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common'
 
 import { FirebaseModule } from 'common/Firebase'
-import { BuilderModule } from 'common/builder/Module'
+import { BuilderModule } from 'common/builders/Module'
 import { PrismaService } from 'common/prisma.service'
 
 import { MediaResolver } from './Resolver'

@@ -1,3 +1,18 @@
+# QUERIES, MUTATIONS, SUBSCRIPTIONS #
+type Query {
+  getTwoFa(token: String!): TwoFactorAuth
+  sendPhone(phone: String!): SendPhoneResponse!
+}
+
+type Mutation {
+  signUp(input: SignUpInput!): Session!
+  signIn(input: SignInInput!): Session!
+  terminateAuthorization(id: String!): Boolean!
+  terminateAllAuthorizations: Boolean!
+}
+
+# ---------------------------- #
+
 type TwoFactorAuth {
   hint: String
   email: String
@@ -37,16 +52,4 @@ input SignInInput {
   firebase_token: String!
   connection: Connection!
   phoneNumber: String!
-}
-
-type Query {
-  getTwoFa(token: String!): TwoFactorAuth
-  sendPhone(phone: String!): SendPhoneResponse!
-}
-
-type Mutation {
-  signUp(input: SignUpInput!): Session!
-  signIn(input: SignInInput!): Session!
-  terminateAuthorization(id: String!): Boolean!
-  terminateAllAuthorizations: Boolean!
 }

@@ -7,7 +7,7 @@ import { AuthGuard } from 'Auth'
 import { PubSubService } from 'common/pubSub/Service'
 import { CurrentSession } from 'common/decorators/Session'
 import { getSession } from 'common/helpers/getSession'
-import { BuilderService } from 'common/builder/Service'
+import { BuilderService } from 'common/builders/Service'
 
 import { MutationTyped, QueryTyped, SubscriptionBuilder, SubscriptionTyped } from 'types/nestjs'
 
@@ -36,7 +36,7 @@ export class MessagesResolver {
 
     // this.pubSub.publish('onNewMessage',{})
     return {
-      message: this.builder.buildApiMessage(message, requesterId, input.chatId),
+      message: this.builder.messages.build(requesterId, input.chatId, message),
     }
   }
 
@@ -72,7 +72,7 @@ export class MessagesResolver {
       const session = getSession(context.req)
 
       const myId = session.userId
-      const chat = this.builder.buildApiChat(payload.onDeleteMessages.affectedChat, myId)
+      const chat = this.builder.chats.build(myId, payload.onDeleteMessages.affectedChat)
       return { ids: payload.onDeleteMessages.ids, chat }
     },
   })
@@ -91,7 +91,7 @@ export class MessagesResolver {
         affectedChat: chat,
       },
     })
-    return this.builder.buildApiMessage(message, requesterId, input.chatId)
+    return this.builder.messages.build(requesterId, input.chatId, message)
     // return this.builder.buildApiMessage()
   }
 
@@ -109,9 +109,9 @@ export class MessagesResolver {
       const myId = session.userId
 
       const message = payload.onEditMessage.message
-      const chat = this.builder.buildApiChat(payload.onEditMessage.affectedChat, myId)
+      const chat = this.builder.chats.build(myId, payload.onEditMessage.affectedChat)
 
-      return { message: this.builder.buildApiMessage(message, myId, chat.id) }
+      return { message: this.builder.messages.build(myId, chat.id, message) }
     },
   })
   public async onEditMessage() {
@@ -162,7 +162,7 @@ export class MessagesResolver {
       const myId = session.userId
       const { maxId, affectedChat } = payload.onReadHistoryOutbox
 
-      const buildedChat = this.builder.buildApiChat(affectedChat, myId)
+      const buildedChat = this.builder.chats.build(myId, affectedChat)
       return {
         maxId: maxId,
         chatId: buildedChat.id,
@@ -192,7 +192,7 @@ export class MessagesResolver {
       const myId = session.userId
       const { maxId, affectedChat, newUnreadCount } = payload.onReadHistoryInbox
 
-      const buildedChat = this.builder.buildApiChat(affectedChat, myId)
+      const buildedChat = this.builder.chats.build(myId, affectedChat)
       return {
         chatId: buildedChat.id,
         maxId,
@@ -231,8 +231,8 @@ export class MessagesResolver {
       const myId = session.userId
       const { chat, message } = payload.onNewMessage
 
-      const buildedChat = this.builder.buildApiChat(chat, myId)
-      const buildedMessage = this.builder.buildApiMessage(message, myId, buildedChat.id)
+      const buildedChat = this.builder.chats.build(myId, chat)
+      const buildedMessage = this.builder.messages.build(myId, buildedChat.id, message)
 
       return { chat: buildedChat, message: buildedMessage }
     },

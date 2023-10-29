@@ -3,8 +3,8 @@ import { Injectable } from '@nestjs/common'
 import type * as Api from '@generated/graphql'
 
 import { PrismaService } from 'common/prisma.service'
-import { selectUserFields } from 'common/builder/users'
-import { BuilderService } from 'common/builder/Service'
+import { BuilderService } from 'common/builders/Service'
+import { selectUserFields } from 'common/selectors'
 
 import { UserRepository } from './Repository'
 
@@ -30,7 +30,7 @@ export class UserService {
       },
     })
 
-    return this.builder.buildApiUsersAndStatuses(users, requesterId)
+    return this.builder.users.buildManyWithStatus(requesterId, users)
   }
 
   public async getApiById(requesterId: string, id: string) {
@@ -54,7 +54,7 @@ export class UserService {
       return undefined
     }
 
-    return this.builder.buildApiUser(result, requesterId) as Api.User
+    return this.builder.users.build(requesterId, result)
   }
 
   public async getApiByPhone(requesterId: string, phoneNumber: string) {
@@ -70,7 +70,7 @@ export class UserService {
       return undefined
     }
     // result.blo
-    return this.builder.buildApiUser(result, requesterId) as Api.User
+    return this.builder.users.build(requesterId, result)
   }
 
   public async getById(userId: string) {

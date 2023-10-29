@@ -3,10 +3,10 @@ import { Mutation, Query, Subscription } from '@nestjs/graphql'
 
 import type { IMutation, IQuery, ISubscription, Session } from '@generated/graphql'
 
-import type { PrismaChat } from 'common/builder/chats'
-import type { PrismaMessage } from 'common/builder/messages'
+import type { PrismaMessage } from 'types/Messages'
 
-import type { GqlContext, MapClassReturnTypes } from './other'
+import type { GqlContext, MapClassReturnTypes } from './helpers'
+import type { PrismaChat } from './Chats'
 
 /* SUBSCRIPTIONS */
 export type SubscriptionPayload = MapClassReturnTypes<ISubscription>

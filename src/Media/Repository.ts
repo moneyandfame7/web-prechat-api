@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import type { Prisma } from '@prisma/client'
 
-import { BuilderService } from 'common/builder/Service'
+import { BuilderService } from 'common/builders/Service'
 import { PrismaService } from 'common/prisma.service'
 
 @Injectable()

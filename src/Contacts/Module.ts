@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common'
 import { UserModule } from 'Users/Module'
 
 import { PrismaService } from 'common/prisma.service'
-import { BuilderModule } from 'common/builder/Module'
+import { BuilderModule } from 'common/builders/Module'
 
 import { ContactsResolver } from './Resolver'
 import { ContactsService } from './Service'

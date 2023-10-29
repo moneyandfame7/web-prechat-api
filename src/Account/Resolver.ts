@@ -8,10 +8,10 @@ import { AuthGuard } from 'Auth/Guard'
 import { CurrentSession } from 'common/decorators/Session'
 import { PubSubService } from 'common/pubSub/Service'
 import { getSession } from 'common/helpers/getSession'
-import { BuilderService } from 'common/builder/Service'
+import { BuilderService } from 'common/builders/Service'
 
 import { MutationTyped, QueryTyped, SubscriptionTyped } from 'types/nestjs'
-import type { UserStatus } from 'types/users'
+import type { UserStatus } from 'types/Users'
 
 import { AccountService } from './Service'
 
@@ -93,7 +93,7 @@ export class AccountResolver {
     resolve(this: AccountResolver, payload, _args, context) {
       const session = getSession(context.req)
 
-      return payload.onAuthorizationTerminated.map((s) => this.builder.buildApiAuthorization(s, session))
+      return payload.onAuthorizationTerminated.map((s) => this.builder.buildSession(session, s))
     },
   })
   public async onAuthorizationTerminated() {

@@ -5,7 +5,7 @@ import type * as Api from '@generated/graphql'
 
 import { InvalidChatId, InvalidPeerId } from 'common/errors/Chats'
 import { isUserId } from 'common/helpers/chats'
-import { BuilderService } from 'common/builder/Service'
+import { BuilderService } from 'common/builders/Service'
 
 import { ChatsRepository } from 'Chats'
 
@@ -50,7 +50,7 @@ export class MessagesService {
   public async getHistory(requesterId: string, input: Api.GetHistoryInput) {
     const messages = await this.repo.getHistory(requesterId, input)
 
-    return messages.map((m) => this.builder.buildApiMessage(m, requesterId, input.chatId))
+    return this.builder.messages.buildMany(requesterId, input.chatId, messages)
   }
 
   public async readHistory(requesterId: string, input: Api.ReadHistoryInput) {

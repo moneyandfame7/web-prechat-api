@@ -1,7 +1,7 @@
 import type { Contact, Prisma } from '@prisma/client'
 
 import type { InputUser } from '@generated/graphql'
-import { selectPhotoFields } from './photos'
+import { selectPhotoFields } from './Diff'
 
 /**
  * Select default user fields.

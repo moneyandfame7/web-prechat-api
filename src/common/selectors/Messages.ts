@@ -1,25 +1,6 @@
-import type { $Enums, Message, Photo, Prisma } from '@prisma/client'
-import type { LanguageStringKeys } from 'types/other'
-
-export type PrismaMessage = Message & { action: PrismaMessageAction | null }
-
-export interface PrismaMessageAction {
-  text: string
-  photo: Photo | null
-  type: $Enums.MessageActionType
-  users: string[]
-}
-
-type MessageActionPayload =
-  | {
-      '@type': 'chatCreate'
-      payload: {
-        title: string
-      }
-    }
-  | {
-      '@type': 'channelCreate'
-    }
+import type { Prisma } from '@prisma/client'
+import type { MessageActionPayload } from 'types/Messages'
+import type { LanguageStringKeys } from 'types/Diff'
 
 export function selectMessageFields() {
   return {
@@ -35,6 +16,9 @@ export function selectMessageFields() {
   } satisfies Prisma.MessageSelect
 }
 
+/**
+ * @todo rewrite this huinyu
+ */
 export function createMessageAction(action: MessageActionPayload, requesterId: string) {
   let translateKey: LanguageStringKeys
   const values: string[] = []

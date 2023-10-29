@@ -2,7 +2,7 @@ import { Args, Query, Resolver } from '@nestjs/graphql'
 
 import { GetLangStringInput } from '@generated/graphql'
 
-import { SupportedLanguage } from 'types/other'
+import { SupportedLanguage } from 'types/Diff'
 
 import { LangPackService } from './Service'
 

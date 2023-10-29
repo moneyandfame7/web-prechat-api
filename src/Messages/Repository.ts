@@ -3,16 +3,15 @@ import { Injectable } from '@nestjs/common'
 import * as Api from '@generated/graphql'
 import { ChatsRepository } from 'Chats'
 
-import { selectMessageFields } from 'common/builder/messages'
 import { InvalidEntityIdError, InvalidMessageIdError } from 'common/errors'
 import { orderHistory } from 'common/helpers/messages'
 import { MSG_HISTORY_LIMIT } from 'common/constants'
-import { selectChatFields } from 'common/builder/chats'
 import { PrismaService } from 'common/prisma.service'
 import { InvalidPeerId } from 'common/errors/Chats'
 import { isUserId } from 'common/helpers/chats'
+import { selectChatFields, selectMessageFields } from 'common/selectors'
 
-import type { CreateMessageInput } from 'types/messages'
+import type { CreateMessageInput } from 'types/Messages'
 
 @Injectable()
 export class MessagesRepository {
