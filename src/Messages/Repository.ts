@@ -4,7 +4,7 @@ import * as Api from '@generated/graphql'
 import { ChatsRepository } from 'Chats'
 
 import { selectMessageFields } from 'common/builder/messages'
-import { InvalidEntityIdError } from 'common/errors'
+import { InvalidEntityIdError, InvalidMessageIdError } from 'common/errors'
 import { orderHistory } from 'common/helpers/messages'
 import { MSG_HISTORY_LIMIT } from 'common/constants'
 import { selectChatFields } from 'common/builder/chats'
@@ -71,6 +71,80 @@ export class MessagesRepository {
         return orderHistory(forwards)
       }
     }
+  }
+  /* 
+  inc 2555 - 2555W out 
+  inc 2556 - 2556W out 
+  inc 2559 - 2559W out 
+  inc 2568 - 2568v out 
+  inc 2569 - 2569v out 
+  inc 2570 - 2570v out 
+  inc 2571 - 2571v out 
+  inc 2572 - 2572v out 
+  inc 2573 - 2573v out 
+  inc 2574 - 2574v out - scroll start FROM HERE
+  inc 2575 - 2575v out 
+  inc 2576 - 2576v out 
+- unreadCount - 9
+- lastReadOutgoing - 2559
+- lastReadIncoming - 2574
+  */
+
+  public async readHistory(requesterId: string, input: Api.ReadHistoryInput) {
+    const member = await this.chats.findMember(input.chatId, requesterId)
+
+    if (!member) {
+      throw new InvalidEntityIdError('messages.readHistory')
+    }
+    const message = await this.getByOrderId(input.chatId, input.maxId)
+
+    if (!message) {
+      throw new InvalidMessageIdError('messages.readHistory')
+    }
+    // не буде працювати, якщо були якісь видаленні повідомлення, тому мб варто видаленні просто помічати флагом isDeleted???
+    const newUnreadCount = await this.prisma.message.count({
+      where: {
+        chatId: input.chatId,
+        senderId: {
+          not: requesterId,
+        },
+        orderedId: {
+          gt: input.maxId,
+        },
+      },
+    })
+
+    const update = await this.prisma.chatMember.update({
+      where: {
+        id: member.id,
+      },
+      data: {
+        lastReadIncomingMessageId: input.maxId,
+        unreadCount: newUnreadCount,
+      },
+      include: {
+        chatInfo: {
+          include: {
+            chat: {
+              include: {
+                ...selectChatFields(),
+              },
+            },
+          },
+        },
+      },
+    })
+
+    return { newUnreadCount, affectedChat: update.chatInfo.chat }
+  }
+
+  private async getByOrderId(chatId: string, id: number) {
+    return this.prisma.message.findFirst({
+      where: {
+        chatId,
+        orderedId: id,
+      },
+    })
   }
 
   public async getHistoryBackward(requesterId: string, input: Api.GetHistoryInput, includeOffset = false) {
@@ -197,10 +271,33 @@ export class MessagesRepository {
         })
       })
       const result = await Promise.all(promises)
+      const chatId = result[0].chat.id
+      const newLastMessage = await tx.message.findFirst({
+        where: {
+          chatId: result[0].chat.id,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      })
+      const updatedChat = await tx.chat.update({
+        where: {
+          id: chatId,
+        },
+        data: {
+          lastMessage: {
+            connect: {
+              id: newLastMessage?.id,
+            },
+          },
+        },
+        include: {
+          ...selectChatFields(),
+        },
+      })
 
-      return result[0].chat
+      return updatedChat
     })
-
     return affectedChat
   }
 

@@ -60,6 +60,12 @@ export class InvalidEntityIdError extends BaseApiError {
   }
 }
 
+export class InvalidMessageIdError extends BaseApiError {
+  public constructor(method: string) {
+    super(ErrorCode.INVALID_ID, 'The provided message ID is invalid.', method)
+  }
+}
+
 export class ForbiddenError extends BaseApiError {
   public constructor(method?: string) {
     super(ErrorCode.FORBIDDEN, "you don't have permission to access", method)

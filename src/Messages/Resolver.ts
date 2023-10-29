@@ -12,6 +12,7 @@ import { BuilderService } from 'common/builder/Service'
 import { MutationTyped, QueryTyped, SubscriptionBuilder, SubscriptionTyped } from 'types/nestjs'
 
 import { MessagesService } from './Service'
+import { filterChatSubscription } from 'common/helpers/filterChatSubscribtion'
 
 /**
  * @todo можливо, треба передавати в самій підписці змінну/массив і від них
@@ -63,16 +64,16 @@ export class MessagesResolver {
       const session = getSession(context.req)
       const myId = session.userId
 
-      const { affectedChat, deleteForAll } = payload.onDeleteMessages
+      const { affectedChat } = payload.onDeleteMessages
 
-      return Boolean(deleteForAll) && Boolean(affectedChat.fullInfo?.members.find((m) => m.userId === myId))
+      return Boolean(affectedChat.fullInfo?.members.find((m) => m.userId === myId))
     },
     resolve(this: MessagesResolver, payload, args, context) {
       const session = getSession(context.req)
 
       const myId = session.userId
-      const chatId = this.builder.buildApiChatId(payload.onDeleteMessages.affectedChat, myId)
-      return { ids: payload.onDeleteMessages.ids, chatId }
+      const chat = this.builder.buildApiChat(payload.onDeleteMessages.affectedChat, myId)
+      return { ids: payload.onDeleteMessages.ids, chat }
     },
   })
   public async onDeleteMessages() {
@@ -123,6 +124,85 @@ export class MessagesResolver {
     return this.messages.getHistory(requesterId, input)
   }
 
+  @MutationTyped('readHistory')
+  @UseGuards(AuthGuard)
+  public async readHistory(@CurrentSession() session: Api.Session, @Args('input') input: Api.ReadHistoryInput) {
+    const { newUnreadCount, affectedChat } = await this.messages.readHistory(session.userId, input)
+
+    this.pubSub.publishNotBuilded('onReadHistoryOutbox', {
+      onReadHistoryOutbox: {
+        maxId: input.maxId,
+        affectedChat,
+        readedBySession: session,
+      },
+    })
+    this.pubSub.publishNotBuilded('onReadHistoryInbox', {
+      onReadHistoryInbox: {
+        newUnreadCount,
+        maxId: input.maxId,
+        affectedChat,
+        readedBySession: session,
+      },
+    })
+
+    return true
+  }
+
+  @UseGuards(AuthGuard)
+  @SubscriptionBuilder('onReadHistoryOutbox', {
+    filter(payload, _, ctx) {
+      const session = getSession(ctx.req)
+      const myId = session.userId
+      const { readedBySession, affectedChat } = payload.onReadHistoryOutbox
+      console.log({ me: myId, readedBy: readedBySession.userId })
+      return readedBySession.userId !== myId && filterChatSubscription(myId, affectedChat.fullInfo!)
+    },
+    resolve(this: MessagesResolver, payload, args, context) {
+      const session = getSession(context.req)
+      const myId = session.userId
+      const { maxId, affectedChat } = payload.onReadHistoryOutbox
+
+      const buildedChat = this.builder.buildApiChat(affectedChat, myId)
+      return {
+        maxId: maxId,
+        chatId: buildedChat.id,
+      }
+    },
+  })
+  public async onReadHistoryOutbox() {
+    return this.pubSub.subscribe('onReadHistoryOutbox')
+  }
+
+  @UseGuards(AuthGuard)
+  @SubscriptionBuilder('onReadHistoryInbox', {
+    filter(payload, variables, ctx) {
+      const session = getSession(ctx.req)
+      const myId = session.userId
+      const { readedBySession, affectedChat } = payload.onReadHistoryInbox
+
+      // sort for ME, BUT NOT CURRENT SESSION
+      return (
+        myId === readedBySession.userId &&
+        session.id !== readedBySession.id &&
+        filterChatSubscription(myId, affectedChat.fullInfo!)
+      )
+    },
+    resolve(this: MessagesResolver, payload, args, context) {
+      const session = getSession(context.req)
+      const myId = session.userId
+      const { maxId, affectedChat, newUnreadCount } = payload.onReadHistoryInbox
+
+      const buildedChat = this.builder.buildApiChat(affectedChat, myId)
+      return {
+        chatId: buildedChat.id,
+        maxId,
+        newUnreadCount,
+      }
+    },
+  })
+  public async onReadHistoryInbox() {
+    return this.pubSub.subscribe('onReadHistoryInbox')
+  }
   /**
    * @todo протестити це на клієнті.
    * ВІДПОВІДНО: якщо це приватний чат - він створюється і відобразиться у юзера,
@@ -131,7 +211,6 @@ export class MessagesResolver {
    * повідомлення.
    * Фільтруємо підписку для юзерів, які є мемберами в чаті.
    */
-
   @UseGuards(AuthGuard)
   @SubscriptionBuilder('onNewMessage', {
     filter(payload, _, context) {

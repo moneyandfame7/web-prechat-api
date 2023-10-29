@@ -7,6 +7,7 @@ type Mutation {
   sendMessage(input: SendMessageInput!): NewMessagePayload!
   deleteMessages(input: DeleteMessagesInput!): Boolean!
   editMessage(input: EditMessageInput!): Message!
+  readHistory(input: ReadHistoryInput!): Boolean!
   saveDraft(input: SaveDraftInput!): Boolean!
 }
 type Subscription {
@@ -14,6 +15,8 @@ type Subscription {
   onDeleteMessages: DeleteMessagesPayload!
   onEditMessage: EditMessagePayload!
   onDraftUpdate: UpdateDraftPayload!
+  onReadHistoryInbox: ReadHistoryInboxPayload!
+  onReadHistoryOutbox: ReadHistoryOutboxPayload!
 }
 
 # ------------------------ #
@@ -33,7 +36,6 @@ input GetHistoryInput {
 }
 input DeleteMessagesInput {
   ids: [String!]!
-  deleteForAll: Boolean
 }
 input SendMessageInput {
   # I provide Id for optimistic render
@@ -51,7 +53,10 @@ input EditMessageInput {
   messageId: String!
   text: String!
 }
-
+input ReadHistoryInput {
+  chatId: String!
+  maxId: Int!
+}
 input SaveDraftInput {
   text: String
   chatId: String!
@@ -64,7 +69,19 @@ type UpdateDraftPayload {
 }
 type DeleteMessagesPayload {
   ids: [String!]!
+  chat: Chat!
+}
+
+# ТЕ, ЩО ЧИТАЮ Я!
+type ReadHistoryInboxPayload {
   chatId: String!
+  maxId: Int!
+  newUnreadCount: Int!
+}
+# ТЕ, ЩО ЧИТАЄ ЮЗЕР!
+type ReadHistoryOutboxPayload {
+  chatId: String!
+  maxId: Int!
 }
 enum MessageEntityType {
   italic

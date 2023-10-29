@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Mutation, Query, Subscription } from '@nestjs/graphql'
 
-import type { IMutation, IQuery, ISubscription } from '@generated/graphql'
+import type { IMutation, IQuery, ISubscription, Session } from '@generated/graphql'
 
 import type { PrismaChat } from 'common/builder/chats'
 import type { PrismaMessage } from 'common/builder/messages'
@@ -24,7 +24,6 @@ export type SubscriptionBuilderPayload = {
     onDeleteMessages: {
       affectedChat: PrismaChat
       ids: string[]
-      deleteForAll?: boolean | null
     }
   }
   onEditMessage: {
@@ -33,10 +32,25 @@ export type SubscriptionBuilderPayload = {
       message: PrismaMessage
     }
   }
+  onReadHistoryInbox: {
+    onReadHistoryInbox: {
+      affectedChat: PrismaChat
+      maxId: number
+      newUnreadCount: number
+      readedBySession: Session
+    }
+  }
+  onReadHistoryOutbox: {
+    onReadHistoryOutbox: {
+      affectedChat: PrismaChat
+      maxId: number
+      readedBySession: Session
+    }
+  }
 }
 export type SubscriptionBuilderName = keyof Pick<
   SubscriptionPayload,
-  'onChatCreated' | 'onNewMessage' | 'onDeleteMessages' | 'onEditMessage'
+  'onChatCreated' | 'onNewMessage' | 'onDeleteMessages' | 'onEditMessage' | 'onReadHistoryInbox' | 'onReadHistoryOutbox'
 >
 // add types, if NOT BUILDED SUBSCRIPTION - need to provide RESOLVE.
 

@@ -52,6 +52,10 @@ export class MessagesService {
 
     return messages.map((m) => this.builder.buildApiMessage(m, requesterId, input.chatId))
   }
+
+  public async readHistory(requesterId: string, input: Api.ReadHistoryInput) {
+    return this.repo.readHistory(requesterId, input)
+  }
   /**
    *  as InputPeer - chatId, userId
    *  peer InputPeer

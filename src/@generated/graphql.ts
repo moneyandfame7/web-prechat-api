@@ -148,7 +148,6 @@ export class GetHistoryInput {
 
 export class DeleteMessagesInput {
     ids: string[];
-    deleteForAll?: Nullable<boolean>;
 }
 
 export class SendMessageInput {
@@ -165,6 +164,11 @@ export class EditMessageInput {
     chatId: string;
     messageId: string;
     text: string;
+}
+
+export class ReadHistoryInput {
+    chatId: string;
+    maxId: number;
 }
 
 export class SaveDraftInput {
@@ -279,6 +283,8 @@ export abstract class IMutation {
 
     abstract editMessage(input: EditMessageInput): Message | Promise<Message>;
 
+    abstract readHistory(input: ReadHistoryInput): boolean | Promise<boolean>;
+
     abstract saveDraft(input: SaveDraftInput): boolean | Promise<boolean>;
 }
 
@@ -300,6 +306,10 @@ export abstract class ISubscription {
     abstract onEditMessage(): EditMessagePayload | Promise<EditMessagePayload>;
 
     abstract onDraftUpdate(): UpdateDraftPayload | Promise<UpdateDraftPayload>;
+
+    abstract onReadHistoryInbox(): ReadHistoryInboxPayload | Promise<ReadHistoryInboxPayload>;
+
+    abstract onReadHistoryOutbox(): ReadHistoryOutboxPayload | Promise<ReadHistoryOutboxPayload>;
 }
 
 export class AuthTwoFa {
@@ -325,6 +335,8 @@ export class SendPhoneResponse {
 export class Chat {
     id: string;
     userId?: Nullable<string>;
+    lastReadIncomingMessageId?: Nullable<number>;
+    lastReadOutgoingMessageId?: Nullable<number>;
     folderId?: Nullable<number>;
     color: ColorVariants;
     draft?: Nullable<string>;
@@ -429,7 +441,18 @@ export class UpdateDraftPayload {
 
 export class DeleteMessagesPayload {
     ids: string[];
+    chat: Chat;
+}
+
+export class ReadHistoryInboxPayload {
     chatId: string;
+    maxId: number;
+    newUnreadCount: number;
+}
+
+export class ReadHistoryOutboxPayload {
+    chatId: string;
+    maxId: number;
 }
 
 export class NewMessagePayload {

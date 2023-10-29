@@ -88,17 +88,24 @@ export class BuilderService {
   public buildApiChat(chat: PrismaChat, requesterId: string): Api.Chat {
     const requesterMember = this.selectChatMember(chat, requesterId)
     const privateChatPartner =
-      chat.type === 'chatTypePrivate' ? this.selectPrivateChatMember(chat, requesterId) : undefined
+      chat.type === 'chatTypePrivate' ? this.selectPrivateChatUser(chat, requesterId) : undefined
+    const partnerChatMember = privateChatPartner ? this.selectChatMember(chat, privateChatPartner.id) : undefined
+
     const chatId = privateChatPartner?.id || chat.id
+    const lastReadOutgoingMessageId =
+      partnerChatMember?.lastReadIncomingMessageId ?? this.getLastReadOutgoingMessageId(chat, requesterId)
 
     const title = privateChatPartner
       ? privateChatPartner.isSelf
         ? 'Saved Messages'
         : this.getUserName(privateChatPartner)
       : chat.title
+    console.log({ lastReadOutgoingMessageId })
     return {
       id: chatId,
       userId: privateChatPartner?.id,
+      lastReadIncomingMessageId: requesterMember?.lastReadIncomingMessageId,
+      lastReadOutgoingMessageId,
       color: privateChatPartner?.color || (chat.color as Api.ColorVariants),
       type: chat.type as Api.ChatType,
       title,
@@ -113,13 +120,14 @@ export class BuilderService {
       photo: this.buildApiPhoto(chat.photo),
       isOwner: Boolean(requesterMember?.isOwner),
       isPinned: Boolean(requesterMember?.isPinned),
+
       _id: chat.id,
     }
   }
 
   public buildApiChatId(chat: PrismaChat, requesterId: string): string {
     const privateChatPartner =
-      chat.type === 'chatTypePrivate' ? this.selectPrivateChatMember(chat, requesterId) : undefined
+      chat.type === 'chatTypePrivate' ? this.selectPrivateChatUser(chat, requesterId) : undefined
     return privateChatPartner?.id || chat.id
   }
   public async buildApiChatFull(chat: PrismaChat, requesterId: string): Promise<Api.ChatFull> {
@@ -159,6 +167,13 @@ export class BuilderService {
   }
 
   /* helpers */
+  private getLastReadOutgoingMessageId(chat: PrismaChat, requesterId: string) {
+    const membersExceptMe = chat.fullInfo?.members.filter((member) => member.userId !== requesterId)
+    const membersLastReadMessageId = membersExceptMe?.map((member) => member.lastReadIncomingMessageId)
+    console.log({ membersLastReadMessageId })
+    return Math.max(...(membersLastReadMessageId as number[]))
+  }
+
   private async buildOnlineCount(members: PrismaChatMember[]) {
     return (
       await Promise.all(members.map(async (m) => this.buildApiUserStatus(m.user).type === 'userStatusOnline'))
@@ -168,7 +183,7 @@ export class BuilderService {
   private selectChatMember(chat: PrismaChat, userId: string) {
     return chat.fullInfo?.members.find((m) => m.userId === userId)
   }
-  private selectPrivateChatMember(chat: PrismaChat, requesterId: string) {
+  private selectPrivateChatUser(chat: PrismaChat, requesterId: string) {
     const members = chat.fullInfo?.members || []
 
     const notMe: UserFieldsForBuild | undefined = members.filter((m) => m.userId !== requesterId)[0]?.user
@@ -188,7 +203,7 @@ export class BuilderService {
       content: {
         formattedText: {
           text: primaryFields.text!,
-          ...(entities && { entities: JSON.parse(entities as string) as Api.MessageEntity[] }),
+          ...(entities && { entities: entities as any }),
         },
         action: (action as Api.MessageAction) || undefined,
       },

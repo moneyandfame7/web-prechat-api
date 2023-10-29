@@ -140,7 +140,7 @@ CREATE TABLE "chat_members" (
     "kicked_by_id" TEXT,
     "chat_id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
-    "lastReadMessageId" TEXT,
+    "lastReadIncomingMessageId" INTEGER DEFAULT 0,
 
     CONSTRAINT "chat_members_pkey" PRIMARY KEY ("id")
 );
@@ -228,6 +228,3 @@ ALTER TABLE "chat_members" ADD CONSTRAINT "chat_members_chat_id_fkey" FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE "chat_members" ADD CONSTRAINT "chat_members_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "chat_members" ADD CONSTRAINT "chat_members_lastReadMessageId_fkey" FOREIGN KEY ("lastReadMessageId") REFERENCES "Message"("id") ON DELETE SET NULL ON UPDATE CASCADE;

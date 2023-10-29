@@ -28,6 +28,8 @@ enum ChatType {
 type Chat {
   id: String!
   userId: String
+  lastReadIncomingMessageId: Int
+  lastReadOutgoingMessageId: Int
   folderId: Int
   color: ColorVariants!
   draft: String

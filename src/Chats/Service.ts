@@ -15,6 +15,7 @@ import { NotFoundEntityError, UsernameNotOccupiedError } from 'common/errors'
 import type { WithTypename } from 'types/other'
 
 import { ChatsRepository } from './Repository'
+import { FIRST_MSG_ID } from 'common/constants'
 
 @Injectable()
 export class ChatService {
@@ -56,7 +57,7 @@ export class ChatService {
                       ),
                     },
                     chatId,
-                    orderedId: 1,
+                    orderedId: FIRST_MSG_ID,
                     senderId: requesterId,
                   },
                 },
@@ -108,7 +109,7 @@ export class ChatService {
                       create: createMessageAction({ '@type': 'channelCreate' }, requesterId),
                     },
                     chatId,
-                    orderedId: 1,
+                    orderedId: FIRST_MSG_ID,
                     senderId: requesterId,
                   },
                 },
@@ -122,7 +123,7 @@ export class ChatService {
               create: createMessageAction({ '@type': 'channelCreate' }, requesterId),
             },
             chatId,
-            orderedId: 1,
+            orderedId: FIRST_MSG_ID,
             senderId: requesterId,
           },
         },

@@ -28,7 +28,7 @@ class Seeder {
   private mockUserId3 = generateId('user')
   private mockUserPhone3 = faker.phone.number('+380#########')
   private async createPhoto() {
-    const url = faker.image.image()
+    const url = faker.image.avatar()
     const test = await (await fetch(url)).arrayBuffer()
     const { hash, metadata } = await encodeImageToBlurhash(test as any)
 
