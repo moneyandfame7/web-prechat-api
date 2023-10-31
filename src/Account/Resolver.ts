@@ -10,8 +10,8 @@ import { PubSubService } from 'common/pubSub/Service'
 import { getSession } from 'common/helpers/getSession'
 import { BuilderService } from 'common/builders/Service'
 
-import { MutationTyped, QueryTyped, SubscriptionTyped } from 'types/nestjs'
-import type { UserStatus } from 'types/Users'
+import { MutationTyped, QueryTyped, SubscriptionTyped } from '../types/nestjs'
+import type { UserStatus } from '../types/Users'
 
 import { AccountService } from './Service'
 

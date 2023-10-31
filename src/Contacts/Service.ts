@@ -12,7 +12,7 @@ import {
 } from 'common/errors/Common'
 import { BuilderService } from 'common/builders/Service'
 
-import type { UserWithoutStatus } from 'types/Users'
+import type { UserWithoutStatus } from '../types/Users'
 
 import { ContactsRepository } from './Repository'
 

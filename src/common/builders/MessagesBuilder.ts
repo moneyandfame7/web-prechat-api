@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import type * as Api from '@generated/graphql'
 
-import type { PrismaMessage } from 'types/Messages'
+import type { PrismaMessage } from '../../types//messages'
 
 @Injectable()
 export class MessagesBuilder {

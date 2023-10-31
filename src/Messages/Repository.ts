@@ -11,7 +11,7 @@ import { InvalidPeerId } from 'common/errors/Chats'
 import { isUserId } from 'common/helpers/chats'
 import { selectChatFields, selectMessageFields } from 'common/selectors'
 
-import type { CreateMessageInput } from 'types/Messages'
+import type { CreateMessageInput } from '../types/Messages'
 
 @Injectable()
 export class MessagesRepository {

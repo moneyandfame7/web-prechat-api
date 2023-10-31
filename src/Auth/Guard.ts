@@ -5,7 +5,7 @@ import { SessionService } from 'Sessions'
 
 import { SessionInvalidError, UnauthorizedError } from 'common/errors/Authorization'
 
-import type { GqlContext } from 'types/helpers'
+import type { GqlContext } from '../types/helpers'
 
 @Injectable()
 export class AuthGuard implements CanActivate {

@@ -214,7 +214,7 @@ model ChatMember {
 
   // outgoing - будемо визначати потім в коді
   // lastReadOutgoingMessageId Int? @default(1)
-  lastReadIncomingMessageId Int? @default(0)
+  lastReadIncomingMessageId Int? // @default(0)
 
   // /* lastReadOutgoing */
   // /* lastReadIncoming 

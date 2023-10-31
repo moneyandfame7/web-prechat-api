@@ -9,7 +9,7 @@ import { PrismaService } from 'common/prisma.service'
 import { isSavedMessages, isUserId } from 'common/helpers/chats'
 import { generateId } from 'common/helpers/generateId'
 
-import type { InputPeer } from 'types/Chats'
+import type { InputPeer } from '../types/Chats'
 import { selectChatFields } from 'common/selectors'
 
 @Injectable()

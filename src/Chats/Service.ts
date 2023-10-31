@@ -10,7 +10,7 @@ import { createMessageAction } from 'common/selectors'
 import { generateId } from 'common/helpers/generateId'
 import { NotFoundEntityError, UsernameNotOccupiedError } from 'common/errors'
 
-import type { WithTypename } from 'types/helpers'
+import type { WithTypename } from '../types/helpers'
 
 import { ChatsRepository } from './Repository'
 import { FIRST_MSG_ID } from 'common/constants'

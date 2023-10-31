@@ -6,7 +6,7 @@ import { FileUpload } from 'graphql-upload'
 import type * as Api from '@generated/graphql'
 
 import { AuthGuard } from 'Auth/Guard'
-import { MutationTyped } from 'types/nestjs'
+import { MutationTyped } from '../types/nestjs'
 import { CurrentSession } from 'common/decorators/Session'
 
 import { MediaService } from './Service'

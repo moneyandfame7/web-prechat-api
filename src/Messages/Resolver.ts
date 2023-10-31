@@ -9,7 +9,7 @@ import { CurrentSession } from 'common/decorators/Session'
 import { getSession } from 'common/helpers/getSession'
 import { BuilderService } from 'common/builders/Service'
 
-import { MutationTyped, QueryTyped, SubscriptionBuilder, SubscriptionTyped } from 'types/nestjs'
+import { MutationTyped, QueryTyped, SubscriptionBuilder, SubscriptionTyped } from '../types/nestjs'
 
 import { MessagesService } from './Service'
 import { filterChatSubscription } from 'common/helpers/filterChatSubscribtion'

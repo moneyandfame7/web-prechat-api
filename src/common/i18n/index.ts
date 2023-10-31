@@ -3,7 +3,7 @@ import de from './de'
 import pl from './pl'
 import uk from './uk'
 
-import type { SupportedLanguage } from 'types/Diff'
+import type { SupportedLanguage } from '../../types/Diff'
 
 export const i18n /* : Record<SupportedLanguage, { countries: Country[]; pack: Keyset }> */ = {
   en,

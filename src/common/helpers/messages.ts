@@ -1,4 +1,4 @@
-import type { PrismaMessage } from 'types/Messages'
+import type { PrismaMessage } from '../../types/Messages'
 
 /**
  * @todo rewrite just for sort by orderId
