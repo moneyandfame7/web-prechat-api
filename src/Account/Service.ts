@@ -5,7 +5,7 @@ import type * as Api from '@generated/graphql'
 import { SessionService } from 'Sessions'
 import { SessionTooFreshError, ForbiddenError } from 'common/errors'
 
-import type { UserStatus } from '../types/Users'
+import type { UserStatus } from '../interfaces/users'
 
 import { AccountRepository } from './Repository'
 import { BuilderService } from 'common/builders/Service'

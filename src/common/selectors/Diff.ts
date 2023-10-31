@@ -1,4 +1,4 @@
-import type { SelectPhotoFields } from '../../types/diff'
+import type { SelectPhotoFields } from '../../interfaces/diff'
 
 export function selectPhotoFields(): { select: SelectPhotoFields } {
   return {

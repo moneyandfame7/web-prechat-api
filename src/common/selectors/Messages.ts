@@ -1,6 +1,6 @@
 import type { Prisma } from '@prisma/client'
-import type { MessageActionPayload } from '../../types/Messages'
-import type { LanguageStringKeys } from '../../types/diff'
+import type { MessageActionPayload } from '../../interfaces/messages'
+import type { LanguageStringKeys } from '../../interfaces/diff'
 
 export function selectMessageFields() {
   return {

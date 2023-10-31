@@ -3,7 +3,7 @@ import { Mutation, Query, Subscription } from '@nestjs/graphql'
 
 import type { IMutation, IQuery, ISubscription, Session } from '@generated/graphql'
 
-import type { PrismaMessage } from '../types/Messages'
+import type { PrismaMessage } from '../interfaces/messages'
 
 import type { GqlContext, MapClassReturnTypes } from './helpers'
 import type { PrismaChat } from './Chats'

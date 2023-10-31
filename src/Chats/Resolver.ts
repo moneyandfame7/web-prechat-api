@@ -11,7 +11,7 @@ import { isValidUsername } from 'common/helpers/isValidUsername'
 import { UsernameInvalidError } from 'common/errors'
 import { PubSubService } from 'common/pubSub/Service'
 
-import { QueryTyped, SubscriptionBuilder } from '../types/nestjs'
+import { QueryTyped, SubscriptionBuilder } from '../interfaces/nestjs'
 
 import { ChatService } from './Service'
 

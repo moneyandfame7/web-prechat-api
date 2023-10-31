@@ -5,7 +5,7 @@ import type { Country, GetLangStringInput, Language } from '@generated/graphql'
 import { i18n, languagesNames } from 'common/i18n'
 import type { Translation } from 'common/i18n/types'
 
-import type { LanguageStringKeys, SupportedLanguage } from '../types/diff'
+import type { LanguageStringKeys, SupportedLanguage } from '../interfaces/diff'
 
 @Injectable()
 export class LangPackService {

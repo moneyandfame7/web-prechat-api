@@ -3,7 +3,7 @@ import type * as Api from '@generated/graphql'
 import type { Contact } from '@prisma/client'
 
 import { pick } from 'common/utils/pick'
-import type { AnyUser, PrismaUser, UserStatus, UserWithoutStatus } from '../../types/Users'
+import type { AnyUser, PrismaUser, UserStatus, UserWithoutStatus } from '../../interfaces/users'
 
 @Injectable()
 export class UsersBuilder {

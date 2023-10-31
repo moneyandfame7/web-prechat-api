@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import type * as Api from '@generated/graphql'
 
-import type { PrismaChat, PrismaChatMember } from '../../types/Chats'
-import type { PrismaUser } from '../../types/Users'
+import type { PrismaChat, PrismaChatMember } from '../../interfaces/chats'
+import type { PrismaUser } from '../../interfaces/users'
 
 import { UsersBuilder } from './UsersBuilder'
 import { MessagesBuilder } from './MessagesBuilder'

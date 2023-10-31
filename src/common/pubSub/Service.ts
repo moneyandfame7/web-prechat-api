@@ -6,7 +6,7 @@ import type {
   SubscriptionBuilderName,
   SubscriptionPayload,
   SubscriptionBuilderPayload,
-} from '../../types/nestjs'
+} from '../../interfaces/nestjs'
 
 @Injectable()
 export class PubSubService {

@@ -1,4 +1,4 @@
-import type { PrismaChatFull } from '../../types/Chats'
+import type { PrismaChatFull } from '../../interfaces/chats'
 
 export function filterChatSubscription(requesterId: string, chatFull: PrismaChatFull) {
   const affectedUsers = chatFull?.members.map((member) => ({ ...member.user }))
