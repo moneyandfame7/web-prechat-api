@@ -2,7 +2,7 @@ import type { MessageEntity } from '@generated/graphql'
 import type { $Enums, Message, Photo } from '@prisma/client'
 
 import type { Nullable } from './helpers'
-import type { PrismaChat } from './Chats'
+import type { PrismaChat } from './chats'
 
 export interface CreateMessageInput {
   text?: Nullable<string>

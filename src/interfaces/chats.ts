@@ -1,8 +1,8 @@
 import type { Chat, ChatFullInfo, ChatMember } from '@prisma/client'
 import type { InputChat, InputUser } from '@generated/graphql'
 
-import type { PrismaUser } from './Users'
-import type { PrismaMessage } from './Messages'
+import type { PrismaUser } from './users'
+import type { PrismaMessage } from './messages'
 import type { PrismaPhoto } from './diff'
 
 export type InputPeer = InputChat | InputUser

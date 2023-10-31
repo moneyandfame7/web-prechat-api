@@ -6,7 +6,7 @@ import type { IMutation, IQuery, ISubscription, Session } from '@generated/graph
 import type { PrismaMessage } from '../interfaces/messages'
 
 import type { GqlContext, MapClassReturnTypes } from './helpers'
-import type { PrismaChat } from './Chats'
+import type { PrismaChat } from './chats'
 
 /* SUBSCRIPTIONS */
 export type SubscriptionPayload = MapClassReturnTypes<ISubscription>
