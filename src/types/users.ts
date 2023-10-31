@@ -1,6 +1,6 @@
 import type { ColorVariants, Contact, User } from '@prisma/client'
 import type * as Api from '@generated/graphql'
-import type { PhotoFields } from '../types/Diff'
+import type { PhotoFields } from './diff'
 
 export interface PrismaUser {
   id: string

@@ -3,7 +3,7 @@ import type { InputChat, InputUser } from '@generated/graphql'
 
 import type { PrismaUser } from './Users'
 import type { PrismaMessage } from './Messages'
-import type { PrismaPhoto } from './Diff'
+import type { PrismaPhoto } from './diff'
 
 export type InputPeer = InputChat | InputUser
 
