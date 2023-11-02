@@ -141,7 +141,8 @@ export class GetHistoryInput {
     direction: HistoryDirection;
     chatId: string;
     maxDate?: Nullable<DateTime>;
-    offsetId?: Nullable<string>;
+    offsetId?: Nullable<number>;
+    offsetNativeId?: Nullable<string>;
     limit?: Nullable<number>;
     includeOffset?: Nullable<boolean>;
 }
@@ -283,7 +284,7 @@ export abstract class IMutation {
 
     abstract editMessage(input: EditMessageInput): Message | Promise<Message>;
 
-    abstract readHistory(input: ReadHistoryInput): boolean | Promise<boolean>;
+    abstract readHistory(input: ReadHistoryInput): ReadHistoryPayload | Promise<ReadHistoryPayload>;
 
     abstract saveDraft(input: SaveDraftInput): boolean | Promise<boolean>;
 }
@@ -453,6 +454,10 @@ export class ReadHistoryInboxPayload {
 export class ReadHistoryOutboxPayload {
     chatId: string;
     maxId: number;
+}
+
+export class ReadHistoryPayload {
+    newUnreadCount: number;
 }
 
 export class NewMessagePayload {

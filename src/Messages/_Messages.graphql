@@ -7,7 +7,7 @@ type Mutation {
   sendMessage(input: SendMessageInput!): NewMessagePayload!
   deleteMessages(input: DeleteMessagesInput!): Boolean!
   editMessage(input: EditMessageInput!): Message!
-  readHistory(input: ReadHistoryInput!): Boolean!
+  readHistory(input: ReadHistoryInput!): ReadHistoryPayload!
   saveDraft(input: SaveDraftInput!): Boolean!
 }
 type Subscription {
@@ -30,7 +30,8 @@ input GetHistoryInput {
   direction: HistoryDirection!
   chatId: String!
   maxDate: DateTime
-  offsetId: String
+  offsetId: Int
+  offsetNativeId: String
   limit: Int
   includeOffset: Boolean
 }
@@ -101,6 +102,9 @@ input MessageEntityInput {
   start: Int!
   end: Int!
   type: MessageEntityType!
+}
+type ReadHistoryPayload {
+  newUnreadCount: Int!
 }
 type NewMessagePayload {
   chat: Chat!

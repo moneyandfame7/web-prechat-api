@@ -126,7 +126,10 @@ export class MessagesResolver {
 
   @MutationTyped('readHistory')
   @UseGuards(AuthGuard)
-  public async readHistory(@CurrentSession() session: Api.Session, @Args('input') input: Api.ReadHistoryInput) {
+  public async readHistory(
+    @CurrentSession() session: Api.Session,
+    @Args('input') input: Api.ReadHistoryInput,
+  ): Promise<Api.ReadHistoryPayload> {
     const { newUnreadCount, affectedChat } = await this.messages.readHistory(session.userId, input)
 
     this.pubSub.publishNotBuilded('onReadHistoryOutbox', {
@@ -145,7 +148,7 @@ export class MessagesResolver {
       },
     })
 
-    return true
+    return { newUnreadCount }
   }
 
   @UseGuards(AuthGuard)

@@ -3,7 +3,7 @@ import { GraphQLModule } from '@nestjs/graphql'
 import { type OnModuleInit, type Provider } from '@nestjs/common'
 // import { CacheModule } from '@nestjs/cache-manager'
 import { ApolloDriver, type ApolloDriverConfig } from '@nestjs/apollo'
-import { ConfigModule } from '@nestjs/config'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 import { DateTimeResolver, GraphQLJSON, UUIDResolver } from 'graphql-scalars'
 
 import { GraphQLUpload } from 'graphql-upload'
@@ -51,17 +51,16 @@ const CONFIG_MODULES = [
   }),
   GraphQLModule.forRootAsync<ApolloDriverConfig>({
     driver: ApolloDriver,
-    imports: [AuthModule],
-    inject: [AuthService],
+    inject: [ConfigService],
 
-    useFactory: async (/* authService: AuthService */) => ({
+    useFactory: async (configService: ConfigService) => ({
       playground: false,
       plugins: [ApolloServerPluginLandingPageLocalDefault()],
       introspection: true,
       typePaths: ['./**/*.graphql'],
       cors: {
         credentials: true,
-        origin: true,
+        origin: configService.get('CLIENT_URL'),
       },
       resolvers: {
         DateTime: DateTimeResolver,

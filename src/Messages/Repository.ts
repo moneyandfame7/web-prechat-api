@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import type { Message } from '@prisma/client'
 
 import * as Api from '@generated/graphql'
 import { ChatsRepository } from 'Chats'
@@ -11,7 +12,7 @@ import { InvalidPeerId } from 'common/errors/Chats'
 import { isUserId } from 'common/helpers/chats'
 import { selectChatFields, selectMessageFields } from 'common/selectors'
 
-import type { CreateMessageInput } from '../interfaces/messages'
+import type { CreateMessageInput, GetHistoryInputInternal } from '../interfaces/messages'
 
 @Injectable()
 export class MessagesRepository {
@@ -23,7 +24,14 @@ export class MessagesRepository {
   public async getHistory(requesterId: string, input: Api.GetHistoryInput) {
     const { direction } = input
     const chat = await this.chats.getPeerById(requesterId, input.chatId)
+    let message: Message | null = null
+    if (input.offsetId !== undefined && input.offsetId !== null) {
+      message = await this.getByOrderId(input.chatId, input.offsetId)
 
+      if (!message) {
+        throw new InvalidMessageIdError('messages.getHistory')
+      }
+    }
     if (!chat) {
       //
       if (isUserId(input.chatId)) {
@@ -40,17 +48,17 @@ export class MessagesRepository {
 
     switch (direction) {
       case Api.HistoryDirection.Around: {
-        if (!input.offsetId) {
+        if (input.offsetId === undefined || input.offsetId === null) {
           throw new InvalidEntityIdError('messages.getHistory')
         }
         const limit = input.limit ? Math.round(input.limit / 2) : MSG_HISTORY_LIMIT / 2
 
         const backwards = await this.getHistoryBackward(
           requesterId,
-          { ...input, chatId, limit },
+          { ...input, chatId, limit, message },
           input.includeOffset ?? true,
         )
-        const forwards = await this.getHistoryForward(requesterId, { ...input, chatId, limit }, false)
+        const forwards = await this.getHistoryForward(requesterId, { ...input, chatId, limit, message }, false)
 
         const around = [...backwards, ...forwards]
 
@@ -58,14 +66,22 @@ export class MessagesRepository {
       }
 
       case Api.HistoryDirection.Backwards: {
-        const backwards = await this.getHistoryBackward(requesterId, { ...input, chatId }, input.includeOffset ?? true)
+        const backwards = await this.getHistoryBackward(
+          requesterId,
+          { ...input, chatId, message },
+          input.includeOffset ?? true,
+        )
 
         // return backwards
         return orderHistory(backwards)
       }
 
       case Api.HistoryDirection.Forwards: {
-        const forwards = await this.getHistoryForward(requesterId, { ...input, chatId }, input.includeOffset ?? true)
+        const forwards = await this.getHistoryForward(
+          requesterId,
+          { ...input, chatId, message },
+          input.includeOffset ?? true,
+        )
 
         return orderHistory(forwards)
       }
@@ -137,7 +153,7 @@ export class MessagesRepository {
     return { newUnreadCount, affectedChat: update.chatInfo.chat }
   }
 
-  private async getByOrderId(chatId: string, id: number) {
+  private async getByOrderId(chatId: string, id: number): Promise<Message | null> {
     return this.prisma.message.findFirst({
       where: {
         chatId,
@@ -146,8 +162,8 @@ export class MessagesRepository {
     })
   }
 
-  public async getHistoryBackward(requesterId: string, input: Api.GetHistoryInput, includeOffset = false) {
-    const cursor = input.offsetId ? { cursor: { id: input.offsetId } } : undefined
+  public async getHistoryBackward(requesterId: string, input: GetHistoryInputInternal, includeOffset = false) {
+    const cursor = input.message ? { cursor: { id: input.message.id } } : undefined
 
     return this.prisma.message.findMany({
       where: {
@@ -167,8 +183,8 @@ export class MessagesRepository {
     })
   }
 
-  public async getHistoryForward(requesterId: string, input: Api.GetHistoryInput, includeOffset = false) {
-    const cursor = input.offsetId ? { cursor: { id: input.offsetId } } : undefined
+  public async getHistoryForward(requesterId: string, input: GetHistoryInputInternal, includeOffset = false) {
+    const cursor = input.message ? { cursor: { id: input.message.id } } : undefined
     return this.prisma.message.findMany({
       where: {
         chatId: input.chatId,
