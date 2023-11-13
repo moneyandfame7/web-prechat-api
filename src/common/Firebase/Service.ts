@@ -7,7 +7,7 @@ import { getStorage } from 'firebase-admin/storage'
 import { type Auth, getAuth } from 'firebase-admin/auth'
 
 import type { AppEnvironmentConfig } from 'interfaces/app'
-import type { FirebaseDeleteOptions, FirebaseUploadOptions } from './Types'
+import type { FirebaseUploadOptions } from './Types'
 
 @Injectable()
 export class FirebaseService {
@@ -72,14 +72,14 @@ export class FirebaseService {
     })
   }
 
-  public async remove(options: FirebaseDeleteOptions) {
-    const { fileName, folder } = options
-    const storageFilePath = `${folder}/${fileName}`
+  // public async remove(options: FirebaseDeleteOptions) {
+  //   const { fileName, folder } = options
+  //   const storageFilePath = `${folder}/${fileName}`
 
-    const fileRef = getStorage(this.app).bucket().file(storageFilePath)
+  //   const fileRef = getStorage(this.app).bucket().file(storageFilePath)
 
-    return fileRef.delete()
-  }
+  //   return fileRef.delete()
+  // }
 
   public verifyToken(token: string) {
     return this.auth.verifyIdToken(token)
