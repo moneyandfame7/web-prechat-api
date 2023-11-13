@@ -1,11 +1,11 @@
 import type { FileUpload } from 'graphql-upload'
-import type { Metadata } from 'sharp'
+import type * as Sharp from 'sharp'
 
 export type FirebaseFolders = 'avatar' | 'document' | 'photo'
 
 export interface FirebaseUploadOptions {
   file: FileUpload
-  metadata?: Metadata
+  metadata?: Sharp.Metadata
   folder: FirebaseFolders
   fileName: string
   contentType: string

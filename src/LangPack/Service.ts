@@ -26,12 +26,15 @@ export class LangPackService {
   }
 
   public getLanguages(): Language[] {
-    const array: Language[] = Object.keys(i18n).map((key: SupportedLanguage) => ({
-      name: languagesNames[key],
-      nativeName: i18n[key].pack.LANG_NATIVE_NAME,
-      langCode: key,
-      stringsCount: Object.keys(i18n[key].pack).length,
-    }))
+    const array: Language[] = Object.keys(i18n).map((_key) => {
+      const key = _key as SupportedLanguage
+      return {
+        name: languagesNames[key],
+        nativeName: i18n[key].pack.LANG_NATIVE_NAME,
+        langCode: key,
+        stringsCount: Object.keys(i18n[key].pack).length,
+      }
+    })
 
     return array
   }

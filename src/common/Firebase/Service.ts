@@ -72,7 +72,7 @@ export class FirebaseService {
     })
   }
 
-  public async delete(options: FirebaseDeleteOptions) {
+  public async remove(options: FirebaseDeleteOptions) {
     const { fileName, folder } = options
     const storageFilePath = `${folder}/${fileName}`
 
