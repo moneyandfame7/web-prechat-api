@@ -1,7 +1,10 @@
 import { NestFactory } from '@nestjs/core'
+import { ConfigService } from '@nestjs/config'
+
 import { graphqlUploadExpress } from 'graphql-upload'
 
 import { MAX_FILE_SIZE } from 'common/constants'
+import type { AppEnvironmentConfig } from 'interfaces/app'
 
 import { AppModule } from './Module'
 
@@ -22,8 +25,11 @@ import { AppModule } from './Module'
  */
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
+
+  const config = app.get<ConfigService<AppEnvironmentConfig>>(ConfigService)
+
   app.enableCors({
-    origin: '*',
+    origin: config.getOrThrow('CLIENT_URL'),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   })

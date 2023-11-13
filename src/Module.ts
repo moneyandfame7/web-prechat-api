@@ -3,14 +3,14 @@ import { GraphQLModule } from '@nestjs/graphql'
 import { type OnModuleInit, type Provider } from '@nestjs/common'
 // import { CacheModule } from '@nestjs/cache-manager'
 import { ApolloDriver, type ApolloDriverConfig } from '@nestjs/apollo'
-import { ConfigModule, ConfigService } from '@nestjs/config'
+import { ConfigModule } from '@nestjs/config'
 import { DateTimeResolver, GraphQLJSON, UUIDResolver } from 'graphql-scalars'
 
 import { GraphQLUpload } from 'graphql-upload'
 // import * as redisStore from 'cache-manager-redis-store'
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
 
-import { AuthModule, AuthService } from './Auth'
+import { AuthModule } from './Auth'
 import { UserModule } from './Users'
 import { ChatsModule } from './Chats'
 import { SessionsModule } from './Sessions'
@@ -49,68 +49,61 @@ const CONFIG_MODULES = [
   ConfigModule.forRoot({
     isGlobal: true,
   }),
-  GraphQLModule.forRootAsync<ApolloDriverConfig>({
+  GraphQLModule.forRoot<ApolloDriverConfig>({
     driver: ApolloDriver,
-    inject: [ConfigService],
 
-    useFactory: async (configService: ConfigService) => ({
-      playground: false,
-      plugins: [ApolloServerPluginLandingPageLocalDefault()],
-      introspection: true,
-      typePaths: ['./**/*.graphql'],
-      cors: {
-        credentials: true,
-        origin: '*',
-      },
-      resolvers: {
-        DateTime: DateTimeResolver,
-        Upload: GraphQLUpload,
-        JSON: GraphQLJSON,
-        UUID: UUIDResolver,
-      },
+    playground: false,
+    plugins: [ApolloServerPluginLandingPageLocalDefault()],
+    introspection: true,
+    typePaths: ['./**/*.graphql'],
+    resolvers: {
+      DateTime: DateTimeResolver,
+      Upload: GraphQLUpload,
+      JSON: GraphQLJSON,
+      UUID: UUIDResolver,
+    },
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      context: ({ req, connection }: any) => (connection ? { req: connection.context } : { req }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    context: ({ req, connection }: any) => (connection ? { req: connection.context } : { req }),
 
-      subscriptions: {
-        'graphql-ws': {
-          path: '/graphql/subscriptions',
-          onConnect: async (ctx) => {
-            const headers: Record<string, unknown> = {
-              ...(ctx.connectionParams?.headers as object),
-            }
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ;(ctx.extra as any).headers = headers
-            return {
-              req: {
-                headers,
-              },
-            }
-          },
-        },
-        'subscriptions-transport-ws': {
-          path: '/graphql/subscriptions',
-
-          onConnect: () => {
-            // eslint-disable-next-line no-console
-            console.log('CONNECT')
-          },
+    subscriptions: {
+      'graphql-ws': {
+        path: '/graphql/subscriptions',
+        onConnect: async (ctx) => {
+          const headers: Record<string, unknown> = {
+            ...(ctx.connectionParams?.headers as object),
+          }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ;(ctx.extra as any).headers = headers
+          return {
+            req: {
+              headers,
+            },
+          }
         },
       },
-      formatError: (e) => {
-        if (e.extensions?.code === 'BAD_USER_INPUT') {
-          return e
-        }
-        const formatted = new ApiErrorFormatted(e)
+      'subscriptions-transport-ws': {
+        path: '/graphql/subscriptions',
 
-        return {
-          code: formatted.error.code,
-          message: formatted.error.message,
-          method: formatted.error.method,
-          path: formatted.error.path,
-        }
+        onConnect: () => {
+          // eslint-disable-next-line no-console
+          console.log('CONNECT')
+        },
       },
-    }),
+    },
+    formatError: (e) => {
+      if (e.extensions?.code === 'BAD_USER_INPUT') {
+        return e
+      }
+      const formatted = new ApiErrorFormatted(e)
+
+      return {
+        code: formatted.error.code,
+        message: formatted.error.message,
+        method: formatted.error.method,
+        path: formatted.error.path,
+      }
+    },
   }),
 
   // CacheModule.registerAsync({
