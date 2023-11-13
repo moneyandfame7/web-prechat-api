@@ -60,7 +60,7 @@ const CONFIG_MODULES = [
       typePaths: ['./**/*.graphql'],
       cors: {
         credentials: true,
-        origin: configService.get('CLIENT_URL'),
+        origin: '*',
       },
       resolvers: {
         DateTime: DateTimeResolver,
