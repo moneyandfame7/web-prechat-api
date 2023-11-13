@@ -17,7 +17,7 @@
     "noImplicitAny": true,
     "resolveJsonModule": true,
     "strictBindCallApply": false,
-    "strict": true,
+    "strict": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false
   }
