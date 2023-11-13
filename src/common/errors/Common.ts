@@ -107,3 +107,13 @@ export class UsernameNotOccupiedError extends BaseApiError {
     super(ErrorCode.USERNAME_NOT_OCCUPIED, "The provided usernams doesn't exist.", method)
   }
 }
+
+export class InvalidFileIdError extends BaseApiError {
+  public constructor(method: string) {
+    super(
+      ErrorCode.INVALID_FILE_ID,
+      "The name of the provided file doesn't contain a unique ID. Should be: «ID_someFileName»",
+      method,
+    )
+  }
+}

@@ -1,6 +1,8 @@
 import { NestFactory } from '@nestjs/core'
 import { graphqlUploadExpress } from 'graphql-upload'
 
+import { MAX_FILE_SIZE } from 'common/constants'
+
 import { AppModule } from './Module'
 
 /**
@@ -25,7 +27,10 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   })
-  app.use('/graphql', graphqlUploadExpress({ maxFileSize: 100 * 1024 * 1024, maxFiles: 10 }))
+  /**
+   * 3 mb limit ???
+   */
+  app.use('/graphql', graphqlUploadExpress({ maxFileSize: MAX_FILE_SIZE, maxFiles: 10 }))
 
   const env = process.env.PORT || 8001
   await app.listen(env)

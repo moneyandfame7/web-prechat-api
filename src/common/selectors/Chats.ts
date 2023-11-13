@@ -56,7 +56,9 @@ export function selectChatFields() {
   return {
     ...selectChatMembers(),
     photo: {
-      ...selectPhotoFields(),
+      select: {
+        ...selectPhotoFields(),
+      },
     },
     lastMessage: {
       include: {

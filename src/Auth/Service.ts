@@ -88,7 +88,7 @@ export class AuthService {
 
   private async validateToken(token: string) {
     try {
-      return await this.firebase.auth.verifyIdToken(token)
+      return await this.firebase.verifyToken(token)
     } catch (e) {
       throw new AuthVerifyCodeError('auth.validateToken')
     }

@@ -15,10 +15,27 @@ CREATE TABLE "photos" (
     "url" TEXT NOT NULL,
     "chatId" TEXT,
     "userId" TEXT,
+    "messageId" TEXT,
     "width" INTEGER,
     "height" INTEGER,
+    "withSpoiler" BOOLEAN,
 
     CONSTRAINT "photos_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "documents" (
+    "id" TEXT NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "blurHash" TEXT,
+    "url" TEXT NOT NULL,
+    "size" INTEGER,
+    "mimeType" TEXT,
+    "isMedia" BOOLEAN,
+    "fileName" TEXT NOT NULL,
+    "messageId" TEXT,
+
+    CONSTRAINT "documents_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -140,7 +157,7 @@ CREATE TABLE "chat_members" (
     "kicked_by_id" TEXT,
     "chat_id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
-    "lastReadIncomingMessageId" INTEGER DEFAULT 0,
+    "lastReadIncomingMessageId" INTEGER,
 
     CONSTRAINT "chat_members_pkey" PRIMARY KEY ("id")
 );
@@ -153,6 +170,9 @@ CREATE UNIQUE INDEX "photos_chatId_key" ON "photos"("chatId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "photos_userId_key" ON "photos"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "documents_id_key" ON "documents"("id");
 
 -- CreateIndex
 CREATE INDEX "sessions_user_id_idx" ON "sessions"("user_id");
@@ -195,6 +215,12 @@ ALTER TABLE "photos" ADD CONSTRAINT "photos_chatId_fkey" FOREIGN KEY ("chatId") 
 
 -- AddForeignKey
 ALTER TABLE "photos" ADD CONSTRAINT "photos_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "photos" ADD CONSTRAINT "photos_messageId_fkey" FOREIGN KEY ("messageId") REFERENCES "Message"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "documents" ADD CONSTRAINT "documents_messageId_fkey" FOREIGN KEY ("messageId") REFERENCES "Message"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

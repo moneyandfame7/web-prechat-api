@@ -19,7 +19,7 @@ export class MediaResolver {
   @MutationTyped('uploadProfilePhoto')
   public async uploadProfilePhoto(
     @CurrentSession('userId') requesterId: string,
-    @Args('file') file: FileUpload,
+    @Args('file') file: Promise<FileUpload>,
   ): Promise<Api.Photo> {
     return this.media.uploadProfilePhoto(requesterId, file)
   }

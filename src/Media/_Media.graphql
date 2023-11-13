@@ -12,4 +12,27 @@ type Photo {
   url: String!
   width: Int
   height: Int
+  withSpoiler: Boolean
+}
+
+type Document {
+  id: String!
+  date: DateTime!
+  size: Int
+  fileName: String!
+  blurHash: String
+  url: String!
+  mimeType: String
+  isMedia: Boolean
+}
+
+# ------------------------ #
+
+# <---=== INPUTS ===---> #
+input InputMedia {
+  id: String!
+  isMedia: Boolean!
+  mimeType: String!
+  withSpoiler: Boolean
+  sendAsFile: Boolean
 }

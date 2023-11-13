@@ -23,7 +23,9 @@ export function selectUserFields() /* : Required<UserFieldsToBuild> */ {
     // fullInfoId: true,
     bio: true,
     photo: {
-      ...selectPhotoFields(),
+      select: {
+        ...selectPhotoFields(),
+      },
     },
   } satisfies Prisma.UserSelect
 }

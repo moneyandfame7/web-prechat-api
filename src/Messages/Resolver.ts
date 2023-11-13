@@ -13,6 +13,7 @@ import { MutationTyped, QueryTyped, SubscriptionBuilder, SubscriptionTyped } fro
 
 import { MessagesService } from './Service'
 import { filterChatSubscription } from 'common/helpers/filterChatSubscribtion'
+import type { FileUpload } from 'graphql-upload'
 
 /**
  * @todo можливо, треба передавати в самій підписці змінну/массив і від них
@@ -24,8 +25,12 @@ export class MessagesResolver {
 
   @MutationTyped('sendMessage')
   @UseGuards(AuthGuard)
-  public async sendMessage(@CurrentSession('userId') requesterId: string, @Args('input') input: Api.SendMessageInput) {
-    const { chat, message } = await this.messages.sendMessage(requesterId, input)
+  public async sendMessage(
+    @CurrentSession('userId') requesterId: string,
+    @Args('input') input: Api.SendMessageInput,
+    @Args('files') fileUploads?: Promise<FileUpload>[],
+  ) {
+    const { chat, message } = await this.messages.sendMessage(requesterId, input, fileUploads)
 
     this.pubSub.publishNotBuilded('onNewMessage', {
       onNewMessage: {
@@ -84,6 +89,7 @@ export class MessagesResolver {
   @MutationTyped('editMessage')
   public async editMessage(@Args('input') input: Api.EditMessageInput, @CurrentSession('userId') requesterId: string) {
     const { chat, message } = await this.messages.editMessage(requesterId, input)
+    // message.pho
 
     this.pubSub.publishNotBuilded('onEditMessage', {
       onEditMessage: {

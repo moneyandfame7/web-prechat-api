@@ -4,7 +4,7 @@ type Query {
   getPrivateChat: Any
 }
 type Mutation {
-  sendMessage(input: SendMessageInput!): NewMessagePayload!
+  sendMessage(input: SendMessageInput!, files: [Upload!]): NewMessagePayload!
   deleteMessages(input: DeleteMessagesInput!): Boolean!
   editMessage(input: EditMessageInput!): Message!
   readHistory(input: ReadHistoryInput!): ReadHistoryPayload!
@@ -48,12 +48,15 @@ input SendMessageInput {
   silent: Boolean
   entities: [MessageEntityInput!]
   text: String
+  fileOptions: Any
+  shouldSendMediaAsDocument: Boolean
 }
 input EditMessageInput {
   chatId: String!
   messageId: String!
   text: String!
 }
+
 input ReadHistoryInput {
   chatId: String!
   maxId: Int!
@@ -139,6 +142,17 @@ type Message {
 type MessageContent {
   action: MessageAction
   formattedText: MessageFormattedText
+  photos: [Photo!]
+  documents: [Document!]
+  contacts: [Contact!]
+  # todo: add poll, voice, audio later
+}
+
+type Contact {
+  firstName: String!
+  lastName: String!
+  phoneNumber: String!
+  userId: String!
 }
 
 type MessageEntity {

@@ -32,11 +32,30 @@ model Photo {
   chatId        String?        @unique
   user          User?          @relation(fields: [userId], references: [id])
   userId        String?        @unique
+  message       Message?       @relation(fields: [messageId], references: [id])
+  messageId     String?
   width         Int?
   height        Int?
   messageAction MessageAction?
+  withSpoiler   Boolean?
 
   @@map("photos")
+}
+
+model Document {
+  id        String   @id @unique @default(uuid())
+  date      DateTime @default(now())
+  blurHash  String?
+  url       String
+  size      Int? // in bytes
+  mimeType  String?
+  extension String?
+  isMedia   Boolean?
+  fileName  String
+  message   Message? @relation(fields: [messageId], references: [id])
+  messageId String?
+
+  @@map("documents")
 }
 
 model Session {
@@ -108,12 +127,18 @@ model MessageAction {
 }
 
 model Message {
-  id             String         @id @unique @default(uuid())
-  orderedId      Int            @map("ordered_id")
-  chat           Chat           @relation(fields: [chatId], references: [id])
+  id             String   @id @unique @default(uuid())
+  orderedId      Int      @map("ordered_id")
+  chat           Chat     @relation(fields: [chatId], references: [id])
   chatId         String // ??
-  isPinnedForAll Boolean?       @map("pinned_for_all")
+  isPinnedForAll Boolean? @map("pinned_for_all")
+
+  // мейбі винести це в контент?
+  // ---------
   action         MessageAction?
+  photos         Photo[]
+  documents      Document[]
+  // ----------
   entities       Json?
   sender         User           @relation(fields: [senderId], references: [id])
   senderId       String         @map("sender_id")

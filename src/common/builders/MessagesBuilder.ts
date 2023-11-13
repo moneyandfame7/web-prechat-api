@@ -9,8 +9,8 @@ export class MessagesBuilder {
    *
    * @param chatId - this field is BUILT by the builder service
    */
-  public build(requesterId: string, chatId: string, message: PrismaMessage) {
-    const { action, entities, senderId, ...primaryFields } = message
+  public build(requesterId: string, chatId: string, message: PrismaMessage): Api.Message {
+    const { action, entities, senderId, photos, documents, ...primaryFields } = message
 
     return {
       ...primaryFields,
@@ -22,6 +22,8 @@ export class MessagesBuilder {
           ...(entities && { entities: entities as any }),
         },
         action: (action as Api.MessageAction) || undefined,
+        ...(photos.length ? { photos } : {}),
+        ...(documents.length ? { documents } : {}),
       },
       senderId: senderId,
       isOutgoing: senderId === requesterId,
@@ -30,5 +32,9 @@ export class MessagesBuilder {
   }
   public buildMany(requesterId: string, chatId: string, messages: PrismaMessage[]) {
     return messages.map((message) => this.build(requesterId, chatId, message))
+  }
+
+  private buildContent(requesterId: string, message: PrismaMessage) {
+    return {}
   }
 }

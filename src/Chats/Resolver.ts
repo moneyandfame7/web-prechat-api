@@ -45,7 +45,7 @@ export class ChatsResolver {
     @Args('input') input: Api.CreateGroupInput,
   ): Promise<Api.Chat> {
     const chatNotBuilded = await this.chats.createGroup(requesterId, input)
-
+    // chatNotBuilded.lastMessage.do
     this.pubSub.publishNotBuilded('onChatCreated', {
       onChatCreated: chatNotBuilded,
     })

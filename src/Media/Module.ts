@@ -3,13 +3,14 @@ import { Module } from '@nestjs/common'
 import { FirebaseModule } from 'common/Firebase'
 import { BuilderModule } from 'common/builders/Module'
 import { PrismaService } from 'common/prisma.service'
+import { BlurhashModule } from 'common/Blurhash/Module'
 
 import { MediaResolver } from './Resolver'
 import { MediaService } from './Service'
 import { MediaRepository } from './Repository'
 
 @Module({
-  imports: [FirebaseModule, BuilderModule],
+  imports: [FirebaseModule, BuilderModule, BlurhashModule],
   providers: [MediaResolver, MediaService, MediaRepository, PrismaService],
   exports: [MediaService],
 })

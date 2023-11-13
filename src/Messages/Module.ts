@@ -8,9 +8,10 @@ import { BuilderModule } from 'common/builders/Module'
 import { MessagesResolver } from './Resolver'
 import { MessagesService } from './Service'
 import { MessagesRepository } from './Repository'
+import { MediaModule } from 'Media'
 
 @Module({
-  imports: [ChatsModule, BuilderModule],
+  imports: [ChatsModule, BuilderModule, MediaModule],
   providers: [PrismaService, MessagesResolver, MessagesService, MessagesRepository],
 })
 export class MessagesModule {}

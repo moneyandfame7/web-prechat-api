@@ -1,6 +1,7 @@
 import type { Prisma } from '@prisma/client'
 import type { MessageActionPayload } from '../../interfaces/messages'
 import type { LanguageStringKeys } from '../../interfaces/diff'
+import { selectDocumentFields, selectPhotoFields } from './Diff'
 
 export function selectMessageFields() {
   return {
@@ -11,6 +12,16 @@ export function selectMessageFields() {
         photo: true,
         text: true,
         values: true,
+      },
+    },
+    documents: {
+      select: {
+        ...selectDocumentFields(),
+      },
+    },
+    photos: {
+      select: {
+        ...selectPhotoFields(),
       },
     },
   } satisfies Prisma.MessageSelect

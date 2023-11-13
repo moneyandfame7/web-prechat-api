@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import type { $Enums } from '@prisma/client'
+import type { FileUpload } from 'graphql-upload'
 
 import type * as Api from '@generated/graphql'
 
@@ -10,6 +11,7 @@ import { BuilderService } from 'common/builders/Service'
 import { ChatsRepository } from 'Chats'
 
 import { MessagesRepository } from './Repository'
+import { MediaService } from 'Media'
 
 @Injectable()
 export class MessagesService {
@@ -17,6 +19,7 @@ export class MessagesService {
     private repo: MessagesRepository,
     public chatRepo: ChatsRepository,
     private builder: BuilderService,
+    private media: MediaService,
   ) {}
   /**
    * @example
@@ -60,7 +63,7 @@ export class MessagesService {
    *  as InputPeer - chatId, userId
    *  peer InputPeer
    */
-  public async sendMessage(requesterId: string, input: Api.SendMessageInput) {
+  public async sendMessage(requesterId: string, input: Api.SendMessageInput, fileUploads?: Promise<FileUpload>[]) {
     // const message = this.repo.create()
     const { chatId, text, entities, id, orderedId /*  sendAs, silent */ } = input
     // let chat: Chat | null
@@ -70,7 +73,7 @@ export class MessagesService {
       throw new InvalidChatId('chats.sendMessage')
     }
 
-    return this.repo.create(requesterId, {
+    const result = await this.repo.create(requesterId, {
       text,
       chat: foundedChat,
       entities,
@@ -78,15 +81,11 @@ export class MessagesService {
       orderedId,
     })
 
-    // return { chat: foundedChat, message }
-    /**
-     * Якщо це приватний чат - то ми створюємо його, якщо раніше не існувало.
-     *
-     */
+    if (fileUploads) {
+      return this.media.uploadMany(result.message.id, fileUploads, input.fileOptions, input.shouldSendMediaAsDocument)
+    }
 
-    /* check if user is blocked? */
-    // const chat=
-    /* check if chat exist, if not - create and then send message ? */
+    return result
   }
 
   public async deleteMessages(requesterId: string, input: Api.DeleteMessagesInput) {
@@ -96,7 +95,7 @@ export class MessagesService {
 
   public async editMessage(requesterId: string, input: Api.EditMessageInput) {
     const { chat, ...message } = await this.repo.edit(requesterId, input)
-
+    // message.documents
     return { chat, message }
   }
 

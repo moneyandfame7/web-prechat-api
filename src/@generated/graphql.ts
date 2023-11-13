@@ -137,6 +137,14 @@ export class GetLangStringInput {
     key: string;
 }
 
+export class InputMedia {
+    id: string;
+    isMedia: boolean;
+    mimeType: string;
+    withSpoiler?: Nullable<boolean>;
+    sendAsFile?: Nullable<boolean>;
+}
+
 export class GetHistoryInput {
     direction: HistoryDirection;
     chatId: string;
@@ -159,6 +167,8 @@ export class SendMessageInput {
     silent?: Nullable<boolean>;
     entities?: Nullable<MessageEntityInput[]>;
     text?: Nullable<string>;
+    fileOptions?: Nullable<Any>;
+    shouldSendMediaAsDocument?: Nullable<boolean>;
 }
 
 export class EditMessageInput {
@@ -278,7 +288,7 @@ export abstract class IMutation {
 
     abstract uploadProfilePhoto(file: Upload): Photo | Promise<Photo>;
 
-    abstract sendMessage(input: SendMessageInput): NewMessagePayload | Promise<NewMessagePayload>;
+    abstract sendMessage(input: SendMessageInput, files?: Nullable<Upload[]>): NewMessagePayload | Promise<NewMessagePayload>;
 
     abstract deleteMessages(input: DeleteMessagesInput): boolean | Promise<boolean>;
 
@@ -432,6 +442,18 @@ export class Photo {
     url: string;
     width?: Nullable<number>;
     height?: Nullable<number>;
+    withSpoiler?: Nullable<boolean>;
+}
+
+export class Document {
+    id: string;
+    date: DateTime;
+    size?: Nullable<number>;
+    fileName: string;
+    blurHash?: Nullable<string>;
+    url: string;
+    mimeType?: Nullable<string>;
+    isMedia?: Nullable<boolean>;
 }
 
 export class UpdateDraftPayload {
@@ -490,6 +512,16 @@ export class Message {
 export class MessageContent {
     action?: Nullable<MessageAction>;
     formattedText?: Nullable<MessageFormattedText>;
+    photos?: Nullable<Photo[]>;
+    documents?: Nullable<Document[]>;
+    contacts?: Nullable<Contact[]>;
+}
+
+export class Contact {
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    userId: string;
 }
 
 export class MessageEntity {
