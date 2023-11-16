@@ -168,7 +168,7 @@ export class SendMessageInput {
     entities?: Nullable<MessageEntityInput[]>;
     text?: Nullable<string>;
     fileOptions?: Nullable<Any>;
-    shouldSendMediaAsDocument?: Nullable<boolean>;
+    sendMediaAsDocument?: Nullable<boolean>;
 }
 
 export class EditMessageInput {

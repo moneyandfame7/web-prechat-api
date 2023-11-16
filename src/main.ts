@@ -33,6 +33,13 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   })
+
+  // app.use((req: any, res: any, next: any) => {
+  //   res.header('Access-Control-Allow-Origin', '*') // Set to your specific origin in production
+  //   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
+  //   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  //   next()
+  // })
   /**
    * 3 mb limit ???
    */

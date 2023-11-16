@@ -9,6 +9,7 @@ export interface FirebaseUploadOptions {
   folder: FirebaseFolders
   fileName: string
   contentType: string
+  shouldResize: boolean
 }
 
 export interface FirebaseDeleteOptions {

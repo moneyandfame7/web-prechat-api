@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common'
-import * as sharp from 'sharp'
-import { encode } from 'blurhash'
 import type { FileUpload } from 'graphql-upload'
 import { isUUID } from 'class-validator'
 import * as mime from 'mime-types'
@@ -16,7 +14,6 @@ import { BlurhashService } from 'common/Blurhash'
 import { InvalidFileIdError } from 'common/errors'
 
 import { MediaRepository } from './Repository'
-import type { ReadStream } from 'fs'
 
 @Injectable()
 export class MediaService {
@@ -40,6 +37,7 @@ export class MediaService {
       contentType: mimeType,
       file: awaitedFile,
       fileName: requesterId,
+      shouldResize: true,
     })
 
     return this.repo.createAvatar(requesterId, { blurHash, width: metadata.width, height: metadata.height, url })
@@ -50,7 +48,7 @@ export class MediaService {
     messageId: string,
     fileUploads: Promise<FileUpload>[],
     fileOptions?: Record<string, SendMediaItem>,
-    shouldSendAsDocument?: Nullable<boolean>,
+    sendMediaAsDocument?: Nullable<boolean>,
   ): Promise<{ message: PrismaMessage; chat: PrismaChat }> {
     const promises = fileUploads.map(async (file) => {
       const awaitedFile = await file
@@ -66,39 +64,42 @@ export class MediaService {
       const mimeType = mime.lookup(awaitedFile.filename) as string
       const isImage = mimeType ? mimeType.includes('image') : false
 
-      const isDocument = !isImage || shouldSendAsDocument
+      const isDocument = !isImage || sendMediaAsDocument
       const nativeFileName = awaitedFile.filename?.split(`${id}_`)[1]
-
       const url = await this.firebase.upload({
         file: awaitedFile,
         contentType: mimeType,
         fileName: id,
         folder: isDocument ? 'document' : 'photo',
+        shouldResize: !isDocument,
       })
+      const fileSize = await this.getFileSize(awaitedFile)
       if (isImage) {
         const { blurHash, metadata } = await this.blurhash.encode(awaitedFile)
 
         const input = {
+          messageId,
           blurHash,
           url,
-          height: metadata.height,
-          width: metadata.width,
         }
 
-        return shouldSendAsDocument
-          ? this.repo.createDocument({
-              messageId,
-              fileName: nativeFileName,
-              mimeType: mimeType,
-              size: metadata.size,
-              url,
-              blurHash,
-              isMedia: true,
-            })
-          : this.repo.createPhoto({ ...input, withSpoiler: fileOption?.withSpoiler, messageId })
-      }
+        if (isDocument) {
+          return this.repo.createDocument({
+            ...input,
+            fileName: nativeFileName,
+            mimeType: mimeType,
+            size: fileSize,
+            isMedia: true,
+          })
+        }
 
-      const fileSize = await this.getFileSize(awaitedFile)
+        return this.repo.createPhoto({
+          ...input,
+          withSpoiler: fileOption?.withSpoiler,
+          height: metadata.height,
+          width: metadata.width,
+        })
+      }
 
       return this.repo.createDocument({ mimeType: mimeType, size: fileSize, url, messageId, fileName: nativeFileName })
     })
@@ -133,7 +134,6 @@ export class MediaService {
   private getFileExtension(fileName: string) {
     return fileName.substring(fileName.lastIndexOf('.') + 1)
   }
-  private prepareImage(file: FileUpload) {}
   // private getFileExtension(file:FileUpload):Promise<number> {
 
   // }

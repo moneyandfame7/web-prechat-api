@@ -82,7 +82,7 @@ export class MessagesService {
     })
 
     if (fileUploads) {
-      return this.media.uploadMany(result.message.id, fileUploads, input.fileOptions, input.shouldSendMediaAsDocument)
+      return this.media.uploadMany(result.message.id, fileUploads, input.fileOptions, input.sendMediaAsDocument)
     }
 
     return result

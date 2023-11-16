@@ -49,7 +49,7 @@ input SendMessageInput {
   entities: [MessageEntityInput!]
   text: String
   fileOptions: Any
-  shouldSendMediaAsDocument: Boolean
+  sendMediaAsDocument: Boolean
 }
 input EditMessageInput {
   chatId: String!

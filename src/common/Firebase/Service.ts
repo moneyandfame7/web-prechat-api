@@ -30,7 +30,7 @@ export class FirebaseService {
   }
 
   public async upload(options: FirebaseUploadOptions) {
-    const { file, fileName, folder, contentType } = options
+    const { file, fileName, folder, contentType, shouldResize } = options
     const fullFileName = `${folder}/${fileName}`
 
     const stream = file.createReadStream()
@@ -48,15 +48,19 @@ export class FirebaseService {
         firebaseStorageDownloadTokens: uuid(),
       },
     })
-    const sharpPipeline = sharp()
-      .resize({
-        fit: 'contain',
-        width: 800,
-        height: 600,
-      })
-      .jpeg({ quality: 70, force: false })
-      .png({ quality: 70, force: false })
-      .webp({ quality: 70, force: false })
+
+    let sharpPipeline: sharp.Sharp
+    if (shouldResize) {
+      sharpPipeline = sharp()
+        .resize({
+          fit: 'cover',
+          width: 800,
+          height: 600,
+        })
+        .jpeg({ quality: 70, force: false })
+        .png({ quality: 70, force: false })
+        .webp({ quality: 70, force: false })
+    }
 
     // const sharpPipeline = sharp().png
     return new Promise<string>((resolve, reject) => {
@@ -68,7 +72,11 @@ export class FirebaseService {
         reject(error)
       })
 
-      stream.pipe(sharpPipeline).pipe(writeStream)
+      if (sharpPipeline) {
+        stream.pipe(sharpPipeline).pipe(writeStream)
+      } else {
+        stream.pipe(writeStream)
+      }
     })
   }
 

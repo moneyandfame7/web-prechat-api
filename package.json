@@ -28,7 +28,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed": "npx prisma db seed",
     "seed:undo": "ts-node prisma/undo-seed.ts",
-    "migration:revert": "ts-node prisma/migration-revert.ts"
+    "migration:revert": "ts-node prisma/migration-revert.ts",
+    "db-reset": "yarn prisma migrate reset"
   },
   "dependencies": {
     "@apollo/server": "^4.7.0",
