@@ -7,12 +7,12 @@ export interface FirebaseUploadOptions {
   file: FileUpload
   metadata?: Sharp.Metadata
   folder: FirebaseFolders
-  fileName: string
+  id: string
   contentType: string
   shouldResize: boolean
 }
 
 export interface FirebaseDeleteOptions {
   folder: FirebaseFolders
-  fileName: string
+  id: string
 }

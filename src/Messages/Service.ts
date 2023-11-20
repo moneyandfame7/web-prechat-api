@@ -82,7 +82,18 @@ export class MessagesService {
     })
 
     if (fileUploads) {
-      return this.media.uploadMany(result.message.id, fileUploads, input.fileOptions, input.sendMediaAsDocument)
+      try {
+        const result2 = await this.media.uploadMany(
+          result.message.id,
+          fileUploads,
+          input.fileOptions,
+          input.sendMediaAsDocument,
+        )
+
+        return result2
+      } catch (e) {
+        console.log({ e })
+      }
     }
 
     return result

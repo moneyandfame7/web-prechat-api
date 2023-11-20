@@ -7,7 +7,7 @@ import { getStorage } from 'firebase-admin/storage'
 import { type Auth, getAuth } from 'firebase-admin/auth'
 
 import type { AppEnvironmentConfig } from 'interfaces/app'
-import type { FirebaseUploadOptions } from './Types'
+import type { FirebaseDeleteOptions, FirebaseUploadOptions } from './Types'
 
 @Injectable()
 export class FirebaseService {
@@ -30,7 +30,7 @@ export class FirebaseService {
   }
 
   public async upload(options: FirebaseUploadOptions) {
-    const { file, fileName, folder, contentType, shouldResize } = options
+    const { file, id: fileName, folder, contentType, shouldResize } = options
     const fullFileName = `${folder}/${fileName}`
 
     const stream = file.createReadStream()
@@ -69,6 +69,7 @@ export class FirebaseService {
       })
 
       writeStream.on('error', (error) => {
+        // console.log({ error })
         reject(error)
       })
 
@@ -78,6 +79,24 @@ export class FirebaseService {
         stream.pipe(writeStream)
       }
     })
+  }
+
+  public async remove(options: FirebaseDeleteOptions) {
+    const { id, folder } = options
+    const storageFilePath = `${folder}/${id}`
+
+    const fileRef = getStorage(this.app).bucket().file(storageFilePath)
+
+    return fileRef
+      .delete()
+      .then((val) => {
+        console.log({ val, storageFilePath }, 'WAS DELETED!')
+        return true
+      })
+      .catch((err) => {
+        console.log(err)
+        return false
+      })
   }
 
   // public async remove(options: FirebaseDeleteOptions) {

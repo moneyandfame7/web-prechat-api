@@ -18,16 +18,6 @@ export function createChatMembers(requesterId: string, memberIds: string[]) {
   }
 }
 
-export function selectChatPermissions() {
-  return {
-    canChangeInfo: true,
-    canInviteUsers: true,
-    canPinMessages: true,
-    canSendMedia: true,
-    canSendMessages: true,
-  }
-}
-
 export function selectChatMembers() {
   return {
     fullInfo: {

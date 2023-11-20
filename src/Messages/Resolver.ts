@@ -1,5 +1,5 @@
 import { Args, Resolver, Query } from '@nestjs/graphql'
-import { UseGuards } from '@nestjs/common'
+import { UseFilters, UseGuards } from '@nestjs/common'
 
 import * as Api from '@generated/graphql'
 import { AuthGuard } from 'Auth'
@@ -14,6 +14,7 @@ import { MutationTyped, QueryTyped, SubscriptionBuilder, SubscriptionTyped } fro
 import { MessagesService } from './Service'
 import { filterChatSubscription } from 'common/helpers/filterChatSubscribtion'
 import type { FileUpload } from 'graphql-upload'
+import { ExceptionFilter } from 'common/filters/ExceptionFilter'
 
 /**
  * @todo можливо, треба передавати в самій підписці змінну/массив і від них
@@ -25,23 +26,33 @@ export class MessagesResolver {
 
   @MutationTyped('sendMessage')
   @UseGuards(AuthGuard)
+  // @UseFilters(ExceptionFilter)
   public async sendMessage(
     @CurrentSession('userId') requesterId: string,
     @Args('input') input: Api.SendMessageInput,
     @Args('files') fileUploads?: Promise<FileUpload>[],
   ) {
-    const { chat, message } = await this.messages.sendMessage(requesterId, input, fileUploads)
+    try {
+      console.log(fileUploads?.[0])
 
-    this.pubSub.publishNotBuilded('onNewMessage', {
-      onNewMessage: {
-        chat,
-        message,
-      },
-    })
+      // const test = Promise.allSettled(fileUploads?.map(async file=>{
+      //   await file
+      // }))
+      const { chat, message } = await this.messages.sendMessage(requesterId, input, fileUploads)
 
-    // this.pubSub.publish('onNewMessage',{})
-    return {
-      message: this.builder.messages.build(requesterId, input.chatId, message),
+      this.pubSub.publishNotBuilded('onNewMessage', {
+        onNewMessage: {
+          chat,
+          message,
+        },
+      })
+
+      // this.pubSub.publish('onNewMessage',{})
+      return {
+        message: this.builder.messages.build(requesterId, input.chatId, message),
+      }
+    } catch (e) {
+      console.log({ e })
     }
   }
 

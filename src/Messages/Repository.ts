@@ -12,11 +12,17 @@ import { InvalidPeerId } from 'common/errors/Chats'
 import { isUserId } from 'common/helpers/chats'
 import { selectChatFields, selectMessageFields } from 'common/selectors'
 
-import type { CreateMessageInput, GetHistoryInputInternal } from '../interfaces/messages'
+import type { CreateMessageInput, GetHistoryInputInternal, PrismaMessage } from '../interfaces/messages'
+import { FirebaseService } from 'common/Firebase'
+import { PrismaTx } from 'interfaces/nestjs'
 
 @Injectable()
 export class MessagesRepository {
-  public constructor(private prisma: PrismaService, private chats: ChatsRepository) {}
+  public constructor(
+    private prisma: PrismaService,
+    private chats: ChatsRepository,
+    private firebase: FirebaseService,
+  ) {}
 
   /**
    * @todo handle private chats
@@ -88,18 +94,14 @@ export class MessagesRepository {
     }
   }
   /* 
-  inc 2555 - 2555W out 
-  inc 2556 - 2556W out 
-  inc 2559 - 2559W out 
-  inc 2568 - 2568v out 
-  inc 2569 - 2569v out 
-  inc 2570 - 2570v out 
-  inc 2571 - 2571v out 
-  inc 2572 - 2572v out 
-  inc 2573 - 2573v out 
-  inc 2574 - 2574v out - scroll start FROM HERE
-  inc 2575 - 2575v out 
-  inc 2576 - 2576v out 
+  inc 2554 
+              - 2555W out 
+  inc 2556    
+              - 2557W out 
+  inc 2558
+              - 2559W out 
+  inc 2560
+              - 2561 out
 - unreadCount - 9
 - lastReadOutgoing - 2559
 - lastReadIncoming - 2574
@@ -157,7 +159,7 @@ export class MessagesRepository {
     return this.prisma.message.findFirst({
       where: {
         chatId,
-        orderedId: id,
+        OR: [{ orderedId: { lte: id } }, { orderedId: { gte: id } }],
       },
     })
   }
@@ -269,23 +271,15 @@ export class MessagesRepository {
     return { message: lastMessage!, chat: updChat }
   }
 
+  // public async deleteOne(){}
+
   public async delete(requesterId: string, input: Api.DeleteMessagesInput) {
     const affectedChat = await this.prisma.$transaction(async (tx) => {
       const promises = input.ids.map(async (id) => {
-        return tx.message.delete({
-          where: {
-            id,
-          },
-          include: {
-            chat: {
-              include: {
-                ...selectChatFields(),
-              },
-            },
-          },
-        })
+        return this.deleteOneMessage(tx, id)
       })
       const result = await Promise.all(promises)
+
       const chatId = result[0].chat.id
       const newLastMessage = await tx.message.findFirst({
         where: {
@@ -336,6 +330,58 @@ export class MessagesRepository {
         },
       },
     })
+  }
+
+  // private async getLastReadMessage(u)
+
+  private async deleteOneMessage(tx: PrismaTx, id: string) {
+    const message = await tx.message.findUnique({
+      where: {
+        id,
+      },
+    })
+    if (!message) {
+      throw new InvalidMessageIdError('message.deleteMessages')
+    }
+    const deleted = await tx.message.delete({
+      where: {
+        id,
+      },
+      include: {
+        chat: {
+          include: {
+            ...selectChatFields(),
+          },
+        },
+        ...selectMessageFields(),
+      },
+    })
+    await this.deleteAttachments(deleted)
+
+    return deleted
+  }
+
+  private async deleteAttachments(message: PrismaMessage) {
+    const hasPhotos = message.photos.length > 0
+
+    const hasDocuments = message.documents.length > 0
+
+    if (hasPhotos) {
+      for await (const photo of message.photos) {
+        await this.firebase.remove({
+          id: photo.id,
+          folder: 'photo',
+        })
+      }
+    }
+    if (hasDocuments) {
+      for await (const doc of message.documents) {
+        await this.firebase.remove({
+          id: doc.id,
+          folder: 'document',
+        })
+      }
+    }
   }
 
   /* Drafts. */

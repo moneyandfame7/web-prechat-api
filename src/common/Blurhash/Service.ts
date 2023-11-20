@@ -7,7 +7,7 @@ import { encode as blurhashEncode } from 'blurhash'
 @Injectable()
 export class BlurhashService {
   public async encode(file: FileUpload) {
-    return new Promise<{ blurHash: string; metadata: sharp.Metadata }>((resolve, reject) => {
+    return await new Promise<{ blurHash: string; metadata: sharp.Metadata }>((resolve, reject) => {
       const readStream = file.createReadStream()
       const chunks: Uint8Array[] = []
       let totalLength = 0
@@ -36,7 +36,9 @@ export class BlurhashService {
       })
 
       readStream.on('error', (error) => {
-        reject(error)
+        /* Ignore error... */
+        console.log({ error })
+        // readStream.destroy()
       })
     })
   }

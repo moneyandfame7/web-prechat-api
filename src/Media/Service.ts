@@ -30,13 +30,12 @@ export class MediaService {
     const awaitedFile = await file
 
     const { blurHash, metadata } = await this.blurhash.encode(awaitedFile)
-    // const test=await sharp(awaitedFile.createReadStream().)
     const mimeType = mime.lookup(awaitedFile.filename) as string
     const url = await this.firebase.upload({
       folder: 'avatar',
       contentType: mimeType,
       file: awaitedFile,
-      fileName: requesterId,
+      id: requesterId,
       shouldResize: true,
     })
 
@@ -69,7 +68,7 @@ export class MediaService {
       const url = await this.firebase.upload({
         file: awaitedFile,
         contentType: mimeType,
-        fileName: id,
+        id,
         folder: isDocument ? 'document' : 'photo',
         shouldResize: !isDocument,
       })
@@ -81,6 +80,7 @@ export class MediaService {
           messageId,
           blurHash,
           url,
+          id,
         }
 
         if (isDocument) {
@@ -101,7 +101,15 @@ export class MediaService {
         })
       }
 
-      return this.repo.createDocument({ mimeType: mimeType, size: fileSize, url, messageId, fileName: nativeFileName })
+      return this.repo.createDocument({
+        id,
+        url,
+        messageId,
+        mimeType: mimeType,
+        size: fileSize,
+
+        fileName: nativeFileName,
+      })
     })
 
     const result = await Promise.all(promises)
@@ -114,7 +122,7 @@ export class MediaService {
 
   /** returns file size in bytes */
   private async getFileSize(file: FileUpload): Promise<number> {
-    return new Promise((resolve, reject) => {
+    return new Promise<number>((resolve, reject) => {
       const readStream = file.createReadStream()
       let fileSize = 0
 
@@ -127,7 +135,9 @@ export class MediaService {
       })
 
       readStream.on('error', (error) => {
-        reject(error)
+        /* Ignore error... */
+        console.log({ error })
+        // reject(error)
       })
     })
   }

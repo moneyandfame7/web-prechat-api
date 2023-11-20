@@ -7,6 +7,13 @@ import type { PrismaMessage } from '../interfaces/messages'
 
 import type { GqlContext, MapClassReturnTypes } from './helpers'
 import type { PrismaChat } from './chats'
+import type { Prisma, PrismaClient } from '@prisma/client'
+import type { DefaultArgs } from '@prisma/client/runtime/library'
+
+export type PrismaTx = Omit<
+  PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>,
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+>
 
 /* SUBSCRIPTIONS */
 export type SubscriptionPayload = MapClassReturnTypes<ISubscription>
