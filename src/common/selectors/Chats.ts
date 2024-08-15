@@ -18,7 +18,7 @@ export function createChatMembers(requesterId: string, memberIds: string[]) {
   }
 }
 
-export function selectChatMembers() {
+function selectChatMembers() {
   return {
     fullInfo: {
       include: {

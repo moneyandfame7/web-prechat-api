@@ -49,6 +49,11 @@ export enum ColorVariants {
     ORANGE = "ORANGE"
 }
 
+export class Currency {
+    code: string;
+    name: string;
+}
+
 export class Connection {
     ipVersion: number;
     ipAddress: string;
@@ -56,14 +61,19 @@ export class Connection {
     longitude: number;
     countryName: string;
     countryCode: string;
-    continentCode: string;
-    continent: string;
     timeZone: string;
     zipCode: string;
     cityName: string;
     regionName: string;
-    browser?: Nullable<string>;
-    platform?: Nullable<string>;
+    isProxy: boolean;
+    continent: string;
+    continentCode: string;
+    language: string;
+    tlds: Nullable<string>[];
+    timeZones: Nullable<string>[];
+    currency: Currency;
+    browser: string;
+    platform: string;
 }
 
 export class SignUpInput {

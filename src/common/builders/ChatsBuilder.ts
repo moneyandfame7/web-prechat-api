@@ -103,7 +103,6 @@ export class ChatsBuilder {
   private getLastReadOutgoingMessageId(requesterId: string, chat: PrismaChat) {
     const membersExceptMe = chat.fullInfo?.members.filter((member) => member.userId !== requesterId)
     const membersLastReadMessageId = membersExceptMe?.map((member) => member.lastReadIncomingMessageId)
-    console.log({ membersLastReadMessageId })
     return Math.max(...(membersLastReadMessageId as number[]))
   }
 }

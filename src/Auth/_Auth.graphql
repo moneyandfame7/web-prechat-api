@@ -17,6 +17,12 @@ type TwoFactorAuth {
   hint: String
   email: String
 }
+
+input Currency {
+  code: String!
+  name: String!
+}
+
 input Connection {
   ipVersion: Int!
   ipAddress: String!
@@ -24,14 +30,19 @@ input Connection {
   longitude: Float!
   countryName: String!
   countryCode: String!
-  continentCode: String!
-  continent: String!
   timeZone: String!
   zipCode: String!
   cityName: String!
   regionName: String!
-  browser: String
-  platform: String
+  isProxy: Boolean!
+  continent: String!
+  continentCode: String!
+  language: String!
+  tlds: [String]!
+  timeZones: [String]!
+  currency: Currency!
+  browser: String!
+  platform: String!
 }
 
 type SendPhoneResponse {

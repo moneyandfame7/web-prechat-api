@@ -90,7 +90,7 @@ export default {
   SourceCode: 'Вихідний код',
   'Auth.Signin': 'Увійти до Prechat',
   'Auth.ConfirmNumber': 'Будь ласка, підтвердіть свою країну та введіть номер телефону.',
-  'Auth.ContinueOnLanguage': 'Продовжити англійською',
+  'Auth.ContinueOnLanguage': 'Продовжити українською',
   'Auth.CodeSendOnApp': 'Ми надіслали код у додаток Prechat на іншому вашому пристрої.',
   'Auth.CodeSendOnPhone': 'Ми надіслали код на ваш мобільний телефон',
   'Auth.Password': 'Ваш обліковий запис захищений додатковим паролем.',

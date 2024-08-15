@@ -1,5 +1,5 @@
 import { Args, Resolver, Query } from '@nestjs/graphql'
-import { UseFilters, UseGuards } from '@nestjs/common'
+import { UseGuards } from '@nestjs/common'
 
 import * as Api from '@generated/graphql'
 import { AuthGuard } from 'Auth'
@@ -14,7 +14,6 @@ import { MutationTyped, QueryTyped, SubscriptionBuilder, SubscriptionTyped } fro
 import { MessagesService } from './Service'
 import { filterChatSubscription } from 'common/helpers/filterChatSubscribtion'
 import type { FileUpload } from 'graphql-upload'
-import { ExceptionFilter } from 'common/filters/ExceptionFilter'
 
 /**
  * @todo можливо, треба передавати в самій підписці змінну/массив і від них
@@ -33,11 +32,6 @@ export class MessagesResolver {
     @Args('files') fileUploads?: Promise<FileUpload>[],
   ) {
     try {
-      console.log(fileUploads?.[0])
-
-      // const test = Promise.allSettled(fileUploads?.map(async file=>{
-      //   await file
-      // }))
       const { chat, message } = await this.messages.sendMessage(requesterId, input, fileUploads)
 
       this.pubSub.publishNotBuilded('onNewMessage', {
